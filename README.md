@@ -46,13 +46,13 @@ Peso de menciones específicas:
 
 ⚙️ Stack Tecnológico
 
-| Proceso            | Herramientas Seleccionadas                    |
-|--|--|
-| Carga de Datos | Yelp Fusion API, Google Maps API, Python      |
-| Procesamiento  | Pandas, spaCy, NLTK, TextBlob                 |
-| Almacenamiento | PostgreSQL/MySQL                              |
-| Automatización/ML| Scikit-learn, Apache Airflow                 |
-| Visualización  | Power BI, Streamlit                           |
+| Proceso            | Herramientas Seleccionadas                     |
+|--------------------|------------------------------------------------|
+| Carga de Datos     | Yelp Fusion API, Google Maps API, Python       |
+| Procesamiento      | Pandas, spaCy, NLTK, TextBlob                  |
+| Almacenamiento     | PostgreSQL/MySQL                               |
+| Automatización/ML  | Scikit-learn, Apache Airflow                   |
+| Visualización      | Power BI, Streamlit                            |
 
 
 
@@ -64,25 +64,32 @@ Peso de menciones específicas:
 4. Visualización y Reportes: Dashboards interactivos con Power BI y Streamlit.
 5. Evaluación continua: Validación de resultados e iteración según métricas definidas.
 
+🔄 Metodología de Trabajo
+
+Adoptaremos un enfoque ágil, basado en la metodología SCRUM, utilizando el software de gestión de proyectos ClickUp. A través de esta plataforma, dividiremos y asignaremos las actividades, actualizaremos el diagrama de Gantt y haremos un seguimiento continuo del proyecto. Los pilares de nuestra metodología son los siguientes:
+
+Gestión del trabajo colaborativo: Fomentamos la puesta en común de avances entre todos los miembros del equipo.
+
+Resolución rápida y efectiva: Priorizamos reuniones diarias y una comunicación fluida para abordar cualquier desafío de manera eficiente.
+
+Visualización del flujo de trabajo: Mantenemos una clara división de roles y responsabilidades para asegurar el avance continuo del proyecto.
+
+Simplicidad en las soluciones: Optamos por soluciones prácticas y directas para facilitar el progreso.
 
 
 🗂️ Estructura del Repositorio
 
 📦 hype-analytics-yelp-gmaps ├── 📁 data/ Datos recolectados y procesados ├── 📁 notebooks/ EDA, análisis y modelos predictivos ├── 📁 docs/ Documentación del proyecto ├── 📁 scripts/ Scripts de automatización y procesamiento ├── 📁 visuals/ Visualizaciones finales y dashboards ├── README.md Este archivo ├── requirements.txt Librerías y dependencias necesarias └── .gitignore
 
-
-
 🚀 Instalación y Ejecución
 
-```bash
 git clone https://github.com/tu_usuario/hype-analytics-yelp-gmaps.git
 cd hype-analytics-yelp-gmaps
 python -m venv venv
-source venv/bin/activate  Linux/Mac
-venv\Scripts\activate     Windows
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
 pip install -r requirements.txt
-Luego explora los notebooks o ejecuta scripts según la etapa de desarrollo.
-________________________________________
+
 📌 Clientes Potenciales y Beneficios
 Cliente Potencial	Beneficio del Proyecto	Potencialidades
 Restaurantes	Mejora estratégica de reputación digital	Incremento en fidelización y tráfico
@@ -103,4 +110,9 @@ ________________________________________
 📄 Licencia
 MIT License – Libre uso académico y educativo.
 ________________________________________
+
+
+
+
+
 
