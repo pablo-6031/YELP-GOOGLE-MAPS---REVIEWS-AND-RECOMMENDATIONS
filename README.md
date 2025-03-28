@@ -1,15 +1,10 @@
-________________________________________
 📊 HYPE Analytics
 
-
 Proyecto de Análisis Estratégico de Reseñas (Yelp & Google Maps)
-
-
 
 🧠 Introducción
 
 Este proyecto busca analizar detalladamente las reseñas digitales en plataformas como Yelp y Google Maps para identificar factores clave en las calificaciones otorgadas y determinar patrones específicos en las preferencias del consumidor. Asimismo, pretende proporcionar herramientas analíticas para optimizar estratégicamente la reputación digital en negocios gastronómicos, facilitando la toma de decisiones informadas en cuanto a la apertura de nuevos establecimientos y la mejora continua en calidad y percepción del servicio ofrecido.
-
 
 
 📌 Definición del Problema
@@ -43,7 +38,6 @@ Peso de menciones específicas:
   Meta: Identificar factores que expliquen al menos 40% de la variabilidad en la calificación total.
 
 
-
 ⚙️ Stack Tecnológico
 
 | Proceso            | Herramientas Seleccionadas                     |
@@ -55,26 +49,37 @@ Peso de menciones específicas:
 | Visualización      | Power BI, Streamlit                            |
 
 
-
 🔄 Flujo de Trabajo
 
 1. Extracción y carga: Obtención de datos mediante APIs.
 2. Procesamiento: Limpieza, EDA y análisis de sentimientos.
 3. Modelado y predicción: Machine Learning aplicado a reseñas.
-4. Visualización y Reportes: Dashboards interactivos con Power BI y Streamlit.
+4. Visualización y reportes: Dashboards interactivos con Power BI y Streamlit.
 5. Evaluación continua: Validación de resultados e iteración según métricas definidas.
 
-🔄 Metodología de Trabajo
 
-Adoptaremos un enfoque ágil, basado en la metodología SCRUM, utilizando el software de gestión de proyectos ClickUp. A través de esta plataforma, dividiremos y asignaremos las actividades, actualizaremos el diagrama de Gantt y haremos un seguimiento continuo del proyecto. Los pilares de nuestra metodología son los siguientes:
 
-Gestión del trabajo colaborativo: Fomentamos la puesta en común de avances entre todos los miembros del equipo.
+📋 Análisis de Calidad de Datos (preliminar)
 
-Resolución rápida y efectiva: Priorizamos reuniones diarias y una comunicación fluida para abordar cualquier desafío de manera eficiente.
+Fuentes: Yelp Fusion API y Google Maps API (Places + Reviews).
+Fiabilidad: Datos públicos extraídos mediante APIs oficiales.
+Estructura: JSON con campos como nombre, ubicación, puntuación, categoría, texto de la reseña, fecha, etc.
+Pre-procesamiento:  
+  Eliminación de duplicados.  
+  Normalización de puntuaciones.  
+  Traducción automática en caso de múltiples idiomas (si aplica).  
+Desafíos identificados:  
+  Variabilidad en la cantidad de reseñas por negocio.  
+  Poca estandarización en los textos de reseñas.  
+  Necesidad de limpieza profunda para NLP.
 
-Visualización del flujo de trabajo: Mantenemos una clara división de roles y responsabilidades para asegurar el avance continuo del proyecto.
 
-Simplicidad en las soluciones: Optamos por soluciones prácticas y directas para facilitar el progreso.
+
+📆 Cronograma y Gestión
+
+[📌 ClickUp del proyecto](https://app.clickup.com/9013800114/v/f/90135057513/90133246806) – Gestión de tareas, cronograma y roles.  
+📊 Diagrama de Gantt (ver en carpeta `docs/`)  
+
 
 
 🗂️ Estructura del Repositorio
@@ -83,8 +88,8 @@ Simplicidad en las soluciones: Optamos por soluciones prácticas y directas para
 
 🚀 Instalación y Ejecución
 
-git clone https://github.com/tu_usuario/hype-analytics-yelp-gmaps.git
-cd hype-analytics-yelp-gmaps
+git clone https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS.git
+cd YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
 venv\Scripts\activate     # Windows
