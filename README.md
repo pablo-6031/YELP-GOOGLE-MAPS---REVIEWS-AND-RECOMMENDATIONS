@@ -53,7 +53,11 @@ Nuestro producto está dirigido a:
 
 ---
 
-## 🛠️ Stack Tecnológico
+## 🛠️ Stack Tecnológico 
+
+
+📄 Consulta el detalle completo del stack tecnológico aquí 👉 Ver archivo del Stack Tecnológico
+
 
 | **Fase**              | **Tecnologías**  |
 |----------------------|----------------|
