@@ -82,3 +82,54 @@ train_model_task = BashOperator(
 # Flujo: primero subir a GCS, luego entrenar modelo
 upload_task >> train_model_task
 
+"""Modificaciones para flujo de DAG's"""
+
+# 📁 dags/pipeline_dag.py
+
+from airflow import DAG
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from datetime import datetime
+
+default_args = {
+    "owner": "harry",
+    "start_date": datetime(2025, 4, 1),
+    "retries": 1,
+}
+
+dag = DAG(
+    "pipeline_dag",
+    default_args=default_args,
+    description="DAG maestro que orquesta los DAGs de ETL, DW y ML",
+    schedule_interval=None,
+    catchup=False,
+)
+
+# Tarea 1: Ejecutar el DAG de ETL (etl_dag)
+trigger_etl = TriggerDagRunOperator(
+    task_id="trigger_etl_dag",
+    trigger_dag_id="etl_dag",  # Debe coincidir con el dag_id dentro del archivo etl_dag.py
+    dag=dag,
+)
+
+# Tarea 2: Ejecutar el DAG de DW (dw_dag)
+trigger_dw = TriggerDagRunOperator(
+    task_id="trigger_dw_dag",
+    trigger_dag_id="dw_dag",
+    dag=dag,
+)
+
+# Tarea 3: Ejecutar el DAG de ML training (ml_training_dag)
+trigger_ml_training = TriggerDagRunOperator(
+    task_id="trigger_ml_training_dag",
+    trigger_dag_id="ml_training_dag",
+    dag=dag,
+)
+
+# Flujo completo
+trigger_etl >> trigger_dw >> trigger_ml_training
+
+
+
+
+
+
