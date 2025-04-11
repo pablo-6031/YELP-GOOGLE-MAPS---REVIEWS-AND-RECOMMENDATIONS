@@ -22,50 +22,67 @@ def optional_download_data():
     print("✔️ Descarga opcional no implementada aún.")
     pass
 
-# 2. DEFINIR LA RUTA DE LOS DATOS YA DESCARGADOS
+# 1.2. DEFINIR LA RUTA DE LOS DATOS YA DESCARGADOS
 LOCAL_DATA_FOLDER = "data/"  # Carpeta local donde están los .csv o .parquet
 INPUT_FILE = os.path.join(LOCAL_DATA_FOLDER, "reviews_alabama.csv")  # Ajusta según el archivo real
 
-# 3. CARGAR LOS DATOS
-def load_local_data():
-    print(f"📂 Cargando archivo desde: {INPUT_FILE}")
-    df = pd.read_csv(INPUT_FILE)
-    print(f"✅ {len(df)} registros cargados.")
-    return df
+# 2. Detectar archivos válidos
+def list_data_files(folder):
+    valid_extensions = [".csv", ".json", ".parquet"]
+    return [f for f in os.listdir(folder) if os.path.splitext(f)[1] in valid_extensions]
 
-# 4. TRANSFORMACIONES BÁSICAS
+# 3. Transformación básica
 def transform_data(df):
-    print("🔧 Aplicando transformaciones...")
-
     df = df.copy()
-    df["text"] = df["text"].fillna("")
-    df["review_length"] = df["text"].apply(lambda x: len(x.split()))
-    df["review_date"] = pd.to_datetime(df["time"], unit="s", errors="coerce")
-
-    # Aquí puedes aplicar otras limpiezas según necesidades
+    if "text" in df.columns:
+        df["text"] = df["text"].fillna("")
+        df["review_length"] = df["text"].apply(lambda x: len(str(x).split()))
+    if "time" in df.columns:
+        df["review_date"] = pd.to_datetime(df["time"], unit="s", errors="coerce")
     return df
 
-# 5. GUARDAR COMO .PARQUET EN EL DATA LAKE
-def save_to_datalake(df):
-    today = datetime.now().strftime("%Y-%m-%d")
-    output_path = f"data_lake/clean_reviews_{today}.parquet"  # Local, luego se sube a GCS
-    df.to_parquet(output_path, index=False)
-    print(f"📁 Archivo guardado como: {output_path}")
+# 4. Procesar todos los archivos
+def process_all_files(folder, file_list):
+    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+    for file_name in file_list:
+        full_path = os.path.join(folder, file_name)
+        print(f"\n🔄 Procesando: {file_name}")
+        ext = os.path.splitext(file_name)[1]
+
+        if ext == ".csv":
+            df = pd.read_csv(full_path)
+        elif ext == ".json":
+            df = pd.read_json(full_path, lines=True)
+        elif ext == ".parquet":
+            df = pd.read_parquet(full_path)
+        else:
+            print(f"⛔ Tipo de archivo no soportado: {file_name}")
+            continue
+
+        df_transformed = transform_data(df)
+        today = datetime.now().strftime("%Y-%m-%d")
+        output_file = f"{os.path.splitext(file_name)[0]}_clean_{today}.parquet"
+        output_path = os.path.join(OUTPUT_FOLDER, output_file)
+        df_transformed.to_parquet(output_path, index=False)
+        print(f"✅ Guardado en: {output_path}")
 
 # MAIN
 if __name__ == "__main__":
-    print("🚀 Iniciando proceso ETL...")
+    print(f"🔍 Buscando archivos en: {LOCAL_DATA_FOLDER}")
+    archivos = list_data_files(LOCAL_DATA_FOLDER)
 
-    # [1] Descarga opcional (no implementada)
-    optional_download_data()
+    if not archivos:
+        print("⚠️ No se encontraron archivos válidos (.csv, .json, .parquet).")
+        exit()
 
-    # [2] Cargar datos locales
-    df = load_local_data()
+    print("📄 Archivos encontrados:")
+    for i, f in enumerate(archivos, 1):
+        print(f"{i}. {f}")
 
-    # [3] Transformar
-    df_transformed = transform_data(df)
+    confirm = input("\n¿Deseas procesar estos archivos? (S/N): ").strip().lower()
 
-    # [4] Guardar en formato .parquet
-    save_to_datalake(df_transformed)
-
-    print("✅ Proceso ETL finalizado.")
+    if confirm == "s":
+        process_all_files(LOCAL_DATA_FOLDER, archivos)
+        print("\n✅ Proceso completado con éxito.")
+    else:
+        print("\n🚫 Proceso cancelado por el usuario.")
