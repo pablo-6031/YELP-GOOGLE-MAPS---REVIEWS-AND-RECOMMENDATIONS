@@ -60,3 +60,25 @@ upload_task = PythonOperator(
 
 upload_task
 
+
+"""Integración del modelo al DAG"""
+
+from airflow.operators.bash import BashOperator
+
+# Tarea 1: Subir archivos al Data Lake (GCS)
+upload_task = PythonOperator(
+    task_id="upload_to_gcs",
+    python_callable=upload_parquet_files_to_gcs,
+    dag=dag,
+)
+
+# Tarea 2: Ejecutar entrenamiento del modelo ML
+train_model_task = BashOperator(
+    task_id="train_sentiment_model",
+    bash_command="python /opt/airflow/ml/train_sentiment.py",
+    dag=dag,
+)
+
+# Flujo: primero subir a GCS, luego entrenar modelo
+upload_task >> train_model_task
+
