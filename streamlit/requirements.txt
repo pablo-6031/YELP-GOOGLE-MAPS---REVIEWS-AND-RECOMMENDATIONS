@@ -1,0 +1,8 @@
+streamlit
+plotly.express
+numpy
+os
+glob
+pyarrow.parquet
+pandas
+streamlit
