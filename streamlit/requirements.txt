@@ -1,8 +1,8 @@
 streamlit
-plotly.express
+plotly
 numpy
 os
 glob
-pyarrow.parquet
+pyarrow
 pandas
 streamlit
