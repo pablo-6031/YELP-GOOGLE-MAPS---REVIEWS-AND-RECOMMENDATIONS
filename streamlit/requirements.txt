@@ -6,3 +6,4 @@ glob
 pyarrow
 pandas
 streamlit
+google-cloud-bigquery==3.17.2
