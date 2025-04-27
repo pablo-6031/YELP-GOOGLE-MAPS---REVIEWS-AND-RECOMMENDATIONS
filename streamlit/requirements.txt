@@ -1,9 +1,6 @@
 streamlit
 plotly
 numpy
-os
-glob
 pyarrow
 pandas
-streamlit
 google-cloud-bigquery==3.17.2
