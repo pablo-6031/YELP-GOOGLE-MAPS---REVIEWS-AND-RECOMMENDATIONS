@@ -1,7 +1,6 @@
-"""DAG para predicciones
+"""DAG para predicciones"""
 
-
-"""
+# 📁 dags/ml_prediction_dag.py
 
 from airflow import DAG
 from airflow.operators.bash import BashOperator
@@ -14,19 +13,17 @@ default_args = {
 }
 
 dag = DAG(
-    "ml_prediction_dag",
+    dag_id="ml_prediction_dag",
+    description="Predice el rating esperado de nuevas reseñas usando el modelo entrenado de XGBoost",
     default_args=default_args,
-    description="Ejecuta la predicción de sentimiento sobre reseñas sin clasificar",
-    schedule_interval=None,  # Manual por ahora
+    schedule_interval="@weekly",  # Ejecución automática semanal
     catchup=False,
 )
 
-# Tarea: ejecutar el script predict.py
-predict_task = BashOperator(
-    task_id="predict_sentiment",
-    bash_command="python /opt/airflow/ml/predict.py",
+predict_rating_task = BashOperator(
+    task_id="predict_rating",
+    bash_command="python /opt/airflow/ml/predict_rating.py",
     dag=dag,
 )
 
-predict_task
-
+predict_rating_task
