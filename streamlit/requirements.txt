@@ -3,4 +3,6 @@ plotly
 numpy
 pyarrow
 pandas
-google-cloud-bigquery==3.17.2
+google-cloud-bigquery
+streamlit-option-menu
+matplotlib
