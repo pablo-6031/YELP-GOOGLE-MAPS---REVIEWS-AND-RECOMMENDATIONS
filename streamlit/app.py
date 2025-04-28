@@ -8,11 +8,23 @@ import pyarrow.parquet as pq
 import pandas as pd
 import streamlit as st
 import glob
-# Configuración de la página
-st.set_page_config(page_title="Yelp & Google Reviews - Torito Comida Mexicana", layout="wide")
+from google.cloud import bigquery
 
-# Título principal
-st.title("📊 Yelp & Google Maps - Reviews y Recomendaciones")
+
+st.title("Test de conexión a BigQuery")
+
+# Conectar
+client = bigquery.Client()
+
+# Consulta de prueba
+query = "SELECT CURRENT_TIMESTAMP() as current_time;"
+query_job = client.query(query)
+result = query_job.result()
+
+# Mostrar resultados
+for row in result:
+    st.write(f"Conexión exitosa, hora actual: {row.current_time}")
+
 
 # Navegación a secciones
 st.sidebar.title("Navegación")
