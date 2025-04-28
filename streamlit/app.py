@@ -5,26 +5,78 @@ import numpy as np
 import os
 import glob
 import pyarrow.parquet as pq
-import pandas as pd
-import streamlit as st
-import glob
 from google.cloud import bigquery
 
+# Configuración general
+st.set_page_config(page_title="Yelp & Google Reviews - Torito Comida Mexicana", layout="wide")
 
+# Estilo personalizado
+st.markdown("""
+    <style>
+    .stApp {
+        background-color: #FFFFFF;  /* Blanco */
+        color: #000000;  /* Negro */
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    h1, h2, h3 {
+        color: #860A35;  /* Rojo Oscuro */
+    }
+
+    .css-1d391kg, .css-1d391kg::before {
+        background-color: #860A35;  /* Rojo Oscuro */
+    }
+
+    .css-1d391kg a, .css-1d391kg span {
+        color: #E4C590;  /* Beige Claro */
+    }
+
+    .stMetric {
+        background-color: #E4C590;  /* Beige Claro */
+        border-radius: 10px;
+        padding: 10px;
+        color: #000000;  /* Negro */
+    }
+
+    a {
+        color: #860A35 !important;  /* Rojo Oscuro */
+        text-decoration: none;
+    }
+
+    footer {
+        visibility: hidden;
+    }
+
+    .css-1v0mbdj {
+        padding-bottom: 2rem;
+    }
+
+    .sidebar .sidebar-content {
+        background-color: #860A35;  /* Rojo Oscuro */
+    }
+
+    .css-1lcb4p0 {
+        background-color: #860A35 !important;  /* Rojo Oscuro */
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Sidebar con logo
+with st.sidebar:
+    st.image("https://kids.kiddle.co/images/9/90/El_Torito_Logo.jpg", width=180)
+
+# Título
 st.title("Test de conexión a BigQuery")
 
-# Conectar
+# Conectar a BigQuery
 client = bigquery.Client()
-
-# Consulta de prueba
 query = "SELECT CURRENT_TIMESTAMP() as current_time;"
 query_job = client.query(query)
 result = query_job.result()
 
-# Mostrar resultados
+# Mostrar resultados de BigQuery
 for row in result:
     st.write(f"Conexión exitosa, hora actual: {row.current_time}")
-
 
 # Navegación a secciones
 st.sidebar.title("Navegación")
@@ -135,73 +187,29 @@ elif opcion == "Análisis de Sentimiento":
         y='Cantidad',
         color='Sentimiento',
         color_discrete_map={'Positivo': 'green', 'Neutral': 'gray', 'Negativo': 'red'},
-        title="Distribución de Sentimientos en Reseñas",
-        labels={'Cantidad': 'Número de Reseñas'},
-        template="plotly_dark"
+        title="Distribución de Sentimientos en las Reseñas"
     )
     st.plotly_chart(fig)
 
 # Predicciones
 elif opcion == "Predicciones":
-    st.header("📈 Predicción de Tendencias")
-    data_prediccion = pd.DataFrame({
-        'Fecha': pd.date_range(start="2023-01-01", periods=12, freq='M'),
-        'Reseñas': np.random.randint(1000, 2000, 12)
-    })
-    data_prediccion['Tendencia'] = np.poly1d(np.polyfit(range(len(data_prediccion)), data_prediccion['Reseñas'], 1))(range(len(data_prediccion)))
-    fig = px.line(data_prediccion, x='Fecha', y=['Reseñas', 'Tendencia'], title="Predicción de Crecimiento de Reseñas")
-    st.plotly_chart(fig)
+    st.header("🔮 Predicciones sobre el Comportamiento de los Clientes")
+    st.info("Modelo predictivo en desarrollo...")
 
+# Distribución de Reseñas
+elif opcion == "Distribución de Reseñas":
+    st.header("📊 Análisis de la Distribución de Reseñas")
+    st.info("Distribución próximamente...")
 
+# Competencia
+elif opcion == "Competencia":
+    st.header("📍 Competencia de El Torito")
+    st.info("Análisis de competencia próximamente...")
 
-
-# Ruta a la carpeta con los archivos Parquet
-ruta_reviews = r"C:\Users\yanin\OneDrive\Desktop\reseñas\*.parquet"
-archivos = glob.glob(ruta_reviews)
-
-# Intentar cargar todos los archivos Parquet en fragmentos con PyArrow
-try:
-    dfs = []
-    for archivo in archivos:
-        table = pq.read_table(archivo)
-        df = table.to_pandas()  # Convertir de Arrow Table a Pandas DataFrame
-        dfs.append(df)
-
-    df_reviews = pd.concat(dfs, ignore_index=True)
-    st.success(f"Se cargaron correctamente {len(df_reviews)} reseñas.")
-except Exception as e:
-    st.error(f"❌ Error leyendo los archivos Parquet con PyArrow: {e}")
-
-if 'df_reviews' in locals() and not df_reviews.empty:
-    df_reviews["review_date"] = pd.to_datetime(df_reviews["review_date"])
-
-    # Filtrar los datos
-    plataformas = st.multiselect("Filtrar por plataforma:", df_reviews["plataforma"].unique(), default=df_reviews["plataforma"].unique())
-    ciudades = st.multiselect("Filtrar por ciudad:", df_reviews["ciudad"].unique(), default=df_reviews["ciudad"].unique())
-    sentimientos = st.multiselect("Filtrar por sentimiento:", df_reviews["sentimiento"].unique(), default=df_reviews["sentimiento"].unique())
-    fecha_inicio = st.date_input("Desde:", df_reviews["review_date"].min().date())
-    fecha_fin = st.date_input("Hasta:", df_reviews["review_date"].max().date())
-
-    mask = (
-        df_reviews["plataforma"].isin(plataformas) &
-        df_reviews["ciudad"].isin(ciudades) &
-        df_reviews["sentimiento"].isin(sentimientos) &
-        (df_reviews["review_date"] >= pd.to_datetime(fecha_inicio)) &
-        (df_reviews["review_date"] <= pd.to_datetime(fecha_fin))
-    )
-
-    df_filtrado = df_reviews[mask]
-    st.subheader(f"🔍 Se encontraron {len(df_filtrado)} reseñas:")
-    st.dataframe(df_filtrado[["review_date", "plataforma", "ciudad", "sentimiento", "calificacion", "texto"]])
-
-    # Gráfico de sentimiento filtrado
-    data_sentimiento = df_filtrado["sentimiento"].value_counts().reset_index()
-    data_sentimiento.columns = ['Sentimiento', 'Cantidad']
-    fig = px.bar(data_sentimiento, x='Sentimiento', y='Cantidad', color='Sentimiento',
-                 title="Distribución de Sentimientos (Filtrados)", template="plotly_dark")
-    st.plotly_chart(fig)
-
-
+# Explorar Reseñas
+elif opcion == "Explorar Reseñas":
+    st.header("📝 Reseñas de Clientes")
+    st.info("Exploración de reseñas próximamente...")
 # --- Footer del Dashboard ---
 st.markdown("---")
 st.markdown("### 📚 Documentación")
