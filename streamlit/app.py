@@ -139,6 +139,7 @@ if opcion == "Distribución de Reseñas":
     st.bar_chart(pd.DataFrame({'Estrellas': stars, 'Cantidad': count}))
 
 # Página de Competencia
+# Página de Competencia
 if opcion == "Competencia":
     st.title("Análisis de Competencia para El Torito")
     
@@ -146,15 +147,14 @@ if opcion == "Competencia":
     try:
         # Consulta SQL para analizar la competencia
         query = f"""
-        SELECT business_name, AVG(stars) AS avg_rating, COUNT(*) AS review_count
+        SELECT business_name, AVG(stars) AS avg_rating
         FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
         JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review`
         ON dim_business.business_id = fact_review.business_id
-        WHERE categories LIKE '%Mexicano%' 
-        AND business_id != '{business_id}'  -- Excluyendo El Torito
+        WHERE dim_business.categories LIKE '%Mexicano%' AND dim_business.business_id != '{business_id}'
         GROUP BY business_name
         ORDER BY avg_rating DESC
-        LIMIT 10
+        LIMIT 5
         """
         
         # Ejecutar la consulta usando la función run_query
@@ -169,7 +169,6 @@ if opcion == "Competencia":
     
     except Exception as e:
         st.error(f"Error ejecutando la consulta de competencia: {str(e)}")
-
 
 # Página de Explorar Reseñas
 if opcion == "Explorar Reseñas":
