@@ -78,16 +78,29 @@ if opcion == "KPIs":
     
     st.metric("Promedio de Rating", avg_rating)
     st.metric("Número de Reseñas", review_count)
-# Nombre del restaurante "El Torito"
-restaurant_name = "El Torito"  # Asegúrate de que esta variable esté definida
+# Lista de los business_id de las sucursales de El Torito
+business_ids = [
+    "0x80c2bfcf8cc535fd:0xea7ffe91727d1946", 
+    "0x80c29794c7e2d44d:0xda1266db4b03e83c",
+    "0x80dbf8ec8ade5d45:0x952d1e263dadc54e",
+    "0x80dd2ddc6a24e4af:0xcadb76671ddbc94d",
+    "0x80dd32f142b8252b:0x1af197c9399f5231",
+    "0x80c297ce3cd0f54b:0xececf01e9eeee6f7",
+    "0x808fccb4507dc323:0x297d7fd58fc8ff91",
+    "0x80ea4fe71c447a1b:0x17232153c8e87293"
+]
+
 # Página de Mapas
-st.title(f"Mapa de Ubicaciones de {restaurant_name}")
+st.title(f"Mapa de Ubicaciones de El Torito")
+
 # Consulta SQL para obtener latitud y longitud de todas las sucursales de "El Torito"
 query = f"""
-SELECT latitude, longitude, business_name
+SELECT latitude, longitude, business_id
 FROM `shining-rampart-455602-a7.dw_restaurantes.dim_locations`
-WHERE business_name LIKE '%{restaurant_name}%'
+WHERE business_id IN ({','.join([f"'{business_id}'" for business_id in business_ids])})
 """
+
+# Ejecutar la consulta y obtener los resultados (utilizando tu función run_query)
 locations = run_query(query)
 
 if locations:
@@ -104,8 +117,7 @@ if locations:
     # Mostrar mapa con todas las ubicaciones
     st.map(locations_df)  # Mapa interactivo
 else:
-    st.error(f"No se encontraron ubicaciones para {restaurant_name}.")
-
+    st.error(f"No se encontraron ubicaciones para las sucursales de El Torito.")
 # Página de Recomendador
 if opcion == "Recomendador":
     st.title("Recomendador de Restaurantes")
