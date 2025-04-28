@@ -80,17 +80,25 @@ if opcion == "KPIs":
     st.metric("Número de Reseñas", review_count)
 
 # Página de Mapas
-if opcion == "Mapas":
-    st.title("Mapa de Ubicación de El Torito")
-    query = f"""
-    SELECT latitude, longitude, business_name
-    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_locations`
-    WHERE business_id = '{business_id}'
-    """
-    location = run_query(query)
-    lat, lon, name = location[0]['latitude'], location[0]['longitude'], location[0]['business_name']
+# Página de Mapa
+st.title("Mapa de Ubicación de El Torito")
+# Consulta SQL para obtener latitud y longitud
+query = f"""
+SELECT latitude, longitude
+FROM `shining-rampart-455602-a7.dw_restaurantes.dim_locations`
+WHERE business_id = '{business_id}'
+"""
+location = run_query(query)
+
+if location:
+    # Extraer latitud y longitud
+    lat = location[0]['latitude']
+    lon = location[0]['longitude']
     
-    st.map(pd.DataFrame({'latitude': [lat], 'longitude': [lon]}))  # Mapa con la ubicación de El Torito
+    # Mostrar mapa con la ubicación
+    st.map(pd.DataFrame({'latitude': [lat], 'longitude': [lon]}))  # Mapa interactivo
+else:
+    st.error("No se encontró la ubicación para el negocio.")
 
 # Página de Recomendador
 if opcion == "Recomendador":
