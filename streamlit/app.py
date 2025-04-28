@@ -139,47 +139,36 @@ if opcion == "Distribución de Reseñas":
     st.bar_chart(pd.DataFrame({'Estrellas': stars, 'Cantidad': count}))
 
 # Página de Competencia
-# Página de Competencia
 if opcion == "Competencia":
     st.title("Análisis de Competencia para El Torito")
     
-    # Query para obtener los competidores en la misma categoría
-    query = f"""
-    SELECT business_name, AVG(stars) AS avg_rating, COUNT(review_text) AS review_count
-    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review`
-    ON dim_business.business_id = fact_review.business_id
-    WHERE categories LIKE '%Mexicano%' 
-    AND city = 'San Francisco'  -- Puedes ajustar la ciudad o categoría
-    GROUP BY business_name
-    ORDER BY review_count DESC
-    LIMIT 10
-    """
-    competition = run_query(query)
+    # Agregar un try-except para manejar errores en la consulta
+    try:
+        # Consulta SQL para analizar la competencia
+        query = f"""
+        SELECT business_name, AVG(stars) AS avg_rating, COUNT(*) AS review_count
+        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
+        JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review`
+        ON dim_business.business_id = fact_review.business_id
+        WHERE categories LIKE '%Mexicano%' 
+        AND business_id != '{business_id}'  -- Excluyendo El Torito
+        GROUP BY business_name
+        ORDER BY avg_rating DESC
+        LIMIT 10
+        """
+        
+        # Ejecutar la consulta usando la función run_query
+        competition = run_query(query)
+        
+        # Verificar si hay datos y mostrarlos
+        if competition:
+            st.write("Competencia más cercana:")
+            st.dataframe(competition)
+        else:
+            st.warning("No se encontraron resultados para la competencia.")
     
-    # Mostrar la tabla de los competidores
-    st.write("Competencia más cercana:")
-    st.dataframe(competition)
-
-    # Análisis de sentimientos de las reseñas de los competidores
-    st.subheader("Análisis de Sentimiento de la Competencia")
-    
-    # Aquí podrías integrar un modelo de análisis de sentimiento sobre las reseñas de los competidores
-    sentiment_query = f"""
-    SELECT business_name, review_text
-    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business`
-    ON fact_review.business_id = dim_business.business_id
-    WHERE categories LIKE '%Mexicano%' AND city = 'San Francisco'
-    """
-    reviews = run_query(sentiment_query)
-    
-    # Aquí puedes analizar las reseñas con un modelo de sentimiento si tienes uno integrado.
-    st.write("Aquí se puede integrar un análisis de sentimiento para cada reseña.")
-    
-    # Mostrar algunas reseñas de competidores para análisis
-    st.write("Últimas reseñas de los competidores:")
-    st.dataframe(reviews)
+    except Exception as e:
+        st.error(f"Error ejecutando la consulta de competencia: {str(e)}")
 
 
 # Página de Explorar Reseñas
