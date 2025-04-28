@@ -93,31 +93,49 @@ business_ids = [
 # Página de Mapas
 st.title(f"Mapa de Ubicaciones de El Torito")
 
-# Consulta SQL para obtener latitud y longitud de todas las sucursales de "El Torito"
-query = f"""
-SELECT latitude, longitude, business_id
-FROM `shining-rampart-455602-a7.dw_restaurantes.dim_locations`
-WHERE business_id IN ({','.join([f"'{business_id}'" for business_id in business_ids])})
-"""
 
-# Ejecutar la consulta y obtener los resultados (utilizando tu función run_query)
-locations = run_query(query)
+# Datos de las sucursales de El Torito
+locations_data = [
+    {"latitude": 33.8366, "longitude": -117.9145, "name": "Anaheim, CA"},
+    {"latitude": 33.8753, "longitude": -117.5664, "name": "Corona, CA"},
+    {"latitude": 33.8134, "longitude": -118.0201, "name": "Cypress, CA"},
+    {"latitude": 33.9164, "longitude": -118.3526, "name": "Hawthorne, CA"},
+    {"latitude": 33.6695, "longitude": -117.8231, "name": "Irvine, CA"},
+    {"latitude": 32.7795, "longitude": -117.0340, "name": "La Mesa, CA"},
+    {"latitude": 33.8530, "longitude": -118.1326, "name": "Lakewood, CA"},
+    {"latitude": 33.9765, "longitude": -118.4682, "name": "Marina del Rey, CA"},
+    {"latitude": 37.4284, "longitude": -122.0296, "name": "Milpitas, CA"},
+    {"latitude": 36.6002, "longitude": -121.8947, "name": "Monterey, CA"},
+    {"latitude": 34.1897, "longitude": -118.5376, "name": "Northridge, CA"},
+    {"latitude": 34.0633, "longitude": -117.6130, "name": "Ontario, CA"},
+    {"latitude": 34.1457, "longitude": -118.2205, "name": "Palmdale, CA"},
+    {"latitude": 34.1478, "longitude": -118.1349, "name": "Pasadena, CA"},
+    {"latitude": 33.8484, "longitude": -118.1326, "name": "Redondo Beach, CA"},
+    {"latitude": 33.9533, "longitude": -117.3962, "name": "Riverside, CA"},
+    {"latitude": 33.7483, "longitude": -116.4194, "name": "San Bernardino, CA"},
+    {"latitude": 37.7749, "longitude": -122.4194, "name": "San Leandro, CA"},
+    {"latitude": 34.1496, "longitude": -118.4515, "name": "Sherman Oaks, CA"},
+    {"latitude": 33.8358, "longitude": -118.3406, "name": "Torrance, CA"},
+    {"latitude": 33.7457, "longitude": -117.9389, "name": "Tustin, CA"},
+    {"latitude": 34.0686, "longitude": -118.1018, "name": "West Covina, CA"},
+    {"latitude": 34.1698, "longitude": -118.1079, "name": "Westminster, CA"},
+    {"latitude": 34.1478, "longitude": -118.2205, "name": "West Covina, CA"},
+    {"latitude": 33.7483, "longitude": -116.4194, "name": "San Bernardino, CA"},
+    {"latitude": 37.7749, "longitude": -122.4194, "name": "San Leandro, CA"},
+    {"latitude": 34.1496, "longitude": -118.4515, "name": "Sherman Oaks, CA"},
+    {"latitude": 33.8358, "longitude": -118.3406, "name": "Torrance, CA"},
+    {"latitude": 33.7457, "longitude": -117.9389, "name": "Tustin, CA"},
+    {"latitude": 34.0686, "longitude": -118.1018, "name": "West Covina, CA"},
+    {"latitude": 34.1698, "longitude": -118.1079, "name": "Westminster, CA"},
+]
 
-if locations:
-    # Extraer latitudes y longitudes
-    latitudes = [location['latitude'] for location in locations]
-    longitudes = [location['longitude'] for location in locations]
-    
-    # Crear DataFrame para mostrar en el mapa
-    locations_df = pd.DataFrame({
-        'latitude': latitudes,
-        'longitude': longitudes
-    })
-    
-    # Mostrar mapa con todas las ubicaciones
-    st.map(locations_df)  # Mapa interactivo
-else:
-    st.error(f"No se encontraron ubicaciones para las sucursales de El Torito.")
+# Convertir a DataFrame
+locations_df = pd.DataFrame(locations_data)
+
+# Mostrar el mapa con todas las ubicaciones
+st.title("Ubicaciones de las sucursales de El Torito")
+st.map(locations_df)
+
 # Página de Recomendador
 if opcion == "Recomendador":
     st.title("Recomendador de Restaurantes")
