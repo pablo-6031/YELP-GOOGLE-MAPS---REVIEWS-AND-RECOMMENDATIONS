@@ -80,25 +80,30 @@ if opcion == "KPIs":
     st.metric("Número de Reseñas", review_count)
 
 # Página de Mapas
-# Página de Mapa
-st.title("Mapa de Ubicación de El Torito")
-# Consulta SQL para obtener latitud y longitud
+st.title(f"Mapa de Ubicaciones de {restaurant_name}")
+# Consulta SQL para obtener latitud y longitud de todas las sucursales de "El Torito"
 query = f"""
-SELECT latitude, longitude
+SELECT latitude, longitude, business_name
 FROM `shining-rampart-455602-a7.dw_restaurantes.dim_locations`
-WHERE business_id = '{business_id}'
+WHERE business_name LIKE '%{restaurant_name}%'
 """
-location = run_query(query)
+locations = run_query(query)
 
-if location:
-    # Extraer latitud y longitud
-    lat = location[0]['latitude']
-    lon = location[0]['longitude']
+if locations:
+    # Extraer latitudes y longitudes
+    latitudes = [location['latitude'] for location in locations]
+    longitudes = [location['longitude'] for location in locations]
     
-    # Mostrar mapa con la ubicación
-    st.map(pd.DataFrame({'latitude': [lat], 'longitude': [lon]}))  # Mapa interactivo
+    # Crear DataFrame para mostrar en el mapa
+    locations_df = pd.DataFrame({
+        'latitude': latitudes,
+        'longitude': longitudes
+    })
+    
+    # Mostrar mapa con todas las ubicaciones
+    st.map(locations_df)  # Mapa interactivo
 else:
-    st.error("No se encontró la ubicación para el negocio.")
+    st.error(f"No se encontraron ubicaciones para {restaurant_name}.")
 
 # Página de Recomendador
 if opcion == "Recomendador":
