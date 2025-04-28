@@ -78,7 +78,8 @@ if opcion == "KPIs":
     
     st.metric("Promedio de Rating", avg_rating)
     st.metric("Número de Reseñas", review_count)
-
+# Nombre del restaurante "El Torito"
+restaurant_name = "El Torito"  # Asegúrate de que esta variable esté definida
 # Página de Mapas
 st.title(f"Mapa de Ubicaciones de {restaurant_name}")
 # Consulta SQL para obtener latitud y longitud de todas las sucursales de "El Torito"
