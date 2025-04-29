@@ -43,7 +43,7 @@ def set_background(image):
 # Aplicar fondo
 set_background(fondo)
 
-# Estilos de texto
+# Estilos de texto y logo en la parte superior
 st.markdown(
     """
     <style>
@@ -65,15 +65,22 @@ st.markdown(
         color: white;
         text-shadow: 1px 1px 3px #000;
     }
+    .logo-hype {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        width: 100px;
+    }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# Mostrar los logos (puedes personalizar su tamaño)
-st.image(logo_torito, width=200)
-st.image(logo_hype, width=200)
+# Mostrar el logo de Hype en la parte superior
+st.markdown('<img class="logo-hype" src="https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logo%20hype.png">', unsafe_allow_html=True)
 
+# Mostrar el logo de Torito
+st.image(logo_torito, width=200)
 
 # --------- CONEXIÓN A BIGQUERY ---------
 credentials = service_account.Credentials.from_service_account_info(
