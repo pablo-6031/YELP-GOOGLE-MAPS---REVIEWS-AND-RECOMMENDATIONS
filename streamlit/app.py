@@ -226,8 +226,13 @@ elif opcion == "Recomendador":
 
 
 
-# MAPAS
-elif opcion == "Mapas":
+
+import streamlit as st
+import pandas as pd
+
+# Otras importaciones y configuraciones que ya tienes...
+
+if opcion == "Mapas":
     st.title("Mapa de Ubicaciones de El Torito")
 
     # Lista de ubicaciones (evita duplicados)
@@ -256,9 +261,11 @@ elif opcion == "Mapas":
         {"latitude": 34.1698, "longitude": -118.1079, "name": "Westminster, CA"},
     ]
 
+    # Convertir la lista de ubicaciones a un DataFrame de pandas
     df_map = pd.DataFrame(locations_data)
-    st.map(df_map)
 
+    # Muestra el mapa con las ubicaciones
+    st.map(df_map[['latitude', 'longitude']])
 
 # Página de Recomendador
 if opcion == "Recomendador":
