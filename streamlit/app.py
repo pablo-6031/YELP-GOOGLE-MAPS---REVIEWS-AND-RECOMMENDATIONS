@@ -5,6 +5,8 @@ from google.oauth2 import service_account
 from google.cloud import bigquery
 from streamlit_option_menu import option_menu
 import pandas as pd
+import requests
+from io import BytesIO
 
 # URLs raw de GitHub
 url_logo_torito = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logo%20Torito.png"
