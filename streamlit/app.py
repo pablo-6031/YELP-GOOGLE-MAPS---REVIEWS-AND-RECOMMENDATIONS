@@ -1,10 +1,6 @@
 import streamlit as st
 from PIL import Image
 import base64
-from google.oauth2 import service_account
-from google.cloud import bigquery
-from streamlit_option_menu import option_menu
-import pandas as pd
 import requests
 from io import BytesIO
 
@@ -57,19 +53,25 @@ st.markdown(
     .title {
         font-size: 48px;
         font-weight: bold;
-        color: white;
+        color: #FFFFFF; /* Blanco */
         text-shadow: 2px 2px 4px #000;
     }
     .subtitle {
         font-size: 24px;
-        color: white;
+        color: #D3D3D3; /* Gris claro */
         text-shadow: 1px 1px 3px #000;
     }
     .logo-hype {
         position: fixed;
-        top: 20px;
-        left: 20px;
-        width: 100px;
+        top: 10px;
+        left: 10px;
+        width: 120px;
+    }
+    .text {
+        color: #FFFFFF; /* Blanco */
+        font-size: 18px;
+        line-height: 1.5;
+        text-align: center;
     }
     </style>
     """,
@@ -77,60 +79,27 @@ st.markdown(
 )
 
 # Mostrar el logo de Hype en la parte superior
-st.markdown('<img class="logo-hype" src="https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logo%20hype.png">', unsafe_allow_html=True)
+st.markdown(f'<img class="logo-hype" src="{url_logo_hype}">', unsafe_allow_html=True)
 
 # Mostrar el logo de Torito
 st.image(logo_torito, width=200)
 
-# --------- CONEXIÓN A BIGQUERY ---------
-credentials = service_account.Credentials.from_service_account_info(
-    st.secrets["gcp_service_account"]
-)
-client = bigquery.Client(credentials=credentials)
+# Títulos y descripción con colores ajustados
+st.markdown('<p class="title">Análisis de Reseñas: El Torito</p>', unsafe_allow_html=True)
 
-@st.cache_data(ttl=600)
-def run_query(query):
-    return [dict(row) for row in client.query(query).result()]
+st.markdown('<p class="subtitle">¿Quiénes somos?</p>', unsafe_allow_html=True)
+st.markdown('<p class="text">Somos HYPE Analytics, especialistas en análisis de datos aplicados al sector gastronómico.</p>', unsafe_allow_html=True)
 
-# --------- SIDEBAR ---------
-with st.sidebar:
-    opcion = option_menu(
-        "Navegación", 
-        ["Inicio", "KPIs", "Mapas", "Recomendador", "Análisis de Sentimiento", "Predicciones", "Distribución de Reseñas", "Competencia", "Explorar Reseñas"],
-        icons=['house', 'bar-chart', 'map', 'robot', 'chat', 'graph-up', 'folder', 'flag', 'search'],
-        menu_icon="cast", default_index=0
-    )
+st.markdown('<p class="subtitle">Objetivo del Proyecto</p>', unsafe_allow_html=True)
+st.markdown('<p class="text">Analizar reseñas de clientes para ofrecer recomendaciones, insights y métricas relevantes a El Torito.</p>', unsafe_allow_html=True)
 
-# ID del restaurante principal
-business_id = "7yr4oqcapzbkckrlb3isig"
+st.markdown('<p class="subtitle">Equipo</p>', unsafe_allow_html=True)
+st.markdown('<p class="text">Harry Guevara: Functional Analyst</p>', unsafe_allow_html=True)
+st.markdown('<p class="text">Yanina Spina: Data Scientist</p>', unsafe_allow_html=True)
+st.markdown('<p class="text">Elvis Bernuy: Data Analyst</p>', unsafe_allow_html=True)
+st.markdown('<p class="text">Pablo Carrizo y Pablo Mizzau: Data Engineers</p>', unsafe_allow_html=True)
 
-# --------- PÁGINAS ---------
-
-# INICIO
-if opcion == "Inicio":
-    st.markdown('<div class="centered">', unsafe_allow_html=True)
-    st.image(logo_torito, width=250)
-    st.markdown('<div class="title">Bienvenido a Torito Comida Mexicana</div>', unsafe_allow_html=True)
-    st.markdown('<div class="subtitle">Análisis de datos · Recomendaciones · Opiniones de clientes</div>', unsafe_allow_html=True)
-    st.image(logo_hype, width=100)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.title("Análisis de Reseñas: El Torito")
-    st.markdown("""
-    ## ¿Quiénes somos?
-    Somos **HYPE Analytics**, especialistas en análisis de datos aplicados al sector gastronómico.
-    
-    ## Objetivo del Proyecto
-    Analizar reseñas de clientes para ofrecer recomendaciones, insights y métricas relevantes a El Torito.
-
-    ## Equipo
-    - **Harry Guevara**: Functional Analyst
-    - **Yanina Spina**: Data Scientist
-    - **Elvis Bernuy**: Data Analyst
-    - **Pablo Carrizo** y **Pablo Mizzau**: Data Engineers
-
-    Utilizamos BigQuery + Streamlit para ofrecerte una app interactiva.
-    """)
+st.markdown('<p class="text">Utilizamos BigQuery + Streamlit para ofrecerte una app interactiva.</p>', unsafe_allow_html=True)
 
 # KPIs
 elif opcion == "KPIs":
