@@ -140,6 +140,8 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+# ID del negocio principal: El Torito
+BUSINESS_ID_EL_TORITO = "7yr4oqcapzbkckrlb3isig"
 
 # Mostrar el logo de Hype en la parte superior
 st.markdown(f'<img class="logo-hype" src="{url_logo_hype}">', unsafe_allow_html=True)
@@ -311,15 +313,17 @@ if opcion == "Competencia":
         business_id = "7yr4oqcapzbkckrlb3isig"
 
         query = f"""
-        SELECT business_name, AVG(stars) AS avg_rating
-        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
-        JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review`
-        ON dim_business.business_id = fact_review.business_id
-        WHERE dim_business.categories LIKE '%Mexicano%' AND dim_business.business_id != '{business_id}'
-        GROUP BY business_name
+        SELECT b.business_name, AVG(r.stars) AS avg_rating
+        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` AS b
+        JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` AS r
+         ON b.business_id = r.business_id
+        WHERE b.categories LIKE '%Mexicano%'
+         AND b.business_id != '{BUSINESS_ID_EL_TORITO}'
+        GROUP BY b.business_name
         ORDER BY avg_rating DESC
         LIMIT 5
         """
+
         
         # Ejecutar la consulta usando la función run_query
         competition = run_query(query)
