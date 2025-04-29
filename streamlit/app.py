@@ -6,6 +6,66 @@ from io import BytesIO
 from google.cloud import bigquery
 from google.oauth2 import service_account
 from streamlit_option_menu import option_menu
+# Estilo general con fondo oscuro
+st.markdown("""
+    <style>
+    /* Fondo del contenido */
+    .stApp {
+        background-color: #121212;
+    }
+
+    /* Textos generales */
+    html, body, [class*="css"]  {
+        color: #FFFFFF;
+        background-color: #121212;
+    }
+
+    /* Títulos */
+    h1, h2, h3, h4 {
+        color: #FFFFFF;
+    }
+
+    /* Subtítulos */
+    .subtitle {
+        color: #BBBBBB;
+    }
+
+    /* Texto de párrafos */
+    p {
+        color: #E0E0E0;
+    }
+
+    /* Tablas */
+    .css-1r6slb0, .css-1d391kg {
+        background-color: #1E1E1E !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Métricas */
+    .element-container .stMetric {
+        background-color: #1F1F1F;
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    /* Sidebar */
+    .css-6qob1r {
+        background-color: #1C1C1C;
+    }
+
+    /* Inputs */
+    .stTextInput>div>div>input, .stTextArea>div>textarea, .stSelectbox>div>div>div>div {
+        background-color: #1E1E1E;
+        color: white;
+        border: 1px solid #444;
+    }
+
+    /* Dropdown menu */
+    .stSelectbox>div>div>div>div {
+        background-color: #2C2C2C !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # URLs raw de GitHub
 url_logo_torito = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logo%20Torito.png"
@@ -85,22 +145,6 @@ st.markdown(f'<img class="logo-hype" src="{url_logo_hype}">', unsafe_allow_html=
 # Mostrar el logo de Torito
 st.image(logo_torito, width=200)
 
-# Títulos y descripción con colores ajustados
-st.markdown('<p class="title">Análisis de Reseñas: El Torito</p>', unsafe_allow_html=True)
-
-st.markdown('<p class="subtitle">¿Quiénes somos?</p>', unsafe_allow_html=True)
-st.markdown('<p class="text">Somos HYPE Analytics, especialistas en análisis de datos aplicados al sector gastronómico.</p>', unsafe_allow_html=True)
-
-st.markdown('<p class="subtitle">Objetivo del Proyecto</p>', unsafe_allow_html=True)
-st.markdown('<p class="text">Analizar reseñas de clientes para ofrecer recomendaciones, insights y métricas relevantes a El Torito.</p>', unsafe_allow_html=True)
-
-st.markdown('<p class="subtitle">Equipo</p>', unsafe_allow_html=True)
-st.markdown('<p class="text">Harry Guevara: Functional Analyst</p>', unsafe_allow_html=True)
-st.markdown('<p class="text">Yanina Spina: Data Scientist</p>', unsafe_allow_html=True)
-st.markdown('<p class="text">Elvis Bernuy: Data Analyst</p>', unsafe_allow_html=True)
-st.markdown('<p class="text">Pablo Carrizo y Pablo Mizzau: Data Engineers</p>', unsafe_allow_html=True)
-
-st.markdown('<p class="text">Utilizamos BigQuery + Streamlit para ofrecerte una app interactiva.</p>', unsafe_allow_html=True)
 
 # Configuración de la conexión a BigQuery
 credentials = service_account.Credentials.from_service_account_info(
