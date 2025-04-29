@@ -308,6 +308,8 @@ if opcion == "Competencia":
     # Agregar un try-except para manejar errores en la consulta
     try:
         # Consulta SQL para analizar la competencia
+        business_id = "7yr4oqcapzbkckrlb3isig"
+
         query = f"""
         SELECT business_name, AVG(stars) AS avg_rating
         FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
