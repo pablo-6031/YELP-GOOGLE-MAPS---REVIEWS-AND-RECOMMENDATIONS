@@ -19,14 +19,18 @@ logo_hype = Image.open(BytesIO(requests.get(url_logo_hype).content))
 fondo = Image.open(BytesIO(requests.get(url_fondo).content))
 
 # Función para establecer fondo personalizado
-def set_background(image_file):
-    with open(image_file, "rb") as f:
-        data_url = base64.b64encode(f.read()).decode()
+def set_background(image):
+    # Convertir la imagen a formato base64 para usarla como fondo
+    buffered = BytesIO()
+    image.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+
+    # Establecer el fondo usando CSS
     st.markdown(
         f"""
         <style>
         .stApp {{
-            background-image: url("data:image/png;base64,{data_url}");
+            background-image: url("data:image/png;base64,{img_str}");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -65,6 +69,11 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+# Mostrar los logos (puedes personalizar su tamaño)
+st.image(logo_torito, width=200)
+st.image(logo_hype, width=200)
+
 
 # --------- CONEXIÓN A BIGQUERY ---------
 credentials = service_account.Credentials.from_service_account_info(
