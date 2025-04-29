@@ -167,10 +167,11 @@ if opcion == "Predicciones":
     st.write("Predicción de rating usando modelos de Machine Learning.")
 
 # Página de Distribución de Reseñas
+# Página de Evolución de Reseñas por Año
 if opcion == "Evolución de Reseñas por Año":
     st.title("Evolución de Reseñas de El Torito por Año")
 
-    # Diccionario de sucursales
+    # Diccionario de sucursales con sus business_id
     sucursales = {
         "El Torito Sucursal 1": "0x80844a01be660f09:0x661fee46237228d7",
         "El Torito Sucursal 2": "0x808fc9e896f1d559:0x8c0b57a8edd4fd5d",
@@ -190,13 +191,13 @@ if opcion == "Evolución de Reseñas por Año":
         "El Torito Sucursal 16": "7yr4oqcapzbkckrlb3isig",
     }
 
-    # Selector de sucursal
+    # Selector para escoger la sucursal
     sucursal_seleccionada = st.selectbox("Selecciona una sucursal de El Torito:", list(sucursales.keys()))
 
-    # Obtener business_id
+    # Se obtiene el business_id de la sucursal seleccionada
     business_id = sucursales[sucursal_seleccionada]
 
-    # Consulta SQL agrupando por año
+    # Consulta SQL que agrupa por año
     query = f"""
     SELECT EXTRACT(YEAR FROM review_date) AS year, COUNT(*) AS count
     FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
@@ -206,7 +207,7 @@ if opcion == "Evolución de Reseñas por Año":
     """
     evolucion_reviews = run_query(query)
 
-    # Preparar datos
+    # Preparar datos para el gráfico
     years = [row['year'] for row in evolucion_reviews]
     counts = [row['count'] for row in evolucion_reviews]
 
@@ -214,8 +215,6 @@ if opcion == "Evolución de Reseñas por Año":
 
     # Mostrar gráfico de línea
     st.line_chart(df_evolucion)
-
-# Página de Competencia
 # Página de Competencia
 if opcion == "Competencia":
     st.title("Análisis de Competencia para El Torito")
