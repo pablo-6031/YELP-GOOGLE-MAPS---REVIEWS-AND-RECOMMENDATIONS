@@ -102,7 +102,7 @@ st.markdown('<p class="text">Pablo Carrizo y Pablo Mizzau: Data Engineers</p>', 
 st.markdown('<p class="text">Utilizamos BigQuery + Streamlit para ofrecerte una app interactiva.</p>', unsafe_allow_html=True)
 
 # KPIs
-elif opcion == "KPIs":
+if opcion == "KPIs":
     st.title("KPIs de El Torito")
     query = f"""
     SELECT 
