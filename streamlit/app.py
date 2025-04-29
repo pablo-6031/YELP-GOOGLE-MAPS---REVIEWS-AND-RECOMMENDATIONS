@@ -116,16 +116,15 @@ def run_query(query):
     rows = [dict(row) for row in rows_raw]
     return rows
 
+
 # Navegación en el sidebar
 with st.sidebar:
     opcion = option_menu("Navegación", 
         ["Inicio", "KPIs", "Mapas", "Recomendador", "Análisis de Sentimiento", "Predicciones", "Distribución de Reseñas", "Competencia", "Explorar Reseñas"],
         icons=['house', 'bar-chart', 'map', 'robot', 'chat', 'graph-up', 'folder', 'flag', 'search'],
         menu_icon="cast", default_index=0, orientation="vertical")
-
-# ID del restaurante "El Torito"
-business_id = "7yr4oqcapzbkckrlb3isig"
-
+# Mostrar el logo de Hype en la parte superior
+st.markdown(f'<img class="logo-hype" src="{url_logo_hype}">', unsafe_allow_html=True)
 # Página de Inicio
 if opcion == "Inicio":
     st.title("Análisis de Reseñas: El Torito")
@@ -157,6 +156,19 @@ if opcion == "Inicio":
 
     ---
     """)
+
+# Código para las demás páginas (KPIs, Mapas, Recomendador, etc.)
+if opcion == "KPIs":
+    st.title("KPIs")
+    st.markdown("Aquí van los KPIs...")
+elif opcion == "Mapas":
+    st.title("Mapas")
+    st.markdown("Aquí van los mapas...")
+elif opcion == "Recomendador":
+    st.title("Recomendador")
+    st.markdown("Aquí va el sistema recomendador...")
+# Continuar con las demás páginas...
+
 
 # KPIs
 if opcion == "KPIs":
