@@ -170,59 +170,6 @@ if opcion == "Predicciones":
 if opcion == "Distribución de Reseñas por Año y Sucursal":
     st.title("Distribución de Reseñas de El Torito por Año y Sucursal")
 
-    # Diccionario de sucursales con business_id
-    sucursales = {
-        "Sucursal 1": "0x80844a01be660f09:0x661fee46237228d7",
-        "Sucursal 2": "0x808fc9e896f1d559:0x8c0b57a8edd4fd5d",
-        "Sucursal 3": "0x808fccb4507dc323:0x297d7fd58fc8ff91",
-        "Sucursal 4": "0x809ade1814a05da3:0xad096a803d166a4c",
-        "Sucursal 5": "0x80c280a9a282d2e9:0xf3a894f129f38b2f",
-        "Sucursal 6": "0x80c29794c7e2d44d:0xda1266db4b03e83c",
-        "Sucursal 7": "0x80c297ce3cd0f54b:0xececf01e9eeee6f7",
-        "Sucursal 8": "0x80c2b4d2ca3e19c9:0xcf83f70eaba7a203",
-        "Sucursal 9": "0x80c2bfcf8cc535fd:0xea7ffe91727d1946",
-        "Sucursal 10": "0x80dbf8ec8ade5d45:0x952d1e263dadc54e",
-        "Sucursal 11": "0x80dcd43a352d3ae3:0xae921b0c9e9cbdb7",
-        "Sucursal 12": "0x80dd2ddc6a24e4af:0xcadb76671ddbc94d",
-        "Sucursal 13": "0x80dd32f142b8252b:0x1af197c9399f5231",
-        "Sucursal 14": "0x80e9138c2f68bd4f:0x64f25be6f8d56d95",
-        "Sucursal 15": "0x80ea4fe71c447a1b:0x17232153c8e87293",
-        "Sucursal 16": "7yr4oqcapzbkckrlb3isig",
-    }
-
-    # Selector de Año
-    anio_seleccionado = st.selectbox("Selecciona un año:", list(range(2015, 2025)))  # Puedes ajustar el rango de años
-
-    # Crear un DataFrame vacío
-    data = []
-
-    # Recorrer cada sucursal para traer el número de reseñas en el año seleccionado
-    for nombre, business_id in sucursales.items():
-        query = f"""
-        SELECT COUNT(*) as count
-        FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
-        WHERE business_id = '{business_id}'
-          AND EXTRACT(YEAR FROM review_date) = {anio_seleccionado}
-        """
-        result = run_query(query)
-
-        # Obtener el número de reseñas
-        if result:
-            count = result[0]['count']
-        else:
-            count = 0
-
-        data.append({'Sucursal': nombre, 'Cantidad de Reseñas': count})
-
-    # Convertir a DataFrame
-    df_resultado = pd.DataFrame(data)
-
-    # Mostrar como gráfico de barras
-    st.bar_chart(df_resultado.set_index('Sucursal'))
-
-    # También podemos mostrar la tabla si quieres
-    st.dataframe(df_resultado)
-
 # Página de Competencia
 if opcion == "Competencia":
     st.title("Análisis de Competencia para El Torito")
