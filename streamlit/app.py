@@ -8,9 +8,9 @@ import pandas as pd
 
 # --------- CONFIGURACIÓN GENERAL ---------
 # Cargar imágenes
-logo_torito = Image.open("C:/Users/yanin/OneDrive/Desktop/logo Torito.png")
-logo_hype = Image.open("C:/Users/yanin/OneDrive/Desktop/fondoTorito.png")
-fondo = "C:/Users/yanin/OneDrive/Desktop/fondoTorito.png"
+logo_torito = Image.open(https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/streamlit/logo%20Torito.png)
+logo_hype = Image.open(https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/streamlit/logo%20hype.png)
+fondo =https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/streamlit/fondoTorito.png
 
 # Función para establecer fondo personalizado
 def set_background(image_file):
