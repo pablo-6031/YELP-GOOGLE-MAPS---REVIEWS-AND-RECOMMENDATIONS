@@ -6,11 +6,15 @@ from google.cloud import bigquery
 from streamlit_option_menu import option_menu
 import pandas as pd
 
-# --------- CONFIGURACIÓN GENERAL ---------
-# Cargar imágenes
-logo_torito = Image.open(https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/streamlit/logo%20Torito.png)
-logo_hype = Image.open(https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/streamlit/logo%20hype.png)
-fondo =https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/streamlit/fondoTorito.png
+# URLs raw de GitHub
+url_logo_torito = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logo%20Torito.png"
+url_logo_hype = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logo%20hype.png"
+url_fondo = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/fondoTorito.png"
+
+# Cargar imágenes desde las URLs
+logo_torito = Image.open(BytesIO(requests.get(url_logo_torito).content))
+logo_hype = Image.open(BytesIO(requests.get(url_logo_hype).content))
+fondo = Image.open(BytesIO(requests.get(url_fondo).content))
 
 # Función para establecer fondo personalizado
 def set_background(image_file):
