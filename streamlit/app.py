@@ -6,6 +6,8 @@ from io import BytesIO
 from google.cloud import bigquery
 from google.oauth2 import service_account
 from streamlit_option_menu import option_menu
+import pandas as pd
+
 # Estilo general con fondo oscuro
 st.markdown("""
     <style>
@@ -145,7 +147,6 @@ st.markdown(f'<img class="logo-hype" src="{url_logo_hype}">', unsafe_allow_html=
 # Mostrar el logo de Torito
 st.image(logo_torito, width=200)
 
-
 # Configuración de la conexión a BigQuery
 credentials = service_account.Credentials.from_service_account_info(
     st.secrets["gcp_service_account"]
@@ -160,15 +161,13 @@ def run_query(query):
     rows = [dict(row) for row in rows_raw]
     return rows
 
-
 # Navegación en el sidebar
 with st.sidebar:
     opcion = option_menu("Navegación", 
         ["Inicio", "KPIs", "Mapas", "Recomendador", "Análisis de Sentimiento", "Predicciones", "Distribución de Reseñas", "Competencia", "Explorar Reseñas"],
         icons=['house', 'bar-chart', 'map', 'robot', 'chat', 'graph-up', 'folder', 'flag', 'search'],
         menu_icon="cast", default_index=0, orientation="vertical")
-# Mostrar el logo de Hype en la parte superior
-st.markdown(f'<img class="logo-hype" src="{url_logo_hype}">', unsafe_allow_html=True)
+
 # Página de Inicio
 if opcion == "Inicio":
     st.title("Análisis de Reseñas: El Torito")
@@ -197,10 +196,22 @@ if opcion == "Inicio":
     - **Distribución de reseñas** y cómo los clientes califican al restaurante.
 
     ¡Esperamos que esta información te sea útil y te ayude a tomar decisiones basadas en datos!
-
     ---
     """)
 
+# Código para las demás páginas (KPIs, Mapas, Recomendador, etc.)
+if opcion == "KPIs":
+    st.title("KPIs de El Torito")
+    query = """
+    SELECT 
+        AVG(stars) AS avg_rating,
+        COUNT(review_text) AS review_count
+    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
+    WHERE business_id = 'your_business_id'
+    """
+    resultados = run_query(query)
+    st.metric("Promedio de Rating", round(resultados[0]['avg_rating'], 2))
+    st.metric("Número de Reseñas", resultados[0]['review_count'])
 # Código para las demás páginas (KPIs, Mapas, Recomendador, etc.)
 if opcion == "KPIs":
     st.title("KPIs")
@@ -214,19 +225,6 @@ elif opcion == "Recomendador":
 # Continuar con las demás páginas...
 
 
-# KPIs
-if opcion == "KPIs":
-    st.title("KPIs de El Torito")
-    query = f"""
-    SELECT 
-        AVG(stars) AS avg_rating,
-        COUNT(review_text) AS review_count
-    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
-    WHERE business_id = '{business_id}'
-    """
-    resultados = run_query(query)
-    st.metric("Promedio de Rating", round(resultados[0]['avg_rating'], 2))
-    st.metric("Número de Reseñas", resultados[0]['review_count'])
 
 # MAPAS
 elif opcion == "Mapas":
