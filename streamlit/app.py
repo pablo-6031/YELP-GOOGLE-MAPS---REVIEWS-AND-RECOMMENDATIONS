@@ -3,6 +3,9 @@ from PIL import Image
 import base64
 import requests
 from io import BytesIO
+from google.cloud import bigquery
+from google.oauth2 import service_account
+from streamlit_option_menu import option_menu
 
 # URLs raw de GitHub
 url_logo_torito = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logo%20Torito.png"
@@ -16,12 +19,10 @@ fondo = Image.open(BytesIO(requests.get(url_fondo).content))
 
 # Función para establecer fondo personalizado
 def set_background(image):
-    # Convertir la imagen a formato base64 para usarla como fondo
     buffered = BytesIO()
     image.save(buffered, format="PNG")
     img_str = base64.b64encode(buffered.getvalue()).decode()
 
-    # Establecer el fondo usando CSS
     st.markdown(
         f"""
         <style>
@@ -100,6 +101,62 @@ st.markdown('<p class="text">Elvis Bernuy: Data Analyst</p>', unsafe_allow_html=
 st.markdown('<p class="text">Pablo Carrizo y Pablo Mizzau: Data Engineers</p>', unsafe_allow_html=True)
 
 st.markdown('<p class="text">Utilizamos BigQuery + Streamlit para ofrecerte una app interactiva.</p>', unsafe_allow_html=True)
+
+# Configuración de la conexión a BigQuery
+credentials = service_account.Credentials.from_service_account_info(
+    st.secrets["gcp_service_account"]
+)
+client = bigquery.Client(credentials=credentials)
+
+# Función para realizar consultas a BigQuery
+@st.cache_data(ttl=600)
+def run_query(query):
+    query_job = client.query(query)
+    rows_raw = query_job.result()
+    rows = [dict(row) for row in rows_raw]
+    return rows
+
+# Navegación en el sidebar
+with st.sidebar:
+    opcion = option_menu("Navegación", 
+        ["Inicio", "KPIs", "Mapas", "Recomendador", "Análisis de Sentimiento", "Predicciones", "Distribución de Reseñas", "Competencia", "Explorar Reseñas"],
+        icons=['house', 'bar-chart', 'map', 'robot', 'chat', 'graph-up', 'folder', 'flag', 'search'],
+        menu_icon="cast", default_index=0, orientation="vertical")
+
+# ID del restaurante "El Torito"
+business_id = "7yr4oqcapzbkckrlb3isig"
+
+# Página de Inicio
+if opcion == "Inicio":
+    st.title("Análisis de Reseñas: El Torito")
+    st.markdown(""" 
+    ## ¿Quiénes somos?
+    Somos **HYPE Analytics**, especialistas en proporcionar **información relevante** para ayudar a nuestros clientes a mejorar su rendimiento en el mercado. Nuestro enfoque es **analizar reseñas de clientes** para obtener insights valiosos sobre la satisfacción, competencia y oportunidades de mejora.
+
+    ## Objetivo del Proyecto
+    El objetivo de este proyecto es realizar un análisis exhaustivo de las **reseñas de clientes** del restaurante **El Torito**. A través de diferentes KPIs, análisis de sentimiento y comparaciones con la competencia, buscamos proporcionar una visión clara y precisa del desempeño del restaurante, con el fin de **mejorar su estrategia de negocio**.
+
+    ## Nuestro Equipo de Trabajo
+    Somos un equipo multidisciplinario compuesto por:
+    - **Harry Guevara**: Líder del equipo y Functional Analyst, responsable de analizar los requerimientos funcionales y la gestión del proyecto.
+    - **Yanina Spina**: Data Scientist, encargada del análisis de datos.
+    - **Elvis Bernuy**: Data Analyst, encargado de los análisis exploratorios y creación de visualizaciones.
+    - **Pablo Carrizo**: Data Engineer, responsable de la integración de datos y mantenimiento de la infraestructura de datos.
+    - **Pablo Mizzau**: Data Engineer, encargado de la optimización y automatización de los procesos de datos.
+
+    ## ¿Qué Hacemos?
+    Utilizamos **Google BigQuery** para realizar consultas a las bases de datos de Yelp y Google Maps y obtener información precisa sobre el restaurante. Luego, desarrollamos un **dashboard interactivo** con **Streamlit** para que puedas explorar los datos de manera dinámica.
+
+    A lo largo de esta aplicación, podrás explorar los siguientes análisis:
+    - **KPIs clave** como el promedio de ratings y el número de reseñas.
+    - **Análisis de sentimiento** de las reseñas de los clientes.
+    - **Recomendaciones** basadas en otras reseñas de la misma categoría de restaurante.
+    - **Distribución de reseñas** y cómo los clientes califican al restaurante.
+
+    ¡Esperamos que esta información te sea útil y te ayude a tomar decisiones basadas en datos!
+
+    ---
+    """)
 
 # KPIs
 if opcion == "KPIs":
