@@ -303,7 +303,7 @@ if opcion == "Distribución de Reseñas por Año y Sucursal":
 
 
 # Página de Competencia
-if page == "Competencia":
+if opcion == "Competencia":
     st.title("Competidores & Sucursales de El Torito")
 
     # Top-5 competidores
