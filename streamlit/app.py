@@ -81,10 +81,6 @@ credentials = service_account.Credentials.from_service_account_info(st.secrets["
 client = bigquery.Client(credentials=credentials)
 
 
-
-# Configurar clave API de OpenAI
-openai.api_key = st.secrets["OPENAI_API_KEY"]
-
 # Inicializar historial del chat si no existe
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
