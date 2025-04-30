@@ -8,3 +8,4 @@ streamlit-option-menu
 matplotlib
 requests
 db-dtypes
+scikit-learn
