@@ -322,7 +322,13 @@ if st.sidebar.selectbox("Selecciona una página", ["Competencia", "Otro"]) == "C
     try:
         competition = run_query(query)
 
-        if competition:  # Verificar si la consulta devolvió resultados
+        # Ejecutar la consulta y obtener los resultados
+    try:
+        competition = run_query(query)
+
+        if not competition:  # Verificar si no hay resultados
+            st.warning("No se encontraron resultados para la competencia.")
+        else:
             st.write("### Competencia más cercana:")
             st.write("Estos son los negocios en la categoría 'Mexican' con mejores calificaciones, excluyendo 'El Torito'.")
 
@@ -343,11 +349,8 @@ if st.sidebar.selectbox("Selecciona una página", ["Competencia", "Otro"]) == "C
             st.write(f"Comparando con El Torito, que tiene un rating de {df_el_torito['avg_rating'][0]} estrellas y {df_el_torito['num_reviews'][0]} reseñas.")
             st.dataframe(df_el_torito)
 
-        else:
-            st.warning("No se encontraron resultados para la competencia.")
     except Exception as e:
         st.error(f"Error al obtener datos de competencia: {str(e)}")
-
 # Página de Explorar Reseñas
 if opcion == "Explorar Reseñas":
     st.title("Explorar Reseñas de El Torito")
