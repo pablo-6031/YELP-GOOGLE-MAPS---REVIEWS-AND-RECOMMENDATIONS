@@ -7,88 +7,27 @@ from google.cloud import bigquery
 from google.oauth2 import service_account
 from streamlit_option_menu import option_menu
 import pandas as pd
-import db_dtypes
 import matplotlib.pyplot as plt
 import plotly.express as px
-# Estilo general con fondo oscuro
-st.markdown("""
-    <style>
-    /* Fondo del contenido */
-    .stApp {
-        background-color: #121212;
-    }
 
-    /* Textos generales */
-    html, body, [class*="css"]  {
-        color: #FFFFFF;
-        background-color: #121212;
-    }
+# === CONFIGURACIÓN GENERAL ===
 
-    /* Títulos */
-    h1, h2, h3, h4 {
-        color: #FFFFFF;
-    }
-
-    /* Subtítulos */
-    .subtitle {
-        color: #BBBBBB;
-    }
-
-    /* Texto de párrafos */
-    p {
-        color: #E0E0E0;
-    }
-
-    /* Tablas */
-    .css-1r6slb0, .css-1d391kg {
-        background-color: #1E1E1E !important;
-        color: #FFFFFF !important;
-    }
-
-    /* Métricas */
-    .element-container .stMetric {
-        background-color: #1F1F1F;
-        border-radius: 8px;
-        padding: 10px;
-    }
-
-    /* Sidebar */
-    .css-6qob1r {
-        background-color: #1C1C1C;
-    }
-
-    /* Inputs */
-    .stTextInput>div>div>input, .stTextArea>div>textarea, .stSelectbox>div>div>div>div {
-        background-color: #1E1E1E;
-        color: white;
-        border: 1px solid #444;
-    }
-
-    /* Dropdown menu */
-    .stSelectbox>div>div>div>div {
-        background-color: #2C2C2C !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# URLs raw de GitHub
+# URLs de imágenes desde GitHub
 url_logo_torito = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logo%20Torito.png"
 url_logo_hype = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logo%20hype.png"
 url_fondo = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/fondoTorito.png"
 
-# Cargar imágenes desde las URLs
+# Cargar imágenes
 logo_torito = Image.open(BytesIO(requests.get(url_logo_torito).content))
 logo_hype = Image.open(BytesIO(requests.get(url_logo_hype).content))
 fondo = Image.open(BytesIO(requests.get(url_fondo).content))
 
-# Función para establecer fondo personalizado
+# Estilo global y fondo
 def set_background(image):
     buffered = BytesIO()
     image.save(buffered, format="PNG")
     img_str = base64.b64encode(buffered.getvalue()).decode()
-
-    st.markdown(
-        f"""
+    st.markdown(f"""
         <style>
         .stApp {{
             background-image: url("data:image/png;base64,{img_str}");
@@ -96,154 +35,112 @@ def set_background(image):
             background-position: center;
             background-repeat: no-repeat;
         }}
+        html, body, [class*="css"] {{
+            color: #FFFFFF;
+            background-color: #121212;
+        }}
+        h1, h2, h3, h4 {{ color: #FFFFFF; }}
+        p {{ color: #E0E0E0; }}
+        .subtitle {{ color: #BBBBBB; }}
+        .css-1r6slb0, .css-1d391kg {{
+            background-color: #1E1E1E !important;
+            color: #FFFFFF !important;
+        }}
+        .element-container .stMetric {{
+            background-color: #1F1F1F;
+            border-radius: 8px;
+            padding: 10px;
+        }}
+        .stTextInput>div>div>input, .stTextArea>div>textarea, .stSelectbox>div>div>div>div {{
+            background-color: #1E1E1E;
+            color: white;
+            border: 1px solid #444;
+        }}
+        .stSelectbox>div>div>div>div {{
+            background-color: #2C2C2C !important;
+        }}
+        .logo-hype {{
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            width: 120px;
+        }}
         </style>
-        """,
-        unsafe_allow_html=True
-    )
+    """, unsafe_allow_html=True)
 
-# Aplicar fondo
 set_background(fondo)
 
-# Estilos de texto y logo en la parte superior
-st.markdown(
-    """
-    <style>
-    .centered {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        margin-top: 100px;
-    }
-    .title {
-        font-size: 48px;
-        font-weight: bold;
-        color: #FFFFFF; /* Blanco */
-        text-shadow: 2px 2px 4px #000;
-    }
-    .subtitle {
-        font-size: 24px;
-        color: #D3D3D3; /* Gris claro */
-        text-shadow: 1px 1px 3px #000;
-    }
-    .logo-hype {
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        width: 120px;
-    }
-    .text {
-        color: #FFFFFF; /* Blanco */
-        font-size: 18px;
-        line-height: 1.5;
-        text-align: center;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-# ID del negocio principal: El Torito
-BUSINESS_ID_EL_TORITO = "7yr4oqcapzbkckrlb3isig"
-
-# Mostrar el logo de Hype en la parte superior
+# Mostrar logos
 st.markdown(f'<img class="logo-hype" src="{url_logo_hype}">', unsafe_allow_html=True)
-
-# Mostrar el logo de Torito
 st.image(logo_torito, width=200)
 
-# Configuración de la conexión a BigQuery
-credentials = service_account.Credentials.from_service_account_info(
-    st.secrets["gcp_service_account"]
-)
+# === CONFIGURACIÓN BIGQUERY ===
+credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
 client = bigquery.Client(credentials=credentials)
 
-# Función para realizar consultas a BigQuery
 @st.cache_data(ttl=600)
-
 def run_query(query):
-    query_job = client.query(query)
-    rows_raw = query_job.result()
-    rows = [dict(row) for row in rows_raw]
-    return pd.DataFrame(rows)
-# Competencia functions
+    return pd.DataFrame([dict(row) for row in client.query(query).result()])
 
+# ID fijo del negocio principal
+BUSINESS_ID_EL_TORITO = "7yr4oqcapzbkckrlb3isig"
 
-
+# === FUNCIÓN DE COMPETENCIA ===
 
 def show_competencia():
     st.title("Competidores y Sucursales de El Torito (Categoría: Mexican)")
 
-    # --- 1. Consultas SQL ---
-    # Competencia aleatoria (10 negocios mexicanos aleatorios)
-    q_comp = """
-    SELECT b.business_name,
-           AVG(r.stars) AS avg_rating,
-           COUNT(r.review_text) AS num_reviews
-    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-      ON b.business_id = r.business_id
-    WHERE b.categories LIKE '%Mexican%'
-    GROUP BY b.business_name
-    ORDER BY RAND()
-    LIMIT 10
-    """
-    df_comp = run_query(q_comp)
+    # --- CONSULTAS ---
+    queries = {
+        "df_comp": """
+            SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
+            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
+            WHERE b.categories LIKE '%Mexican%'
+            GROUP BY b.business_name
+            ORDER BY RAND() LIMIT 10
+        """,
+        "df_torito": """
+            SELECT b.business_id, b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
+            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
+            WHERE b.business_name LIKE '%Torito%'
+            GROUP BY b.business_id, b.business_name
+            ORDER BY avg_rating DESC
+        """,
+        "df_torito_pie": """
+            SELECT stars, COUNT(*) AS cantidad
+            FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
+            WHERE business_id IN (
+                SELECT business_id FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
+                WHERE business_name LIKE '%Torito%'
+            )
+            GROUP BY stars ORDER BY stars
+        """,
+        "df_dist": """
+            SELECT r.stars AS star, COUNT(*) AS count
+            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
+            WHERE b.categories LIKE '%Mexican%'
+            GROUP BY r.stars ORDER BY r.stars
+        """
+    }
 
-    # Sucursales de El Torito
-    q_torito = """
-    SELECT b.business_id,
-           b.business_name,
-           AVG(r.stars) AS avg_rating,
-           COUNT(r.review_text) AS num_reviews
-    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-      ON b.business_id = r.business_id
-    WHERE b.business_name LIKE '%Torito%'
-    GROUP BY b.business_id, b.business_name
-    ORDER BY avg_rating DESC
-    """
-    df_torito = run_query(q_torito)
+    df_comp = run_query(queries["df_comp"])
+    df_torito = run_query(queries["df_torito"])
+    df_torito_pie = run_query(queries["df_torito_pie"])
+    df_dist = run_query(queries["df_dist"])
 
-    # Distribución de estrellas (El Torito)
-    q_torito_pie = """
-    SELECT stars, COUNT(*) AS cantidad
-    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
-    WHERE business_id IN (
-        SELECT business_id
-        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
-        WHERE business_name LIKE '%Torito%'
-    )
-    GROUP BY stars
-    ORDER BY stars
-    """
-    df_torito_pie = run_query(q_torito_pie)
-
-    # Distribución de estrellas en general (categoría Mexican)
-    q_dist = """
-    SELECT r.stars AS star,
-           COUNT(*) AS count
-    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-      ON b.business_id = r.business_id
-    WHERE b.categories LIKE '%Mexican%'
-    GROUP BY r.stars
-    ORDER BY r.stars
-    """
-    df_dist = run_query(q_dist)
-
-    # --- 2. Visualizaciones ---
-
-    # Tablas
+    # --- VISUALIZACIONES ---
     st.subheader("10 Competidores Aleatorios (Mexican)")
     st.dataframe(df_comp)
 
     st.subheader("Sucursales de El Torito")
     st.dataframe(df_torito)
 
-    # Scatter Plot
     st.subheader("Dispersión: Número de Reseñas vs Calificación Promedio")
     if not df_comp.empty:
-        fig_scatter, ax = plt.subplots()
+        fig, ax = plt.subplots()
         ax.scatter(df_comp['num_reviews'], df_comp['avg_rating'], alpha=0.7)
         for i, row in df_comp.iterrows():
             ax.annotate(row['business_name'], (row['num_reviews'], row['avg_rating']),
@@ -251,111 +148,84 @@ def show_competencia():
         ax.set_xlabel("Número de Reseñas")
         ax.set_ylabel("Calificación Promedio")
         ax.set_title("Competidores Mexican – Dispersión")
-        st.pyplot(fig_scatter)
+        st.pyplot(fig)
     else:
         st.warning("No hay datos de competidores para mostrar.")
 
-    # Pie Chart - El Torito
     st.subheader("Distribución de Estrellas – El Torito")
     if not df_torito_pie.empty:
-        fig_torito = px.pie(
-            df_torito_pie,
-            names="stars",
-            values="cantidad",
-            title="Distribución de Calificaciones en El Torito",
-            color_discrete_sequence=px.colors.sequential.RdBu
-        )
-        st.plotly_chart(fig_torito)
+        fig = px.pie(df_torito_pie, names="stars", values="cantidad",
+                     title="Distribución de Calificaciones en El Torito",
+                     color_discrete_sequence=px.colors.sequential.RdBu)
+        st.plotly_chart(fig)
     else:
         st.info("No hay datos de calificaciones para El Torito.")
 
-    # Pie Chart - General Mexican
     st.subheader("Distribución de Estrellas – Categoría Mexican")
     if not df_dist.empty:
-        fig_pie, ax = plt.subplots()
-        ax.pie(
-            df_dist['count'],
-            labels=df_dist['star'].astype(int).astype(str),
-            autopct='%1.1f%%',
-            startangle=90
-        )
+        fig, ax = plt.subplots()
+        ax.pie(df_dist['count'], labels=df_dist['star'].astype(str), autopct='%1.1f%%', startangle=90)
         ax.axis('equal')
         ax.set_title("Porcentaje de Reseñas por Estrellas")
-        st.pyplot(fig_pie)
+        st.pyplot(fig)
     else:
         st.info("No hay datos de distribución de estrellas.")
 
-# Navegación en el sidebar
+
+# --- SIDEBAR ---
 with st.sidebar:
     opcion = option_menu("Navegación", 
         ["Inicio", "KPIs", "Mapas", "Recomendador", "Análisis de Sentimiento", "Predicciones", "Distribución de Reseñas", "Competencia", "Explorar Reseñas"],
         icons=['house', 'bar-chart', 'map', 'robot', 'chat', 'graph-up', 'folder', 'flag', 'search'],
-        menu_icon="cast", default_index=0, orientation="vertical")
+        menu_icon="cast", default_index=0, orientation="vertical"
+    )
 
-# Página de Inicio
+# --- INICIO ---
 if opcion == "Inicio":
     st.title("Análisis de Reseñas: El Torito")
     st.markdown(""" 
     ## ¿Quiénes somos?
-    Somos **HYPE Analytics**, especialistas en proporcionar **información relevante** para ayudar a nuestros clientes a mejorar su rendimiento en el mercado. Nuestro enfoque es **analizar reseñas de clientes** para obtener insights valiosos sobre la satisfacción, competencia y oportunidades de mejora.
+    Somos **HYPE Analytics**, especialistas en proporcionar información relevante para mejorar el rendimiento de nuestros clientes.
 
     ## Objetivo del Proyecto
-    El objetivo de este proyecto es realizar un análisis exhaustivo de las **reseñas de clientes** del restaurante **El Torito**. A través de diferentes KPIs, análisis de sentimiento y comparaciones con la competencia, buscamos proporcionar una visión clara y precisa del desempeño del restaurante, con el fin de **mejorar su estrategia de negocio**.
+    Analizar las reseñas de clientes del restaurante **El Torito**, extrayendo KPIs, sentimientos y comparativas que permitan optimizar la estrategia del negocio.
 
     ## Nuestro Equipo de Trabajo
-    Somos un equipo multidisciplinario compuesto por:
-    - **Harry Guevara**: Líder del equipo y Functional Analyst, responsable de analizar los requerimientos funcionales y la gestión del proyecto.
-    - **Yanina Spina**: Data Scientist, encargada del análisis de datos.
-    - **Elvis Bernuy**: Data Analyst, encargado de los análisis exploratorios y creación de visualizaciones.
-    - **Pablo Carrizo**: Data Engineer, responsable de la integración de datos y mantenimiento de la infraestructura de datos.
-    - **Pablo Mizzau**: Data Engineer, encargado de la optimización y automatización de los procesos de datos.
+    - **Harry Guevara** – Functional Analyst
+    - **Yanina Spina** – Data Scientist
+    - **Elvis Bernuy** – Data Analyst
+    - **Pablo Carrizo** – Data Engineer
+    - **Pablo Mizzau** – Data Engineer
 
-    ## ¿Qué Hacemos?
-    Utilizamos **Google BigQuery** para realizar consultas a las bases de datos de Yelp y Google Maps y obtener información precisa sobre el restaurante. Luego, desarrollamos un **dashboard interactivo** con **Streamlit** para que puedas explorar los datos de manera dinámica.
+    ## ¿Qué hacemos?
+    Consultamos datos de Yelp y Google Maps desde **Google BigQuery**, y desarrollamos esta app interactiva con **Streamlit**.
 
-    A lo largo de esta aplicación, podrás explorar los siguientes análisis:
-    - **KPIs clave** como el promedio de ratings y el número de reseñas.
-    - **Análisis de sentimiento** de las reseñas de los clientes.
-    - **Recomendaciones** basadas en otras reseñas de la misma categoría de restaurante.
-    - **Distribución de reseñas** y cómo los clientes califican al restaurante.
-
-    ¡Esperamos que esta información te sea útil y te ayude a tomar decisiones basadas en datos!
+    ### Funcionalidades:
+    - KPIs clave (promedio de rating, volumen de reseñas)
+    - Análisis de Sentimiento
+    - Sistema Recomendador
+    - Distribución de reseñas
+    - Comparativas con la competencia
     ---
     """)
 
-# Código para las demás páginas (KPIs, Mapas, Recomendador, etc.)
-if opcion == "KPIs":
+# --- KPIs ---
+elif opcion == "KPIs":
     st.title("KPIs de El Torito")
     query = """
     SELECT 
         AVG(stars) AS avg_rating,
         COUNT(review_text) AS review_count
-    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
+    FROM shining-rampart-455602-a7.dw_restaurantes.fact_review
     WHERE business_id = 'your_business_id'
     """
     resultados = run_query(query)
     st.metric("Promedio de Rating", round(resultados[0]['avg_rating'], 2))
     st.metric("Número de Reseñas", resultados[0]['review_count'])
-# Código para las demás páginas (KPIs, Mapas, Recomendador, etc.)
-if opcion == "KPIs":
-    st.title("KPIs")
-    st.markdown("Aquí van los KPIs...")
+
+# --- MAPAS ---
 elif opcion == "Mapas":
-    st.title("Mapas")
-    st.markdown("Aquí van los mapas...")
-elif opcion == "Recomendador":
-    st.title("Recomendador")
-    st.markdown("Aquí va el sistema recomendador...")
-
-
-
-
-# Otras importaciones y configuraciones que ya tienes...
-
-if opcion == "Mapas":
     st.title("Mapa de Ubicaciones de El Torito")
-
-    # Lista de ubicaciones (evita duplicados)
     locations_data = [
         {"latitude": 33.8366, "longitude": -117.9145, "name": "Anaheim, CA"},
         {"latitude": 33.8753, "longitude": -117.5664, "name": "Corona, CA"},
@@ -380,23 +250,19 @@ if opcion == "Mapas":
         {"latitude": 34.0686, "longitude": -118.1018, "name": "West Covina, CA"},
         {"latitude": 34.1698, "longitude": -118.1079, "name": "Westminster, CA"},
     ]
-
-    # Convertir la lista de ubicaciones a un DataFrame de pandas
     df_map = pd.DataFrame(locations_data)
-
-    # Muestra el mapa con las ubicaciones
     st.map(df_map[['latitude', 'longitude']])
 
-# Página de Recomendador
-if opcion == "Recomendador":
+# --- RECOMENDADOR ---
+elif opcion == "Recomendador":
     st.title("Recomendador de Restaurantes")
-    # Ejemplo de recomendación basada en categoría
+    business_id = 'your_business_id'
     query = f"""
-    SELECT business_name, categories, AVG(stars) as avg_rating
-    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review`
+    SELECT business_name, categories, AVG(stars) AS avg_rating
+    FROM shining-rampart-455602-a7.dw_restaurantes.dim_business
+    JOIN shining-rampart-455602-a7.dw_restaurantes.fact_review
     ON dim_business.business_id = fact_review.business_id
-    WHERE categories LIKE '%Mexicano%' AND business_id != '{business_id}'
+    WHERE categories LIKE '%Mexicano%' AND dim_business.business_id != '{business_id}'
     GROUP BY business_name, categories
     ORDER BY avg_rating DESC
     LIMIT 5
@@ -405,33 +271,19 @@ if opcion == "Recomendador":
     st.write("Recomendaciones basadas en categoría 'Mexicano':")
     st.dataframe(recommendations)
 
-# Página de Análisis de Sentimiento
-if opcion == "Análisis de Sentimiento":
+# --- ANÁLISIS DE SENTIMIENTO ---
+elif opcion == "Análisis de Sentimiento":
     st.title("Análisis de Sentimiento de las Reseñas")
-    # Aquí puedes integrar un modelo de ML para analizar el sentimiento
-    st.write("Este análisis de sentimiento puede realizarse usando un modelo entrenado para clasificar reseñas como positivas, negativas o neutrales.")
+    st.write("Este análisis puede usar modelos entrenados para clasificar reseñas como positivas, negativas o neutras.")
 
-# Página de Predicciones
-if opcion == "Predicciones":
+# --- PREDICCIONES ---
+elif opcion == "Predicciones":
     st.title("Predicción de Rating para El Torito")
-    # Aquí puedes agregar un modelo ML para predecir el rating futuro basado en el histórico
     st.write("Predicción de rating usando modelos de Machine Learning.")
 
-# Página de Distribución de Reseñas
-if opcion == "Distribución de Reseñas por Año y Sucursal":
-    st.title("Distribución de Reseñas de El Torito por Año y Sucursal")
-
-
-# Página de Competencia
-if opcion == "Competencia":
-    st.title("Competidores & Sucursales de El Torito")
-    show_competencia()
-
-# --- Página de Distribución de Reseñas ---
-
-if opcion == "Distribución de Reseñas":
-    # --- Distribución General de todas las sucursales ---
-    st.subheader("Distribución General de Reseñas (todas las sucursales)")
+# --- DISTRIBUCIÓN DE RESEÑAS ---
+elif opcion == "Distribución de Reseñas":
+    st.title("Distribución de Reseñas de El Torito por Año y Sentimiento")
 
     q_general = """
     SELECT 
@@ -442,19 +294,56 @@ if opcion == "Distribución de Reseñas":
             ELSE 'Positivo'
         END AS sentimiento,
         COUNT(*) AS cantidad
-    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+    FROM shining-rampart-455602-a7.dw_restaurantes.fact_review r
+    JOIN shining-rampart-455602-a7.dw_restaurantes.dim_business b
       ON r.business_id = b.business_id
     WHERE LOWER(b.business_name) LIKE '%torito%'
     GROUP BY anio, sentimiento
     ORDER BY anio;
     """
+    df_general = run_query(q_general)
+    if not df_general.empty:
+        pivot_df = df_general.pivot(index="anio", columns="sentimiento", values="cantidad").fillna(0)
+        pivot_df = pivot_df[["Negativo", "Neutro", "Positivo"]]
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.bar(pivot_df.index, pivot_df["Negativo"], label="Negativo", color="red")
+        ax.bar(pivot_df.index, pivot_df["Neutro"], bottom=pivot_df["Negativo"], label="Neutro", color="gray")
+        ax.bar(pivot_df.index, pivot_df["Positivo"], bottom=pivot_df["Negativo"] + pivot_df["Neutro"], label="Positivo", color="green")
+        ax.set_xlabel("Año")
+        ax.set_ylabel("Cantidad de Reseñas")
+        ax.set_title("Distribución de Reseñas por Año y Sentimiento")
+        ax.legend()
+        st.pyplot(fig)
 
+# --- COMPETENCIA ---
+elif opcion == "Competencia":
+    st.title("Competidores & Sucursales de El Torito")
+    show_competencia()
+    if opcion == "Distribución de Reseñas":
+    st.subheader("Distribución General de Reseñas (todas las sucursales)")
+
+    # Consulta general por sentimiento y año
+    q_general = """
+    SELECT 
+        EXTRACT(YEAR FROM r.review_date) AS anio,
+        CASE 
+            WHEN r.stars <= 2.5 THEN 'Negativo'
+            WHEN r.stars > 2.5 AND r.stars <= 3.5 THEN 'Neutro'
+            ELSE 'Positivo'
+        END AS sentimiento,
+        COUNT(*) AS cantidad
+    FROM shining-rampart-455602-a7.dw_restaurantes.fact_review r
+    JOIN shining-rampart-455602-a7.dw_restaurantes.dim_business b
+      ON r.business_id = b.business_id
+    WHERE LOWER(b.business_name) LIKE '%torito%'
+    GROUP BY anio, sentimiento
+    ORDER BY anio;
+    """
     df_general = run_query(q_general)
 
     if not df_general.empty:
         pivot_df = df_general.pivot(index="anio", columns="sentimiento", values="cantidad").fillna(0)
-        pivot_df = pivot_df[["Negativo", "Neutro", "Positivo"]]  # Orden deseado
+        pivot_df = pivot_df[["Negativo", "Neutro", "Positivo"]]
 
         fig1, ax1 = plt.subplots(figsize=(10, 6))
         ax1.bar(pivot_df.index, pivot_df["Negativo"], label="Negativo", color="red")
@@ -469,8 +358,7 @@ if opcion == "Distribución de Reseñas":
     else:
         st.warning("No hay datos para El Torito.")
 
-    # --- Distribución por sucursal específica ---
-    # Diccionario de sucursales de El Torito con su business_id
+    # --- Selección de sucursal ---
     sucursales = {
         "El Torito Sucursal 1": "0x80844a01be660f09:0x661fee46237228d7",
         "El Torito Sucursal 2": "0x808fc9e896f1d559:0x8c0b57a8edd4fd5d",
@@ -493,79 +381,50 @@ if opcion == "Distribución de Reseñas":
     sucursal_seleccionada = st.selectbox("Selecciona una sucursal de El Torito:", list(sucursales.keys()))
     business_id = sucursales[sucursal_seleccionada]
 
+    # --- Distribución por sucursal ---
     q_reseñas = f"""
-    SELECT r.business_id,
-           b.business_name,
-           EXTRACT(YEAR FROM r.review_date) AS anio,
-           CASE 
-             WHEN r.stars <= 2.5 THEN 'Negativo'
-             WHEN r.stars > 2.5 AND r.stars <= 3.5 THEN 'Neutro'
-             ELSE 'Positivo'
-           END AS sentimiento,
-           COUNT(*) AS cantidad
-    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-      ON r.business_id = b.business_id
-    WHERE b.business_id = '{business_id}'
-    GROUP BY r.business_id, b.business_name, anio, sentimiento
-    ORDER BY anio
+    SELECT 
+        EXTRACT(YEAR FROM r.review_date) AS anio,
+        CASE 
+            WHEN r.stars <= 2.5 THEN 'Negativo'
+            WHEN r.stars > 2.5 AND r.stars <= 3.5 THEN 'Neutro'
+            ELSE 'Positivo'
+        END AS sentimiento,
+        COUNT(*) AS cantidad
+    FROM shining-rampart-455602-a7.dw_restaurantes.fact_review r
+    WHERE r.business_id = '{business_id}'
+    GROUP BY anio, sentimiento
+    ORDER BY anio;
     """
-
     df_reseñas = run_query(q_reseñas)
 
     if not df_reseñas.empty:
         st.write(f"Distribución de Reseñas de {sucursal_seleccionada} por Año y Sentimiento")
-        
-        df_pivot = df_reseñas.pivot_table(index='anio', columns='sentimiento', values='cantidad', aggfunc='sum', fill_value=0)
 
-        fig, ax = plt.subplots(figsize=(10, 6))
-        df_pivot.plot(kind='bar', stacked=True, ax=ax)
+        df_pivot = df_reseñas.pivot(index='anio', columns='sentimiento', values='cantidad').fillna(0)
+        df_pivot = df_pivot[["Negativo", "Neutro", "Positivo"]]
 
-        ax.set_title(f"Distribución de Sentimientos de las Reseñas de {sucursal_seleccionada}")
-        ax.set_xlabel("Año")
-        ax.set_ylabel("Número de Reseñas")
-        ax.legend(title="Sentimiento")
+        fig2, ax2 = plt.subplots(figsize=(10, 6))
+        df_pivot.plot(kind='bar', stacked=True, ax=ax2)
 
-        st.pyplot(fig)
+        ax2.set_title(f"Distribución de Sentimientos de las Reseñas de {sucursal_seleccionada}")
+        ax2.set_xlabel("Año")
+        ax2.set_ylabel("Número de Reseñas")
+        ax2.legend(title="Sentimiento")
+
+        st.pyplot(fig2)
     else:
         st.warning("No hay datos de reseñas para la sucursal seleccionada.")
 
-#explorar reseñas
-    # Diccionario de sucursales de El Torito con su business_id
-    sucursales = {
-        "El Torito Sucursal 1": "0x80844a01be660f09:0x661fee46237228d7",
-        "El Torito Sucursal 2": "0x808fc9e896f1d559:0x8c0b57a8edd4fd5d",
-        "El Torito Sucursal 3": "0x808fccb4507dc323:0x297d7fd58fc8ff91",
-        "El Torito Sucursal 4": "0x809ade1814a05da3:0xad096a803d166a4c",
-        "El Torito Sucursal 5": "0x80c280a9a282d2e9:0xf3a894f129f38b2f",
-        "El Torito Sucursal 6": "0x80c29794c7e2d44d:0xda1266db4b03e83c",
-        "El Torito Sucursal 7": "0x80c297ce3cd0f54b:0xececf01e9eeee6f7",
-        "El Torito Sucursal 8": "0x80c2b4d2ca3e19c9:0xcf83f70eaba7a203",
-        "El Torito Sucursal 9": "0x80c2bfcf8cc535fd:0xea7ffe91727d1946",
-        "El Torito Sucursal 10": "0x80dbf8ec8ade5d45:0x952d1e263dadc54e",
-        "El Torito Sucursal 11": "0x80dcd43a352d3ae3:0xae921b0c9e9cbdb7",
-        "El Torito Sucursal 12": "0x80dd2ddc6a24e4af:0xcadb76671ddbc94d",
-        "El Torito Sucursal 13": "0x80dd32f142b8252b:0x1af197c9399f5231",
-        "El Torito Sucursal 14": "0x80e9138c2f68bd4f:0x64f25be6f8d56d95",
-        "El Torito Sucursal 15": "0x80ea4fe71c447a1b:0x17232153c8e87293",
-        "El Torito Sucursal 16": "7yr4oqcapzbkckrlb3isig",
-    }
-
-    # Selector de sucursal
-    sucursal_seleccionada = st.selectbox("Selecciona una sucursal de El Torito:", list(sucursales.keys()))
-
-    # Obtener el business_id de la sucursal seleccionada
-    business_id = sucursales[sucursal_seleccionada]
-
-    # Consulta a la base de datos
-    query = f"""
+    # --- Últimas reseñas por sucursal ---
+    st.subheader(f"Últimas 10 Reseñas de {sucursal_seleccionada}")
+    query_reviews = f"""
     SELECT review_text, stars, review_date
-    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
+    FROM shining-rampart-455602-a7.dw_restaurantes.fact_review
     WHERE business_id = '{business_id}'
     ORDER BY review_date DESC
-    LIMIT 10
+    LIMIT 10;
     """
-    reviews = run_query(query)
+    df_reviews = run_query(query_reviews)
+    st.dataframe(df_reviews)
 
-    st.write(f"Últimas 10 reseñas de {sucursal_seleccionada}:")
-    st.dataframe(reviews)
