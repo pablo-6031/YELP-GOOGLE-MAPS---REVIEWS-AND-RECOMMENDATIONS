@@ -301,11 +301,9 @@ if opcion == "Distribución de Reseñas por Año y Sucursal":
     st.title("Distribución de Reseñas de El Torito por Año y Sucursal")
 
 # Página de Competencia
+if st.sidebar.selectbox("Selecciona una página", ["Competencia", "Otro"]) == "Competencia":
+    st.title("Análisis de Competencia para El Torito")
 
-# Página de Competencia
-if opcion == "Competencia":
-    st.title("Comparación de Competencia para El Torito (Categoría Mexicana)")
-    
     # Consulta SQL para obtener los negocios competidores en la categoría 'Mexican'
     query = """
     SELECT b.business_name, 
@@ -324,7 +322,7 @@ if opcion == "Competencia":
     try:
         competition = run_query(query)
 
-        if competition:
+        if competition:  # Verificar si la consulta devolvió resultados
             st.write("### Competencia más cercana:")
             st.write("Estos son los negocios en la categoría 'Mexican' con mejores calificaciones, excluyendo 'El Torito'.")
 
