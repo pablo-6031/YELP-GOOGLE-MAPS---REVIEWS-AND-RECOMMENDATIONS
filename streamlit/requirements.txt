@@ -7,3 +7,4 @@ google-cloud-bigquery
 streamlit-option-menu
 matplotlib
 requests
+db-dtypes
