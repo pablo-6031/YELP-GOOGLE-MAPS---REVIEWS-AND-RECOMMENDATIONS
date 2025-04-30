@@ -391,7 +391,7 @@ if opcion == "Distribución de Reseñas":
         st.warning("No hay datos de reseñas para la sucursal seleccionada.")
 
     # --- Últimas reseñas por sucursal ---
- 
+if opcion == "Explorar Reseñas":
     # Diccionario de sucursales de El Torito con su business_id
     sucursales = {
         "El Torito Sucursal 1": "0x80844a01be660f09:0x661fee46237228d7",
