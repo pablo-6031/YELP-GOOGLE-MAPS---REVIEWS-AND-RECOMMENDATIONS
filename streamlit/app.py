@@ -427,6 +427,8 @@ if opcion == "Competencia":
     st.title("Competidores & Sucursales de El Torito")
     show_competencia()
 
+#pagina distribusion reseñas
+
 # Diccionario de sucursales con sus business_id
 sucursales = {
     "El Torito Sucursal 1": "0x80844a01be660f09:0x661fee46237228d7",
@@ -447,52 +449,54 @@ sucursales = {
     "El Torito Sucursal 16": "7yr4oqcapzbkckrlb3isig",
 }
 
-# Interfaz de usuario para seleccionar la opción
-opcion = st.selectbox("Selecciona una opción:", ["Distribución de Reseñas", "Otra Opción"])
+# Interfaz de usuario para seleccionar sucursal
+sucursal_seleccionada = st.selectbox("Selecciona una sucursal de El Torito:", list(sucursales.keys()))
 
-# Si la opción seleccionada es "Distribución de Reseñas"
-if opcion == "Distribución de Reseñas":
-    # Interfaz de usuario para seleccionar sucursal
-    sucursal_seleccionada = st.selectbox("Selecciona una sucursal de El Torito:", list(sucursales.keys()))
+# Obtener el business_id de la sucursal seleccionada
+business_id = sucursales[sucursal_seleccionada]
 
-    # Obtener el business_id de la sucursal seleccionada
-    business_id = sucursales[sucursal_seleccionada]
+# Consulta a BigQuery para obtener la distribución de reseñas por año y sentimiento
+q_reseñas = f"""
+SELECT r.business_id,
+       b.business_name,
+       EXTRACT(YEAR FROM r.review_date) AS anio,
+       CASE 
+         WHEN r.stars <= 2.5 THEN 'Negativo'
+         WHEN r.stars > 2.5 AND r.stars <= 3.5 THEN 'Neutro'
+         ELSE 'Positivo'
+       END AS sentimiento,
+       COUNT(*) AS cantidad
+FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+  ON r.business_id = b.business_id
+WHERE b.business_id = '{business_id}'
+GROUP BY r.business_id, b.business_name, anio, sentimiento
+ORDER BY anio
+"""
 
-    # Consulta a BigQuery para obtener la distribución de reseñas por año y sentimiento
-    q_reseñas = f"""
-    SELECT r.business_id,
-           b.business_name,
-           EXTRACT(YEAR FROM r.review_date) AS anio,
-           CASE 
-             WHEN r.stars <= 2.5 THEN 'Negativo'
-             WHEN r.stars > 2.5 AND r.stars <= 3.5 THEN 'Neutro'
-             ELSE 'Positivo'
-           END AS sentimiento,
-           COUNT(*) AS cantidad
-    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-      ON r.business_id = b.business_id
-    WHERE b.business_id = '{business_id}'
-    GROUP BY r.business_id, b.business_name, anio, sentimiento
-    ORDER BY anio
-    """
+# Obtener los datos desde BigQuery
+df_reseñas = run_query(q_reseñas)
 
-    # Obtener los datos desde BigQuery
-    df_reseñas = run_query(q_reseñas)
+# Verificar si se obtuvieron datos
+if not df_reseñas.empty:
+    st.write(f"Distribución de Reseñas de {sucursal_seleccionada} por Año y Sentimiento")
+    
+    # Pivotar el DataFrame para facilitar el gráfico
+    df_pivot = df_reseñas.pivot_table(index='anio', columns='sentimiento', values='cantidad', aggfunc='sum', fill_value=0)
 
-    # Verificar si se obtuvieron datos
-    if not df_reseñas.empty:
-        st.write(f"Distribución de Reseñas de {sucursal_seleccionada} por Año y Sentimiento")
-        
-        # Crear gráfico de barras apiladas (por sentimiento y año)
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.barplot(x="anio", y="cantidad", hue="sentimiento", data=df_reseñas, ax=ax)
-        ax.set_title(f"Distribución de Sentimientos de las Reseñas de {sucursal_seleccionada}")
-        ax.set_xlabel("Año")
-        ax.set_ylabel("Número de Reseñas")
-        st.pyplot(fig)
-    else:
-        st.warning("No hay datos de reseñas para la sucursal seleccionada.")
+    # Crear gráfico de barras apiladas usando matplotlib
+    fig, ax = plt.subplots(figsize=(10, 6))
+    df_pivot.plot(kind='bar', stacked=True, ax=ax)
+
+    ax.set_title(f"Distribución de Sentimientos de las Reseñas de {sucursal_seleccionada}")
+    ax.set_xlabel("Año")
+    ax.set_ylabel("Número de Reseñas")
+    ax.legend(title="Sentimiento")
+
+    st.pyplot(fig)
+else:
+    st.warning("No hay datos de reseñas para la sucursal seleccionada.")
+
 #explorar reseñas
     # Diccionario de sucursales de El Torito con su business_id
     sucursales = {
