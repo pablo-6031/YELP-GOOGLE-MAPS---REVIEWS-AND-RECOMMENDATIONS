@@ -427,13 +427,10 @@ if opcion == "Competencia":
     st.title("Competidores & Sucursales de El Torito")
     show_competencia()
 
-
-# Página de Distribución de Reseñas
+# --- Página de Distribución de Reseñas ---
 if opcion == "Distribución de Reseñas":
 
-    st.title("Distribución de Reseñas de El Torito")
-
-    # --- GRÁFICO GENERAL PARA TODAS LAS SUCURSALES ---
+    # --- Distribución General de todas las sucursales ---
     st.subheader("Distribución General de Reseñas (todas las sucursales)")
 
     q_general = """
@@ -456,10 +453,14 @@ if opcion == "Distribución de Reseñas":
     df_general = run_query(q_general)
 
     if not df_general.empty:
+        pivot_df = df_general.pivot(index="anio", columns="sentimiento", values="cantidad").fillna(0)
+        pivot_df = pivot_df[["Negativo", "Neutro", "Positivo"]]  # Orden deseado
+
         fig1, ax1 = plt.subplots(figsize=(10, 6))
-        for sentimiento in df_general["sentimiento"].unique():
-            subset = df_general[df_general["sentimiento"] == sentimiento]
-            ax1.bar(subset["anio"], subset["cantidad"], label=sentimiento, bottom=df_general[df_general["sentimiento"] < sentimiento].groupby("anio")["cantidad"].sum() if sentimiento != "Negativo" else None)
+        ax1.bar(pivot_df.index, pivot_df["Negativo"], label="Negativo", color="red")
+        ax1.bar(pivot_df.index, pivot_df["Neutro"], bottom=pivot_df["Negativo"], label="Neutro", color="gray")
+        ax1.bar(pivot_df.index, pivot_df["Positivo"], bottom=pivot_df["Negativo"] + pivot_df["Neutro"], label="Positivo", color="green")
+
         ax1.set_title("Distribución General de Sentimientos por Año")
         ax1.set_xlabel("Año")
         ax1.set_ylabel("Cantidad de Reseñas")
@@ -468,8 +469,8 @@ if opcion == "Distribución de Reseñas":
     else:
         st.warning("No hay datos para El Torito.")
 
-    # --- GRÁFICO POR SUCURSAL SELECCIONADA ---
-    st.subheader("Distribución de Reseñas por Sucursal")
+    # --- Distribución por sucursal específica ---
+    st.subheader("Distribución por Sucursal de El Torito")
 
     sucursales = {
         "El Torito Sucursal 1": "0x80844a01be660f09:0x661fee46237228d7",
@@ -493,36 +494,35 @@ if opcion == "Distribución de Reseñas":
     sucursal_seleccionada = st.selectbox("Selecciona una sucursal:", list(sucursales.keys()))
     business_id = sucursales[sucursal_seleccionada]
 
-    q_sucursal = f"""
-    SELECT 
-        EXTRACT(YEAR FROM r.review_date) AS anio,
-        CASE 
-            WHEN r.stars <= 2.5 THEN 'Negativo'
-            WHEN r.stars > 2.5 AND r.stars <= 3.5 THEN 'Neutro'
-            ELSE 'Positivo'
-        END AS sentimiento,
-        COUNT(*) AS cantidad
+    q_reseñas = f"""
+    SELECT r.business_id,
+           b.business_name,
+           EXTRACT(YEAR FROM r.review_date) AS anio,
+           CASE 
+             WHEN r.stars <= 2.5 THEN 'Negativo'
+             WHEN r.stars > 2.5 AND r.stars <= 3.5 THEN 'Neutro'
+             ELSE 'Positivo'
+           END AS sentimiento,
+           COUNT(*) AS cantidad
     FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-    WHERE r.business_id = '{business_id}'
-    GROUP BY anio, sentimiento
-    ORDER BY anio;
+    JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+      ON r.business_id = b.business_id
+    WHERE b.business_id = '{business_id}'
+    GROUP BY r.business_id, b.business_name, anio, sentimiento
+    ORDER BY anio
     """
 
-    df_sucursal = run_query(q_sucursal)
+    df_reseñas = run_query(q_reseñas)
 
-    if not df_sucursal.empty:
+    if not df_reseñas.empty:
         fig2, ax2 = plt.subplots(figsize=(10, 6))
-        for sentimiento in df_sucursal["sentimiento"].unique():
-            subset = df_sucursal[df_sucursal["sentimiento"] == sentimiento]
-            ax2.bar(subset["anio"], subset["cantidad"], label=sentimiento, bottom=df_sucursal[df_sucursal["sentimiento"] < sentimiento].groupby("anio")["cantidad"].sum() if sentimiento != "Negativo" else None)
-        ax2.set_title(f"Distribución de Sentimientos en {sucursal_seleccionada}")
+        sns.barplot(x="anio", y="cantidad", hue="sentimiento", data=df_reseñas, ax=ax2)
+        ax2.set_title(f"Distribución de Sentimientos de las Reseñas de {sucursal_seleccionada}")
         ax2.set_xlabel("Año")
-        ax2.set_ylabel("Cantidad de Reseñas")
-        ax2.legend(title="Sentimiento")
+        ax2.set_ylabel("Número de Reseñas")
         st.pyplot(fig2)
     else:
-        st.warning("No hay datos para la sucursal seleccionada.")
-
+        st.warning("No hay datos de reseñas para la sucursal seleccionada.")
 
 #explorar reseñas
     # Diccionario de sucursales de El Torito con su business_id
