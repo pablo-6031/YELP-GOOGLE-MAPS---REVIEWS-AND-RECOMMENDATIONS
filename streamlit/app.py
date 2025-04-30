@@ -12,21 +12,20 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 from sklearn.feature_extraction.text import CountVectorizer
 from wordcloud import WordCloud
+   
+# === CONFIGURACIÓN GENERAL ===
 
-from transformers import pipeline
-# === CONFIGURACIÓN DE LA PÁGINA ===
-st.set_page_config(page_title="Yelp & Google Reviews - Torito Comida Mexicana", layout="wide")
-
-# === CARGA DE IMÁGENES ===
+# URLs de imágenes desde GitHub
 url_logo_torito = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logo%20Torito.png"
 url_logo_hype = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logo%20hype.png"
 url_fondo = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/fondoTorito.png"
 
+# Cargar imágenes
 logo_torito = Image.open(BytesIO(requests.get(url_logo_torito).content))
 logo_hype = Image.open(BytesIO(requests.get(url_logo_hype).content))
 fondo = Image.open(BytesIO(requests.get(url_fondo).content))
 
-# === FONDO PERSONALIZADO ===
+# Estilo global y fondo
 def set_background(image):
     buffered = BytesIO()
     image.save(buffered, format="PNG")
@@ -39,96 +38,52 @@ def set_background(image):
             background-position: center;
             background-repeat: no-repeat;
         }}
-        html, body {{
+        html, body, [class*="css"] {{
+            color: #FFFFFF;
             background-color: #121212;
+        }}
+        h1, h2, h3, h4 {{ color: #FFFFFF; }}
+        p {{ color: #E0E0E0; }}
+        .subtitle {{ color: #BBBBBB; }}
+        .css-1r6slb0, .css-1d391kg {{
+            background-color: #1E1E1E !important;
+            color: #FFFFFF !important;
+        }}
+        .element-container .stMetric {{
+            background-color: #1F1F1F;
+            border-radius: 8px;
+            padding: 10px;
+        }}
+        .stTextInput>div>div>input, .stTextArea>div>textarea, .stSelectbox>div>div>div>div {{
+            background-color: #1E1E1E;
             color: white;
+            border: 1px solid #444;
+        }}
+        .stSelectbox>div>div>div>div {{
+            background-color: #2C2C2C !important;
         }}
         .logo-hype {{
             position: fixed;
             top: 10px;
             left: 10px;
             width: 120px;
-            z-index: 999;
         }}
         </style>
     """, unsafe_allow_html=True)
 
 set_background(fondo)
+
+# Mostrar logos
 st.markdown(f'<img class="logo-hype" src="{url_logo_hype}">', unsafe_allow_html=True)
 st.image(logo_torito, width=200)
 
 # === CONFIGURACIÓN BIGQUERY ===
 credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
-client_bq = bigquery.Client(credentials=credentials)
-# === INICIALIZACIÓN DEL MODELO DE HUGGING FACE ===
-generator = pipeline('text-generation', model='distilgpt2')  # Puedes cambiar a otro modelo de Hugging Face si lo prefieres
+client = bigquery.Client(credentials=credentials)
 
-# === CONFIGURACIÓN CHAT ===
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "assistant", "content": "¡Hola! Soy el asistente de Torito Comida Mexicana. ¿En qué puedo ayudarte hoy?"}
-    ]
-
-# === CHAT FLOTANTE ===
-with st.container():
-    st.markdown(
-        """
-        <style>
-        .chat-container {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            width: 350px;
-            max-height: 500px;
-            background-color: #1e1e1e;
-            border-radius: 15px;
-            padding: 20px;
-            color: white;
-            overflow-y: auto;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            z-index: 1000;
-        }
-        .chat-input {
-            width: 100%;
-            margin-top: 10px;
-        }
-        </style>
-        <div class="chat-container">
-        """,
-        unsafe_allow_html=True
-    )
-
-    # Mostrar los mensajes previos del chat
-    for msg in st.session_state.messages:
-        icon = "🧑" if msg["role"] == "user" else "🤖"
-        st.markdown(f"{icon} {msg['content']}")
-
-    # Entrada de usuario
-    user_input = st.text_input("Tu mensaje:", key="chat_input", label_visibility="collapsed")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("📋 Ver menú"):
-            user_input = "¿Podés mostrarme el menú?"
-    with col2:
-        if st.button("📍 Dónde están?"):
-            user_input = "¿Dónde queda el restaurante?"
-
-    if user_input:
-        # Agregar el mensaje del usuario a la sesión
-        st.session_state.messages.append({"role": "user", "content": user_input})
-
-        # Generación de la respuesta usando el modelo de Hugging Face (GPT-2)
-        prompt = " ".join([msg["content"] for msg in st.session_state.messages])  # Unir todo el chat para dar contexto
-        generated_text = generator(prompt, max_length=150, num_return_sequences=1)[0]['generated_text']
-
-        # Extraer solo la respuesta generada, sin el contexto completo
-        assistant_reply = generated_text[len(prompt):].strip()
-
-        # Agregar la respuesta generada a la conversación
-        st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
-
-    st.markdown("</div>", unsafe_allow_html=True)
+@st.cache_data(ttl=600)
+def run_query(query):
+    return pd.DataFrame([dict(row) for row in client.query(query).result()])
 
 # ID fijo del negocio principal
 BUSINESS_ID_EL_TORITO = "7yr4oqcapzbkckrlb3isig"
@@ -552,4 +507,3 @@ if opcion == "Explorar Reseñas":
 
     st.write(f"Últimas 10 reseñas de {sucursal_seleccionada}:")
     st.dataframe(reviews)
-
