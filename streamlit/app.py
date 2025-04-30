@@ -163,14 +163,14 @@ def run_query(query):
     rows_raw = query_job.result()
     rows = [dict(row) for row in rows_raw]
     return pd.DataFrame(rows)
+# Competencia functions
 @st.cache_data
- def show_competencia():
-    st.title("Competidores & Sucursales de El Torito (Categoría Mexicana)")
+def show_competencia():
+    st.title("Competidores & Sucursales de El Torito (Mexicana)")
 
-    # Consulta para el Top 5 competidores
     q_comp = """
     SELECT b.business_name,
-           AVG(r.stars)    AS avg_rating,
+           AVG(r.stars) AS avg_rating,
            COUNT(r.review_text) AS num_reviews
     FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
     JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
@@ -182,11 +182,10 @@ def run_query(query):
     """
     df_comp = run_query(q_comp)
 
-    # Consulta para cada sucursal de El Torito
     q_torito = """
     SELECT b.business_id,
            b.business_name,
-           AVG(r.stars)    AS avg_rating,
+           AVG(r.stars) AS avg_rating,
            COUNT(r.review_text) AS num_reviews
     FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
     JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
@@ -197,32 +196,30 @@ def run_query(query):
     """
     df_torito = run_query(q_torito)
 
-    # Mostrar tablas
     st.subheader("Top 5 Competidores (Mexican)")
     st.dataframe(df_comp)
 
     st.subheader("Sucursales de El Torito")
     st.dataframe(df_torito)
 
-    # Gráfico de competidores
+    # plots
     st.subheader("Rating Promedio — Competidores")
     fig1, ax1 = plt.subplots()
     sns.barplot(x="avg_rating", y="business_name", data=df_comp, ax=ax1)
     ax1.set_xlabel("Rating promedio")
     st.pyplot(fig1)
 
-    # Gráfico de sucursales Torito
     st.subheader("Rating Promedio — Sucursales de El Torito")
     fig2, ax2 = plt.subplots()
     sns.barplot(x="avg_rating", y="business_id", data=df_torito, ax=ax2, color="salmon")
     ax2.set_xlabel("Rating promedio")
     st.pyplot(fig2)
 
-    # Gráfico comparativo
     st.subheader("Comparación — Competidores vs Sucursales Torito")
     df_comp["tipo"] = "Competidor"
     df_torito["tipo"] = "Torito"
-    df_all = pd.concat([df_comp, df_torito.rename(columns={'business_id': 'business_name'})], ignore_index=True)
+    df_torito_renamed = df_torito.rename(columns={"business_id": "business_name"})
+    df_all = pd.concat([df_comp, df_torito_renamed], ignore_index=True)
     fig3, ax3 = plt.subplots()
     sns.barplot(x="avg_rating", y="business_name", hue="tipo", data=df_all, ax=ax3)
     ax3.set_xlabel("Rating promedio")
