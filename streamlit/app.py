@@ -301,6 +301,24 @@ if opcion == "Distribución de Reseñas por Año y Sucursal":
     st.title("Distribución de Reseñas de El Torito por Año y Sucursal")
 
 # Página de Competencia
+import streamlit as st
+import pandas as pd
+from google.cloud import bigquery
+from google.oauth2 import service_account
+
+# Configuración de la conexión a BigQuery
+credentials = service_account.Credentials.from_service_account_info(
+    st.secrets["gcp_service_account"]
+)
+client = bigquery.Client(credentials=credentials)
+
+def run_query(query):
+    query_job = client.query(query)
+    rows_raw = query_job.result()
+    rows = [dict(row) for row in rows_raw]
+    return rows
+
+# Página de Competencia
 if st.sidebar.selectbox("Selecciona una página", ["Competencia", "Otro"]) == "Competencia":
     st.title("Análisis de Competencia para El Torito")
 
@@ -322,7 +340,8 @@ if st.sidebar.selectbox("Selecciona una página", ["Competencia", "Otro"]) == "C
     try:
         competition = run_query(query)
 
-        if not competition:  # Verificar si no hay resultados
+        # Verificar si no hay resultados usando .empty
+        if not competition:
             st.warning("No se encontraron resultados para la competencia.")
         else:
             st.write("### Competencia más cercana:")
@@ -347,6 +366,7 @@ if st.sidebar.selectbox("Selecciona una página", ["Competencia", "Otro"]) == "C
 
     except Exception as e:
         st.error(f"Error al obtener datos de competencia: {str(e)}")
+
 
         
 # Página de Explorar Reseñas
