@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 from sklearn.feature_extraction.text import CountVectorizer
 from wordcloud import WordCloud
-from openai import OpenAI
 
+from transformers import pipeline
 # === CONFIGURACIÓN DE LA PÁGINA ===
 st.set_page_config(page_title="Yelp & Google Reviews - Torito Comida Mexicana", layout="wide")
 
@@ -60,12 +60,10 @@ st.image(logo_torito, width=200)
 # === CONFIGURACIÓN BIGQUERY ===
 credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
 client_bq = bigquery.Client(credentials=credentials)
+# === INICIALIZACIÓN DEL MODELO DE HUGGING FACE ===
+generator = pipeline('text-generation', model='distilgpt2')  # Puedes cambiar a otro modelo de Hugging Face si lo prefieres
 
-# === CONFIGURACIÓN OPENAI ===
-openai_client = OpenAI(api_key=st.secrets["openai_api_key"])
-
-
-# === INICIALIZACIÓN DEL CHAT ===
+# === CONFIGURACIÓN CHAT ===
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "assistant", "content": "¡Hola! Soy el asistente de Torito Comida Mexicana. ¿En qué puedo ayudarte hoy?"}
@@ -100,10 +98,12 @@ with st.container():
         unsafe_allow_html=True
     )
 
+    # Mostrar los mensajes previos del chat
     for msg in st.session_state.messages:
         icon = "🧑" if msg["role"] == "user" else "🤖"
         st.markdown(f"{icon} {msg['content']}")
 
+    # Entrada de usuario
     user_input = st.text_input("Tu mensaje:", key="chat_input", label_visibility="collapsed")
 
     col1, col2 = st.columns(2)
@@ -115,20 +115,20 @@ with st.container():
             user_input = "¿Dónde queda el restaurante?"
 
     if user_input:
+        # Agregar el mensaje del usuario a la sesión
         st.session_state.messages.append({"role": "user", "content": user_input})
 
-        response = openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "Sos un asistente virtual 24/7 para un restaurante mexicano llamado Torito. Respondé en tono amable y claro."},
-                *st.session_state.messages
-            ]
-        )
-        gpt_response = response.choices[0].message.content
-        st.session_state.messages.append({"role": "assistant", "content": gpt_response})
+        # Generación de la respuesta usando el modelo de Hugging Face (GPT-2)
+        prompt = " ".join([msg["content"] for msg in st.session_state.messages])  # Unir todo el chat para dar contexto
+        generated_text = generator(prompt, max_length=150, num_return_sequences=1)[0]['generated_text']
+
+        # Extraer solo la respuesta generada, sin el contexto completo
+        assistant_reply = generated_text[len(prompt):].strip()
+
+        # Agregar la respuesta generada a la conversación
+        st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
 
     st.markdown("</div>", unsafe_allow_html=True)
-
 
 # ID fijo del negocio principal
 BUSINESS_ID_EL_TORITO = "7yr4oqcapzbkckrlb3isig"
