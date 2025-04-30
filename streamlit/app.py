@@ -223,13 +223,21 @@ def show_competencia():
 
     # 3) Comparación — Competidores vs Sucursales Torito
     st.subheader("Comparación — Competidores vs Sucursales Torito")
-    # Preparamos df_all con business_name y avg_rating y tipo
-        # Marcar el origen de cada fila
-    df_comp['tipo'] = 'Competidor'
-    df_torito_ren = df_torito.rename(columns={'business_id': 'business_name'})
-    df_torito_ren['tipo'] = 'Torito'
+    # Verificamos las columnas disponibles antes de seleccionar
+st.write("Columnas en df_comp:", df_comp.columns.tolist())
+st.write("Columnas en df_torito_ren:", df_torito_ren.columns.tolist())
 
-    # Concatenar asegurando que solo añada filas (axis=0) y reinicie el índice
+# Aseguramos que ambas columnas estén presentes
+required_columns = ['business_name', 'avg_rating']
+
+for col in required_columns:
+    if col not in df_comp.columns:
+        st.error(f"'{col}' no está en df_comp")
+    if col not in df_torito_ren.columns:
+        st.error(f"'{col}' no está en df_torito_ren")
+
+# Ahora aplicamos la concatenación solo si ambas tienen las columnas necesarias
+if all(col in df_comp.columns for col in required_columns) and all(col in df_torito_ren.columns for col in required_columns):
     df_all = pd.concat(
         [
             df_comp[['business_name', 'avg_rating', 'tipo']],
@@ -238,15 +246,18 @@ def show_competencia():
         axis=0,
         ignore_index=True
     )
-
+    
+    # Gráfico
     fig3, ax3 = plt.subplots()
-    # Para cada tipo, trazamos barras
-    for t, group in df_all.groupby('tipo'):
-        ax3.barh(group['business_name'], group['avg_rating'], label=t)
+    for origen, group in df_all.groupby('tipo'):
+        ax3.barh(group['business_name'], group['avg_rating'], label=origen)
     ax3.invert_yaxis()
     ax3.set_xlabel("Rating promedio")
     ax3.legend()
     st.pyplot(fig3)
+else:
+    st.warning("No se pudo concatenar porque faltan columnas.")
+
 # Navegación en el sidebar
 with st.sidebar:
     opcion = option_menu("Navegación", 
