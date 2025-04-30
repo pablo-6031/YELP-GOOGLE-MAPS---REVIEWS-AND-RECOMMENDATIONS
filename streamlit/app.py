@@ -79,7 +79,7 @@ st.image(logo_torito, width=200)
 # === CONFIGURACIÓN BIGQUERY ===
 credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
 client = bigquery.Client(credentials=credentials)
-i
+
 # Configuración de la página
 st.set_page_config(page_title="Asistente Torito", page_icon="🤖")
 st.title("🗨️ Asistente Virtual de Torito Comida Mexicana")
