@@ -222,20 +222,95 @@ if opcion == "Inicio":
 
     📄 [Leer README del Proyecto en GitHub](https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/README.md)
     """)
+
 # --- KPIs ---
 if opcion == "KPIs":
     st.title("KPIs de El Torito")
-    query = """
-    SELECT 
-        AVG(stars) AS avg_rating,
-        COUNT(review_text) AS review_count
-    FROM shining-rampart-455602-a7.dw_restaurantes.fact_review
-    WHERE business_id = 'your_business_id'
-    """
-    resultados = run_query(query)
-    st.metric("Promedio de Rating", round(resultados[0]['avg_rating'], 2))
-    st.metric("Número de Reseñas", resultados[0]['review_count'])
+    
+    sucursales = {
+        "Todas": None,
+        "El Torito Sucursal 1": "0x80844a01be660f09:0x661fee46237228d7",
+        "El Torito Sucursal 2": "0x808fc9e896f1d559:0x8c0b57a8edd4fd5d",
+        "El Torito Sucursal 3": "0x808fccb4507dc323:0x297d7fd58fc8ff91",
+        "El Torito Sucursal 4": "0x809ade1814a05da3:0xad096a803d166a4c",
+        "El Torito Sucursal 5": "0x80c280a9a282d2e9:0xf3a894f129f38b2f",
+        "El Torito Sucursal 6": "0x80c29794c7e2d44d:0xda1266db4b03e83c",
+        "El Torito Sucursal 7": "0x80c297ce3cd0f54b:0xececf01e9eeee6f7",
+        "El Torito Sucursal 8": "0x80c2b4d2ca3e19c9:0xcf83f70eaba7a203",
+        "El Torito Sucursal 9": "0x80c2bfcf8cc535fd:0xea7ffe91727d1946",
+        "El Torito Sucursal 10": "0x80dbf8ec8ade5d45:0x952d1e263dadc54e",
+        "El Torito Sucursal 11": "0x80dcd43a352d3ae3:0xae921b0c9e9cbdb7",
+        "El Torito Sucursal 12": "0x80dd2ddc6a24e4af:0xcadb76671ddbc94d",
+        "El Torito Sucursal 13": "0x80dd32f142b8252b:0x1af197c9399f5231",
+        "El Torito Sucursal 14": "0x80e9138c2f68bd4f:0x64f25be6f8d56d95",
+        "El Torito Sucursal 15": "0x80ea4fe71c447a1b:0x17232153c8e87293",
+        "El Torito Sucursal 16": "7yr4oqcapzbkckrlb3isig",
+    }
 
+    # Selección de sucursal
+    sucursal_seleccionada = st.selectbox("Seleccioná una sucursal para analizar KPIs:", list(sucursales.keys()))
+    business_id = sucursales[sucursal_seleccionada]
+
+    # Selección de frecuencia de análisis (mensual o anual)
+    frecuencia = st.radio("Selecciona la frecuencia de análisis:", ('Mensual', 'Anual'))
+
+    # Selección de rango de fechas
+    fecha_desde = st.date_input("Desde:", value=pd.to_datetime("2020-01-01"))
+    fecha_hasta = st.date_input("Hasta:", value=pd.to_datetime("2023-12-31"))
+
+    # Construcción de la query SQL
+    if business_id:
+        filtro = f"WHERE business_id = '{business_id}'"
+    else:
+        ids = [f"'{v}'" for v in sucursales.values() if v]
+        filtro = f"WHERE business_id IN ({', '.join(ids)})"
+
+    # Ajuste del formato de la fecha dependiendo de la frecuencia seleccionada
+    if frecuencia == 'Mensual':
+        formato_periodo = "FORMAT_TIMESTAMP('%Y-%m', review_date) AS periodo"
+    else:
+        formato_periodo = "FORMAT_TIMESTAMP('%Y', review_date) AS periodo"
+
+    # Query para obtener los KPIs
+    query_kpi = f"""
+    SELECT 
+        {formato_periodo},
+        COUNT(*) AS volumen_resenas,
+        ROUND(AVG(stars), 2) AS calificacion_promedio
+    FROM shining-rampart-455602-a7.dw_restaurantes.fact_review
+    {filtro}
+    AND review_date BETWEEN '{fecha_desde}' AND '{fecha_hasta}'
+    GROUP BY periodo
+    ORDER BY periodo
+    """
+
+    # Ejecutar la consulta
+    df_kpi = run_query(query_kpi)
+
+    # Visualizar resultados
+    if not df_kpi.empty:
+        st.subheader(f"KPIs por Periodo - {sucursal_seleccionada}")
+
+        # Gráfico 1: Calificación promedio
+        fig1, ax1 = plt.subplots(figsize=(10, 4))
+        ax1.plot(df_kpi["periodo"], df_kpi["calificacion_promedio"], marker='o', color='green')
+        ax1.set_title("Calificación Promedio por Periodo")
+        ax1.set_xlabel("Periodo")
+        ax1.set_ylabel("Calificación Promedio")
+        ax1.tick_params(axis='x', rotation=45)
+        st.pyplot(fig1)
+
+        # Gráfico 2: Volumen de reseñas
+        fig2, ax2 = plt.subplots(figsize=(10, 4))
+        ax2.bar(df_kpi["periodo"], df_kpi["volumen_resenas"], color='skyblue')
+        ax2.set_title("Volumen de Reseñas por Periodo")
+        ax2.set_xlabel("Periodo")
+        ax2.set_ylabel("Cantidad de Reseñas")
+        ax2.tick_params(axis='x', rotation=45)
+        st.pyplot(fig2)
+
+    else:
+        st.warning("No hay datos disponibles para la selección realizada.")
 # --- MAPAS ---
 if opcion == "Mapas":
     st.title("Mapa de Ubicaciones de El Torito")
