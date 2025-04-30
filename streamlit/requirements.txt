@@ -10,5 +10,6 @@ requests
 db-dtypes
 scikit-learn
 wordcloud
-openai
 transformers
+torch
+requests
