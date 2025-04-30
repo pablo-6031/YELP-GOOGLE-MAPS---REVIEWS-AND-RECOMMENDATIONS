@@ -319,7 +319,7 @@ elif opcion == "Distribución de Reseñas":
 elif opcion == "Competencia":
     st.title("Competidores & Sucursales de El Torito")
     show_competencia()
-    if opcion == "Distribución de Reseñas":
+elif opcion == "Distribución de Reseñas":
     st.subheader("Distribución General de Reseñas (todas las sucursales)")
 
     # Consulta general por sentimiento y año
