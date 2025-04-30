@@ -465,7 +465,7 @@ if opcion == "Distribución de Reseñas por Año y Sucursal":
         ax_bar.tick_params(axis='x', rotation=45)
         st.pyplot(fig_bar)
         
-Página de Explorar Reseñas
+
 
 
     # Diccionario de sucursales de El Torito con su business_id
