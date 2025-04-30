@@ -362,13 +362,12 @@ if opcion == "Distribución de Reseñas por Año y Sucursal":
     st.title("Distribución de Reseñas de El Torito por Año y Sucursal")
 
 
-
 # Página de Competencia
 if opcion == "Competencia":
     st.title("Competidores & Sucursales de El Torito")
+    show_competencia()
 
-  
-         show_competencia()
+
 # Página de Explorar Reseñas
 if opcion == "Explorar Reseñas":
     st.title("Explorar Reseñas de El Torito")
