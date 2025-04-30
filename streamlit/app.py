@@ -428,8 +428,8 @@ if opcion == "Competencia":
     show_competencia()
 
 # --- Página de Distribución de Reseñas ---
-if opcion == "Distribución de Reseñas":
 
+if opcion == "Distribución de Reseñas":
     # --- Distribución General de todas las sucursales ---
     st.subheader("Distribución General de Reseñas (todas las sucursales)")
 
@@ -470,35 +470,15 @@ if opcion == "Distribución de Reseñas":
         st.warning("No hay datos para El Torito.")
 
     # --- Distribución por sucursal específica ---
-    st.subheader("Distribución por Sucursal Específica")
-
-    # Diccionario de sucursales con sus business_id
     sucursales = {
         "El Torito Sucursal 1": "0x80844a01be660f09:0x661fee46237228d7",
-        "El Torito Sucursal 2": "0x808fc9e896f1d559:0x8c0b57a8edd4fd5d",
-        "El Torito Sucursal 3": "0x808fccb4507dc323:0x297d7fd58fc8ff91",
-        "El Torito Sucursal 4": "0x809ade1814a05da3:0xad096a803d166a4c",
-        "El Torito Sucursal 5": "0x80c280a9a282d2e9:0xf3a894f129f38b2f",
-        "El Torito Sucursal 6": "0x80c29794c7e2d44d:0xda1266db4b03e83c",
-        "El Torito Sucursal 7": "0x80c297ce3cd0f54b:0xececf01e9eeee6f7",
-        "El Torito Sucursal 8": "0x80c2b4d2ca3e19c9:0xcf83f70eaba7a203",
-        "El Torito Sucursal 9": "0x80c2bfcf8cc535fd:0xea7ffe91727d1946",
-        "El Torito Sucursal 10": "0x80dbf8ec8ade5d45:0x952d1e263dadc54e",
-        "El Torito Sucursal 11": "0x80dcd43a352d3ae3:0xae921b0c9e9cbdb7",
-        "El Torito Sucursal 12": "0x80dd2ddc6a24e4af:0xcadb76671ddbc94d",
-        "El Torito Sucursal 13": "0x80dd32f142b8252b:0x1af197c9399f5231",
-        "El Torito Sucursal 14": "0x80e9138c2f68bd4f:0x64f25be6f8d56d95",
-        "El Torito Sucursal 15": "0x80ea4fe71c447a1b:0x17232153c8e87293",
+        ...
         "El Torito Sucursal 16": "7yr4oqcapzbkckrlb3isig",
     }
 
-    # Interfaz de usuario para seleccionar sucursal
     sucursal_seleccionada = st.selectbox("Selecciona una sucursal de El Torito:", list(sucursales.keys()))
-
-    # Obtener el business_id de la sucursal seleccionada
     business_id = sucursales[sucursal_seleccionada]
 
-    # Consulta a BigQuery para obtener la distribución de reseñas por año y sentimiento
     q_reseñas = f"""
     SELECT r.business_id,
            b.business_name,
@@ -517,17 +497,13 @@ if opcion == "Distribución de Reseñas":
     ORDER BY anio
     """
 
-    # Obtener los datos desde BigQuery
     df_reseñas = run_query(q_reseñas)
 
-    # Verificar si se obtuvieron datos
     if not df_reseñas.empty:
         st.write(f"Distribución de Reseñas de {sucursal_seleccionada} por Año y Sentimiento")
         
-        # Pivotar el DataFrame para facilitar el gráfico
         df_pivot = df_reseñas.pivot_table(index='anio', columns='sentimiento', values='cantidad', aggfunc='sum', fill_value=0)
 
-        # Crear gráfico de barras apiladas usando matplotlib
         fig, ax = plt.subplots(figsize=(10, 6))
         df_pivot.plot(kind='bar', stacked=True, ax=ax)
 
@@ -539,7 +515,6 @@ if opcion == "Distribución de Reseñas":
         st.pyplot(fig)
     else:
         st.warning("No hay datos de reseñas para la sucursal seleccionada.")
-
 
 #explorar reseñas
     # Diccionario de sucursales de El Torito con su business_id
