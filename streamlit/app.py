@@ -204,29 +204,41 @@ def show_competencia():
     st.subheader("Sucursales de El Torito")
     st.dataframe(df_torito)
 
-    # plots
+    # 1) Rating Promedio — Competidores
     st.subheader("Rating Promedio — Competidores")
     fig1, ax1 = plt.subplots()
-    sns.barplot(x="avg_rating", y="business_name", data=df_comp, ax=ax1)
+    # barra horizontal: business_name vs avg_rating
+    ax1.barh(df_comp['business_name'], df_comp['avg_rating'])
+    ax1.invert_yaxis()  # para que el mejor rating quede arriba
     ax1.set_xlabel("Rating promedio")
     st.pyplot(fig1)
 
+    # 2) Rating Promedio — Sucursales de El Torito
     st.subheader("Rating Promedio — Sucursales de El Torito")
     fig2, ax2 = plt.subplots()
-    sns.barplot(x="avg_rating", y="business_id", data=df_torito, ax=ax2, color="salmon")
+    ax2.barh(df_torito['business_id'], df_torito['avg_rating'], color='salmon')
+    ax2.invert_yaxis()
     ax2.set_xlabel("Rating promedio")
     st.pyplot(fig2)
 
+    # 3) Comparación — Competidores vs Sucursales Torito
     st.subheader("Comparación — Competidores vs Sucursales Torito")
-    df_comp["tipo"] = "Competidor"
-    df_torito["tipo"] = "Torito"
-    df_torito_renamed = df_torito.rename(columns={"business_id": "business_name"})
-    df_all = pd.concat([df_comp, df_torito_renamed], ignore_index=True)
-    fig3, ax3 = plt.subplots()
-    sns.barplot(x="avg_rating", y="business_name", hue="tipo", data=df_all, ax=ax3)
-    ax3.set_xlabel("Rating promedio")
-    st.pyplot(fig3)
+    # Preparamos df_all con business_name y avg_rating y tipo
+    df_comp['tipo'] = 'Competidor'
+    df_torito_ren = df_torito.rename(columns={'business_id': 'business_name'})
+    df_torito_ren['tipo'] = 'Torito'
+    df_all = pd.concat([df_comp[['business_name','avg_rating','tipo']],
+                        df_torito_ren[['business_name','avg_rating','tipo']]],
+                       ignore_index=True)
 
+    fig3, ax3 = plt.subplots()
+    # Para cada tipo, trazamos barras
+    for t, group in df_all.groupby('tipo'):
+        ax3.barh(group['business_name'], group['avg_rating'], label=t)
+    ax3.invert_yaxis()
+    ax3.set_xlabel("Rating promedio")
+    ax3.legend()
+    st.pyplot(fig3)
 # Navegación en el sidebar
 with st.sidebar:
     opcion = option_menu("Navegación", 
