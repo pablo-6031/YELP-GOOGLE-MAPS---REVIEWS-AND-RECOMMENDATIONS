@@ -224,12 +224,20 @@ def show_competencia():
     # 3) Comparación — Competidores vs Sucursales Torito
     st.subheader("Comparación — Competidores vs Sucursales Torito")
     # Preparamos df_all con business_name y avg_rating y tipo
+        # Marcar el origen de cada fila
     df_comp['tipo'] = 'Competidor'
     df_torito_ren = df_torito.rename(columns={'business_id': 'business_name'})
     df_torito_ren['tipo'] = 'Torito'
-    df_all = pd.concat([df_comp[['business_name','avg_rating','tipo']],
-                        df_torito_ren[['business_name','avg_rating','tipo']]],
-                       ignore_index=True)
+
+    # Concatenar asegurando que solo añada filas (axis=0) y reinicie el índice
+    df_all = pd.concat(
+        [
+            df_comp[['business_name', 'avg_rating', 'tipo']],
+            df_torito_ren[['business_name', 'avg_rating', 'tipo']]
+        ],
+        axis=0,
+        ignore_index=True
+    )
 
     fig3, ax3 = plt.subplots()
     # Para cada tipo, trazamos barras
