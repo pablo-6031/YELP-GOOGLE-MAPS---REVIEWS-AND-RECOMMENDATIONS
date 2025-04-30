@@ -189,6 +189,7 @@ with st.sidebar:
     )
 
 # --- INICIO ---
+# --- INICIO ---
 if opcion == "Inicio":
     st.title("Análisis de Reseñas: El Torito")
     st.markdown(""" 
@@ -214,9 +215,13 @@ if opcion == "Inicio":
     - Sistema Recomendador
     - Distribución de reseñas
     - Comparativas con la competencia
-    ---
-    """)
 
+    ---
+
+    🔗 [Ver Dashboard Interactivo en Looker Studio](https://lookerstudio.google.com/u/0/reporting/df20fc98-f8fa-42bf-8734-92d4ff90e6f5/page/7xbIF)
+
+    📄 [Leer README del Proyecto en GitHub](https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/README.md)
+    """)
 # --- KPIs ---
 if opcion == "KPIs":
     st.title("KPIs de El Torito")
