@@ -300,73 +300,72 @@ if opcion == "Predicciones":
 if opcion == "Distribución de Reseñas por Año y Sucursal":
     st.title("Distribución de Reseñas de El Torito por Año y Sucursal")
 
-# Página de Competencia
-import streamlit as st
-import pandas as pd
-from google.cloud import bigquery
-from google.oauth2 import service_account
 
-# Configuración de la conexión a BigQuery
-credentials = service_account.Credentials.from_service_account_info(
-    st.secrets["gcp_service_account"]
-)
-client = bigquery.Client(credentials=credentials)
-
-def run_query(query):
-    query_job = client.query(query)
-    rows_raw = query_job.result()
-    rows = [dict(row) for row in rows_raw]
-    return rows
 
 # Página de Competencia
-if st.sidebar.selectbox("Selecciona una página", ["Competencia", "Otro"]) == "Competencia":
-    st.title("Análisis de Competencia para El Torito")
+if page == "Competencia":
+    st.title("Competidores & Sucursales de El Torito")
 
-    # Consulta SQL para obtener los negocios competidores en la categoría 'Mexican'
-    query = """
-    SELECT b.business_name, 
-           AVG(r.stars) AS avg_rating, 
+    # Top-5 competidores
+    q_comp = """
+    SELECT b.business_name,
+           AVG(r.stars)    AS avg_rating,
            COUNT(r.review_text) AS num_reviews
-    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` AS b
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` AS r
-    ON b.business_id = r.business_id
-    WHERE b.categories LIKE '%Mexican%' AND b.business_id != '7yr4oqcapzbkckrlb3isig'
+    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+      ON b.business_id = r.business_id
+    WHERE b.categories LIKE '%Mexican%'
     GROUP BY b.business_name
     ORDER BY avg_rating DESC
     LIMIT 5
     """
+    df_comp = run_query(q_comp)
 
-    # Ejecutar la consulta y obtener los resultados
-    try:
-        competition = run_query(query)
+    # Sucursales Torito (por business_id)
+    q_torito = """
+    SELECT b.business_id,
+           b.business_name,
+           AVG(r.stars)    AS avg_rating,
+           COUNT(r.review_text) AS num_reviews
+    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+      ON b.business_id = r.business_id
+    WHERE b.business_name LIKE '%Torito%'
+    GROUP BY b.business_id, b.business_name
+    ORDER BY avg_rating DESC
+    """
+    df_torito = run_query(q_torito)
 
-        # Verificar si no hay resultados usando .empty
-        if not competition:
-            st.warning("No se encontraron resultados para la competencia.")
-        else:
-            st.write("### Competencia más cercana:")
-            st.write("Estos son los negocios en la categoría 'Mexican' con mejores calificaciones, excluyendo 'El Torito'.")
+    # Mostrar tablas
+    st.subheader("Top 5 Competidores (Mexican)")
+    st.dataframe(df_comp)
 
-            # Mostrar la tabla con los datos de la competencia
-            df_competition = pd.DataFrame(competition)
-            st.dataframe(df_competition)
+    st.subheader("Sucursales de El Torito")
+    st.dataframe(df_torito)
 
-            # Comparar con los datos de "El Torito"
-            st.write("### Comparación con El Torito:")
-            # Los datos de El Torito, puedes obtenerlos de BigQuery o definirlos manualmente
-            el_torito_data = {
-                "business_name": ["El Torito"],
-                "avg_rating": [4.2],  # Ejemplo de rating de El Torito
-                "num_reviews": [150]  # Ejemplo de número de reseñas de El Torito
-            }
+    # Gráfico de competidores
+    st.subheader("Rating Promedio — Competidores")
+    fig1, ax1 = plt.subplots()
+    sns.barplot(x="avg_rating", y="business_name", data=df_comp, ax=ax1)
+    ax1.set_xlabel("Rating promedio")
+    st.pyplot(fig1)
 
-            df_el_torito = pd.DataFrame(el_torito_data)
-            st.write(f"Comparando con El Torito, que tiene un rating de {df_el_torito['avg_rating'][0]} estrellas y {df_el_torito['num_reviews'][0]} reseñas.")
-            st.dataframe(df_el_torito)
+    # Gráfico de sucursales Torito
+    st.subheader("Rating Promedio — Sucursales de El Torito")
+    fig2, ax2 = plt.subplots()
+    sns.barplot(x="avg_rating", y="business_id", data=df_torito, ax=ax2, color="salmon")
+    ax2.set_xlabel("Rating promedio")
+    st.pyplot(fig2)
 
-    except Exception as e:
-        st.error(f"Error al obtener datos de competencia: {str(e)}")
-
+    # Gráfico comparativo
+    st.subheader("Comparación — Competidores vs Sucursales Torito")
+    df_comp["tipo"] = "Competidor"
+    df_torito["tipo"] = "Torito"
+    df_all = pd.concat([df_comp, df_torito], ignore_index=True)
+    fig3, ax3 = plt.subplots()
+    sns.barplot(x="avg_rating", y="business_name", hue="tipo", data=df_all, ax=ax3)
+    ax3.set_xlabel("Rating promedio")
+    st.pyplot(fig3)
 
         
 # Página de Explorar Reseñas
