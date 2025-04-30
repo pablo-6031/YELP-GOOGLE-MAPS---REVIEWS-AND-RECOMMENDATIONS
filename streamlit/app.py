@@ -80,9 +80,7 @@ st.image(logo_torito, width=200)
 credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
 client = bigquery.Client(credentials=credentials)
 
-# Configuración de la página
-st.set_page_config(page_title="Asistente Torito", page_icon="🤖")
-st.title("🗨️ Asistente Virtual de Torito Comida Mexicana")
+
 
 # Configurar clave API de OpenAI
 openai.api_key = st.secrets["OPENAI_API_KEY"]
