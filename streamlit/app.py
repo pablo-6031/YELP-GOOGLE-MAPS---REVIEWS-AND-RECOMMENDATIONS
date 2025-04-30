@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 from sklearn.feature_extraction.text import CountVectorizer
 from wordcloud import WordCloud
-   
+import openai
 # === CONFIGURACIÓN GENERAL ===
 
 # URLs de imágenes desde GitHub
@@ -79,6 +79,56 @@ st.image(logo_torito, width=200)
 # === CONFIGURACIÓN BIGQUERY ===
 credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
 client = bigquery.Client(credentials=credentials)
+i
+# Configuración de la página
+st.set_page_config(page_title="Asistente Torito", page_icon="🤖")
+st.title("🗨️ Asistente Virtual de Torito Comida Mexicana")
+
+# Configurar clave API de OpenAI
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+
+# Inicializar historial del chat si no existe
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+# Diccionario de respuestas fijas
+respuestas_fijas = {
+    "dashboard": "📊 Podés ver el dashboard haciendo clic en el siguiente enlace:\n\n👉 [Ir al Dashboard](https://tudashboard.streamlit.app)",
+    "kpi": "📉 Gracias por informarlo. Avisaremos al área correspondiente para que lo revise.",
+    "objetivo": "🎯 El objetivo principal de esta app es ayudarte a analizar el rendimiento de tu restaurante.",
+    "falla": "⚠️ Gracias por avisar. El equipo técnico será notificado de inmediato.",
+    "error": "⚠️ Gracias por avisar. El equipo técnico será notificado de inmediato.",
+    "no funciona": "⚠️ Estamos revisando el sistema. Agradecemos tu paciencia."
+}
+
+# Entrada del usuario
+user_input = st.chat_input("Escribí tu consulta o comentario aquí...")
+
+if user_input:
+    st.session_state.chat_history.append(("usuario", user_input))
+    user_input_lower = user_input.lower()
+
+    # Buscar si hay respuesta fija
+    respuesta = next((respuesta for keyword, respuesta in respuestas_fijas.items() if keyword in user_input_lower), None)
+
+    if respuesta:
+        st.session_state.chat_history.append(("bot", respuesta))
+    else:
+        with st.spinner("Pensando... 🤔"):
+            gpt_response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "Sos un asistente virtual 24/7 para un restaurante mexicano llamado Torito. Respondé en tono amable y claro."},
+                    {"role": "user", "content": user_input}
+                ]
+            ).choices[0].message["content"]
+
+            st.session_state.chat_history.append(("bot", gpt_response))
+
+# Mostrar historial del chat
+for speaker, mensaje in st.session_state.chat_history:
+    with st.chat_message("user" if speaker == "usuario" else "assistant"):
+        st.markdown(mensaje)
 
 @st.cache_data(ttl=600)
 def run_query(query):
