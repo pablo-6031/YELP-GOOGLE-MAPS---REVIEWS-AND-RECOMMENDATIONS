@@ -1,3 +1,4 @@
+
 import streamlit as st
 from PIL import Image
 import base64
@@ -11,20 +12,21 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 from sklearn.feature_extraction.text import CountVectorizer
 from wordcloud import WordCloud
-import openai
-# Configuración de la página
+from openai import OpenAI
+
+# === CONFIGURACIÓN DE LA PÁGINA ===
 st.set_page_config(page_title="Yelp & Google Reviews - Torito Comida Mexicana", layout="wide")
-# === CONFIGURACIÓN GENERAL ===
+
+# === CARGA DE IMÁGENES ===
 url_logo_torito = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logo%20Torito.png"
 url_logo_hype = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logo%20hype.png"
 url_fondo = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/fondoTorito.png"
 
-# Cargar imágenes
 logo_torito = Image.open(BytesIO(requests.get(url_logo_torito).content))
 logo_hype = Image.open(BytesIO(requests.get(url_logo_hype).content))
 fondo = Image.open(BytesIO(requests.get(url_fondo).content))
 
-# Estilo global y fondo
+# === FONDO PERSONALIZADO ===
 def set_background(image):
     buffered = BytesIO()
     image.save(buffered, format="PNG")
@@ -37,151 +39,96 @@ def set_background(image):
             background-position: center;
             background-repeat: no-repeat;
         }}
-        html, body, [class*="css"] {{
-            color: #FFFFFF;
+        html, body {{
             background-color: #121212;
-        }}
-        h1, h2, h3, h4 {{ color: #FFFFFF; }}
-        p {{ color: #E0E0E0; }}
-        .subtitle {{ color: #BBBBBB; }}
-        .css-1r6slb0, .css-1d391kg {{
-            background-color: #1E1E1E !important;
-            color: #FFFFFF !important;
-        }}
-        .element-container .stMetric {{
-            background-color: #1F1F1F;
-            border-radius: 8px;
-            padding: 10px;
-        }}
-        .stTextInput>div>div>input, .stTextArea>div>textarea, .stSelectbox>div>div>div>div {{
-            background-color: #1E1E1E;
             color: white;
-            border: 1px solid #444;
-        }}
-        .stSelectbox>div>div>div>div {{
-            background-color: #2C2C2C !important;
         }}
         .logo-hype {{
             position: fixed;
             top: 10px;
             left: 10px;
             width: 120px;
-        }}
-        .chatbox {{
-            position: fixed;
-            bottom: 0;
-            right: 20px;
-            width: 300px;
-            height: 400px;
-            background-color: #2c2c2c;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }}
-        .chatbox-header {{
-            font-size: 18px;
-            font-weight: bold;
-            color: #ffffff;
-        }}
-        .chatbox-messages {{
-            flex: 1;
-            overflow-y: auto;
-            margin-bottom: 10px;
-            color: #ffffff;
-            font-size: 14px;
-        }}
-        .chatbox-input {{
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            background-color: #3c3c3c;
-            color: white;
-            border: none;
-            font-size: 14px;
-        }}
-        .chatbox-button {{
-            padding: 10px 15px;
-            background-color: #4CAF50;
-            border: none;
-            color: white;
-            cursor: pointer;
-            border-radius: 5px;
-        }}
-        .chatbox-button:hover {{
-            background-color: #45a049;
+            z-index: 999;
         }}
         </style>
     """, unsafe_allow_html=True)
 
 set_background(fondo)
-
-# Mostrar logos
 st.markdown(f'<img class="logo-hype" src="{url_logo_hype}">', unsafe_allow_html=True)
 st.image(logo_torito, width=200)
 
 # === CONFIGURACIÓN BIGQUERY ===
 credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
-client = bigquery.Client(credentials=credentials)
+client_bq = bigquery.Client(credentials=credentials)
 
-# Inicializar historial del chat si no existe
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
+# === CONFIGURACIÓN OPENAI ===
+openai_client = OpenAI(api_key=st.secrets["openai_api_key"])
 
-# Diccionario de respuestas fijas
-respuestas_fijas = {
-    "dashboard": "📊 Podés ver el dashboard haciendo clic en el siguiente enlace:\n\n👉 [Ir al Dashboard](https://tudashboard.streamlit.app)",
-    "kpi": "📉 Gracias por informarlo. Avisaremos al área correspondiente para que lo revise.",
-    "objetivo": "🎯 El objetivo principal de esta app es ayudarte a analizar el rendimiento de tu restaurante.",
-    "falla": "⚠️ Gracias por avisar. El equipo técnico será notificado de inmediato.",
-    "error": "⚠️ Gracias por avisar. El equipo técnico será notificado de inmediato.",
-    "no funciona": "⚠️ Estamos revisando el sistema. Agradecemos tu paciencia."
-}
 
-# Entrada del usuario
-user_input = st.chat_input("Escribí tu consulta o comentario aquí...")
+# === INICIALIZACIÓN DEL CHAT ===
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {"role": "assistant", "content": "¡Hola! Soy el asistente de Torito Comida Mexicana. ¿En qué puedo ayudarte hoy?"}
+    ]
 
-if user_input:
-    st.session_state.chat_history.append(("usuario", user_input))
-    user_input_lower = user_input.lower()
+# === CHAT FLOTANTE ===
+with st.container():
+    st.markdown(
+        """
+        <style>
+        .chat-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 350px;
+            max-height: 500px;
+            background-color: #1e1e1e;
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .chat-input {
+            width: 100%;
+            margin-top: 10px;
+        }
+        </style>
+        <div class="chat-container">
+        """,
+        unsafe_allow_html=True
+    )
 
-    # Buscar si hay respuesta fija
-    respuesta = next((respuesta for keyword, respuesta in respuestas_fijas.items() if keyword in user_input_lower), None)
+    for msg in st.session_state.messages:
+        icon = "🧑" if msg["role"] == "user" else "🤖"
+        st.markdown(f"{icon} {msg['content']}")
 
-    if respuesta:
-        st.session_state.chat_history.append(("bot", respuesta))
-    else:
-        with st.spinner("Pensando... 🤔"):
-            gpt_response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[ 
-                    {"role": "system", "content": "Sos un asistente virtual 24/7 para un restaurante mexicano llamado Torito. Respondé en tono amable y claro."},
-                    {"role": "user", "content": user_input}
-                ]
-            ).choices[0].message["content"]
+    user_input = st.text_input("Tu mensaje:", key="chat_input", label_visibility="collapsed")
 
-            st.session_state.chat_history.append(("bot", gpt_response))
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("📋 Ver menú"):
+            user_input = "¿Podés mostrarme el menú?"
+    with col2:
+        if st.button("📍 Dónde están?"):
+            user_input = "¿Dónde queda el restaurante?"
 
-# Mostrar historial del chat
-st.markdown("""
-    <div class="chatbox">
-        <div class="chatbox-header">Chatbot</div>
-        <div class="chatbox-messages">
-            <!-- Mostrar mensajes aquí -->
-            """)
+    if user_input:
+        st.session_state.messages.append({"role": "user", "content": user_input})
 
-# Mostrar mensajes del chat
-for speaker, mensaje in st.session_state.chat_history:
-    st.markdown(f"<p><strong>{speaker.capitalize()}:</strong> {mensaje}</p>", unsafe_allow_html=True)
+        response = openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Sos un asistente virtual 24/7 para un restaurante mexicano llamado Torito. Respondé en tono amable y claro."},
+                *st.session_state.messages
+            ]
+        )
+        gpt_response = response.choices[0].message.content
+        st.session_state.messages.append({"role": "assistant", "content": gpt_response})
 
-# Entrada para nueva consulta
-st.markdown("""
-        </div>
-        <input class="chatbox-input" type="text" placeholder="Escribe tu mensaje..." />
-    </div>
-""", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
 
 # ID fijo del negocio principal
 BUSINESS_ID_EL_TORITO = "7yr4oqcapzbkckrlb3isig"
