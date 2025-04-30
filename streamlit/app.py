@@ -305,6 +305,8 @@ if opcion == "Distribución de Reseñas por Año y Sucursal":
 
 # Página de Competencia
 if opcion == "Competencia":
+    st.write("Entrando a la sección de competencia...")
+
     st.title("Análisis de Competencia para El Torito")
     
     # Agregar un try-except para manejar errores en la consulta
