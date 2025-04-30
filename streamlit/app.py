@@ -7,7 +7,7 @@ from google.cloud import bigquery
 from google.oauth2 import service_account
 from streamlit_option_menu import option_menu
 import pandas as pd
-
+import db_dtypes
 # Estilo general con fondo oscuro
 st.markdown("""
     <style>
