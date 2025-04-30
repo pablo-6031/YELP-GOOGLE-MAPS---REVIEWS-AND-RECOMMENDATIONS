@@ -322,10 +322,6 @@ if st.sidebar.selectbox("Selecciona una página", ["Competencia", "Otro"]) == "C
     try:
         competition = run_query(query)
 
-        # Ejecutar la consulta y obtener los resultados
-    try:
-        competition = run_query(query)
-
         if not competition:  # Verificar si no hay resultados
             st.warning("No se encontraron resultados para la competencia.")
         else:
@@ -351,6 +347,8 @@ if st.sidebar.selectbox("Selecciona una página", ["Competencia", "Otro"]) == "C
 
     except Exception as e:
         st.error(f"Error al obtener datos de competencia: {str(e)}")
+
+        
 # Página de Explorar Reseñas
 if opcion == "Explorar Reseñas":
     st.title("Explorar Reseñas de El Torito")
