@@ -429,7 +429,7 @@ if opcion == "Competencia":
 
 
 # Pagina de Distribución de Reseñas por Año y Sucursal:
-    if opcion == "Distribución de Reseñas por Año y Sucursal":
+if opcion == "Distribución de Reseñas por Año y Sucursal":
     st.title("Distribución de Reseñas de El Torito por Año y Sucursal")
 
     # Consulta: cantidad de reseñas por año y sucursal
