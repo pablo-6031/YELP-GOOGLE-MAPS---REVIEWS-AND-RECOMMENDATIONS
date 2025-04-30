@@ -170,9 +170,10 @@ def run_query(query):
 def show_competencia():
     st.title("Competidores & Sucursales de El Torito (Mexicana)")
 
+    # --- 1) DataFrames desde BigQuery ---
     q_comp = """
     SELECT b.business_name,
-           AVG(r.stars) AS avg_rating,
+           AVG(r.stars)    AS avg_rating,
            COUNT(r.review_text) AS num_reviews
     FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
     JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
@@ -187,7 +188,7 @@ def show_competencia():
     q_torito = """
     SELECT b.business_id,
            b.business_name,
-           AVG(r.stars) AS avg_rating,
+           AVG(r.stars)    AS avg_rating,
            COUNT(r.review_text) AS num_reviews
     FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
     JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
@@ -198,22 +199,23 @@ def show_competencia():
     """
     df_torito = run_query(q_torito)
 
+    # --- 2) Tablas ---
     st.subheader("Top 5 Competidores (Mexican)")
     st.dataframe(df_comp)
 
     st.subheader("Sucursales de El Torito")
     st.dataframe(df_torito)
 
-    # 1) Rating Promedio — Competidores
+    # --- 3) Gráficos de barras ---
+    # a) Competidores
     st.subheader("Rating Promedio — Competidores")
     fig1, ax1 = plt.subplots()
-    # barra horizontal: business_name vs avg_rating
     ax1.barh(df_comp['business_name'], df_comp['avg_rating'])
-    ax1.invert_yaxis()  # para que el mejor rating quede arriba
+    ax1.invert_yaxis()
     ax1.set_xlabel("Rating promedio")
     st.pyplot(fig1)
 
-    # 2) Rating Promedio — Sucursales de El Torito
+    # b) Sucursales Torito
     st.subheader("Rating Promedio — Sucursales de El Torito")
     fig2, ax2 = plt.subplots()
     ax2.barh(df_torito['business_id'], df_torito['avg_rating'], color='salmon')
@@ -221,33 +223,19 @@ def show_competencia():
     ax2.set_xlabel("Rating promedio")
     st.pyplot(fig2)
 
-    # 3) Comparación — Competidores vs Sucursales Torito
+    # c) Comparativo
     st.subheader("Comparación — Competidores vs Sucursales Torito")
-    # Verificamos las columnas disponibles antes de seleccionar
-st.write("Columnas en df_comp:", df_comp.columns.tolist())
-st.write("Columnas en df_torito_ren:", df_torito_ren.columns.tolist())
-
-# Aseguramos que ambas columnas estén presentes
-required_columns = ['business_name', 'avg_rating']
-
-for col in required_columns:
-    if col not in df_comp.columns:
-        st.error(f"'{col}' no está en df_comp")
-    if col not in df_torito_ren.columns:
-        st.error(f"'{col}' no está en df_torito_ren")
-
-# Ahora aplicamos la concatenación solo si ambas tienen las columnas necesarias
-if all(col in df_comp.columns for col in required_columns) and all(col in df_torito_ren.columns for col in required_columns):
+    df_comp['tipo'] = 'Competidor'
+    df_torito_ren = df_torito.rename(columns={'business_id': 'business_name'})
+    df_torito_ren['tipo'] = 'Torito'
     df_all = pd.concat(
         [
-            df_comp[['business_name', 'avg_rating', 'tipo']],
-            df_torito_ren[['business_name', 'avg_rating', 'tipo']]
+            df_comp[['business_name','avg_rating','tipo']],
+            df_torito_ren[['business_name','avg_rating','tipo']]
         ],
         axis=0,
         ignore_index=True
     )
-    
-    # Gráfico
     fig3, ax3 = plt.subplots()
     for origen, group in df_all.groupby('tipo'):
         ax3.barh(group['business_name'], group['avg_rating'], label=origen)
@@ -255,9 +243,8 @@ if all(col in df_comp.columns for col in required_columns) and all(col in df_tor
     ax3.set_xlabel("Rating promedio")
     ax3.legend()
     st.pyplot(fig3)
-else:
-    st.warning("No se pudo concatenar porque faltan columnas.")
-# 4) Gráfico de torta: distribución de estrellas en categoría Mexican
+
+    # --- 4) Gráfico de torta de distribución de estrellas ---
     st.subheader("Distribución de Estrellas — Categoría Mexican")
     q_dist = """
     SELECT r.stars AS star, COUNT(*) AS count
@@ -272,7 +259,12 @@ else:
 
     if not df_dist.empty:
         fig4, ax4 = plt.subplots()
-        ax4.pie(df_dist['count'], labels=df_dist['star'].astype(str), autopct='%1.1f%%', startangle=90)
+        ax4.pie(
+            df_dist['count'],
+            labels=df_dist['star'].astype(str),
+            autopct='%1.1f%%',
+            startangle=90
+        )
         ax4.set_title("Porcentaje de Reseñas por Estrellas")
         ax4.axis('equal')
         st.pyplot(fig4)
