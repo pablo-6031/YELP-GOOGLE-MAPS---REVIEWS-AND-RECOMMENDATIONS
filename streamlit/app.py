@@ -170,21 +170,7 @@ def run_query(query):
 def show_competencia():
     st.title("Competidores & Sucursales de El Torito (Mexicana)")
 
-    # --- 1) DataFrames desde BigQuery ---
-    q_comp = """
-    SELECT b.business_name,
-           AVG(r.stars)    AS avg_rating,
-           COUNT(r.review_text) AS num_reviews
-    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-      ON b.business_id = r.business_id
-    WHERE b.categories LIKE '%Mexican%'
-    GROUP BY b.business_name
-    ORDER BY avg_rating DESC
-    LIMIT 5
-    """
-    df_comp = run_query(q_comp)
-
+  
     q_torito = """
     SELECT b.business_id,
            b.business_name,
@@ -199,55 +185,44 @@ def show_competencia():
     """
     df_torito = run_query(q_torito)
 
-    # --- 2) Tablas ---
-    st.subheader("Top 5 Competidores (Mexican)")
-    st.dataframe(df_comp)
+   
 
-    st.subheader("Sucursales de El Torito")
-    st.dataframe(df_torito)
 
-    # --- 3) Gráficos de barras ---
-    # a) Competidores
-    st.subheader("Rating Promedio — Competidores")
-    fig1, ax1 = plt.subplots()
-    ax1.barh(df_comp['business_name'], df_comp['avg_rating'])
-    ax1.invert_yaxis()
-    ax1.set_xlabel("Rating promedio")
-    st.pyplot(fig1)
+    # 1) Obtener 10 competidores aleatorios
+    q_comp_random = """
+    SELECT b.business_name,
+           AVG(r.stars)    AS avg_rating,
+           COUNT(r.review_text) AS num_reviews
+    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+      ON b.business_id = r.business_id
+    WHERE b.categories LIKE '%Mexican%'
+    GROUP BY b.business_name
+    ORDER BY RAND()
+    LIMIT 10
+    """
+    df_comp = run_query(q_comp_random)
 
-    # b) Sucursales Torito
-    st.subheader("Rating Promedio — Sucursales de El Torito")
-    fig2, ax2 = plt.subplots()
-    ax2.barh(df_torito['business_id'], df_torito['avg_rating'], color='salmon')
-    ax2.invert_yaxis()
-    ax2.set_xlabel("Rating promedio")
-    st.pyplot(fig2)
+    # 2) Scatter plot: avg_rating vs num_reviews
+    st.subheader("Dispersión: Número de Reseñas vs Calificación Promedio")
+    if not df_comp.empty:
+        fig_scatter, ax_scatter = plt.subplots()
+        ax_scatter.scatter(df_comp['num_reviews'], df_comp['avg_rating'], s=50, alpha=0.7)
+        for i, name in enumerate(df_comp['business_name']):
+            ax_scatter.annotate(name, (df_comp['num_reviews'][i], df_comp['avg_rating'][i]),
+                                textcoords="offset points", xytext=(5,5), ha="left", fontsize=8)
+        ax_scatter.set_xlabel("Número de Reseñas")
+        ax_scatter.set_ylabel("Calificación Promedio")
+        ax_scatter.set_title("Competidores Mexican – Dispersión")
+        st.pyplot(fig_scatter)
+    else:
+        st.warning("No hay datos de competidores para mostrar.")
 
-    # c) Comparativo
-    st.subheader("Comparación — Competidores vs Sucursales Torito")
-    df_comp['tipo'] = 'Competidor'
-    df_torito_ren = df_torito.rename(columns={'business_id': 'business_name'})
-    df_torito_ren['tipo'] = 'Torito'
-    df_all = pd.concat(
-        [
-            df_comp[['business_name','avg_rating','tipo']],
-            df_torito_ren[['business_name','avg_rating','tipo']]
-        ],
-        axis=0,
-        ignore_index=True
-    )
-    fig3, ax3 = plt.subplots()
-    for origen, group in df_all.groupby('tipo'):
-        ax3.barh(group['business_name'], group['avg_rating'], label=origen)
-    ax3.invert_yaxis()
-    ax3.set_xlabel("Rating promedio")
-    ax3.legend()
-    st.pyplot(fig3)
-
-    # --- 4) Gráfico de torta de distribución de estrellas ---
-    st.subheader("Distribución de Estrellas — Categoría Mexican")
+    # 3) Gráfico de torta: distribución de estrellas en toda la categoría
+    st.subheader("Distribución de Estrellas – Categoría Mexican")
     q_dist = """
-    SELECT r.stars AS star, COUNT(*) AS count
+    SELECT r.stars    AS star,
+           COUNT(*)   AS count
     FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
     JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
       ON b.business_id = r.business_id
@@ -258,16 +233,16 @@ def show_competencia():
     df_dist = run_query(q_dist)
 
     if not df_dist.empty:
-        fig4, ax4 = plt.subplots()
-        ax4.pie(
+        fig_pie, ax_pie = plt.subplots()
+        ax_pie.pie(
             df_dist['count'],
-            labels=df_dist['star'].astype(str),
+            labels=df_dist['star'].astype(int).astype(str),
             autopct='%1.1f%%',
             startangle=90
         )
-        ax4.set_title("Porcentaje de Reseñas por Estrellas")
-        ax4.axis('equal')
-        st.pyplot(fig4)
+        ax_pie.set_title("Porcentaje de Reseñas por Estrellas")
+        ax_pie.axis('equal')
+        st.pyplot(fig_pie)
     else:
         st.info("No hay datos de distribución de estrellas.")
 
