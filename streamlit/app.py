@@ -305,40 +305,34 @@ if opcion == "Distribución de Reseñas por Año y Sucursal":
 
 # Página de Competencia
 if opcion == "Competencia":
-    st.write("Entrando a la sección de competencia...")
-
     st.title("Análisis de Competencia para El Torito")
-    
-    # Agregar un try-except para manejar errores en la consulta
-    try:
-        # Consulta SQL para analizar la competencia
-        business_id = "7yr4oqcapzbkckrlb3isig"
 
-        query = f"""
-        SELECT b.business_name, AVG(r.stars) AS avg_rating
-        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` AS b
-        JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` AS r
-         ON b.business_id = r.business_id
-        WHERE b.categories LIKE '%Mexicano%'
-         AND b.business_id != '{BUSINESS_ID_EL_TORITO}'
-        GROUP BY b.business_name
-        ORDER BY avg_rating DESC
-        LIMIT 5
+    try:
+        # Consulta SQL
+        query = """
+            SELECT business_name, AVG(stars) AS avg_rating
+            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` AS b
+            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` AS r
+            ON b.business_id = r.business_id
+            WHERE b.categories LIKE '%Mexican%' AND b.business_id != '7yr4oqcapzbkckrlb3isig'
+            GROUP BY business_name
+            ORDER BY avg_rating DESC
+            LIMIT 5
         """
 
-        
-        # Ejecutar la consulta usando la función run_query
-        competition = run_query(query)
-        
-        # Verificar si hay datos y mostrarlos
-        if competition:
-            st.write("Competencia más cercana:")
-            st.dataframe(competition)
+        # Ejecutar la consulta (asumiendo que ya definiste la función run_query)
+        competencia_df = run_query(query)
+
+        # Mostrar resultados
+        if not competencia_df.empty:
+            st.subheader("Top 5 negocios similares a El Torito")
+            st.dataframe(competencia_df)
         else:
-            st.warning("No se encontraron resultados para la competencia.")
-    
+            st.warning("No se encontraron negocios similares con reseñas.")
+
     except Exception as e:
-        st.error(f"Error ejecutando la consulta de competencia: {str(e)}")
+        st.error(f"❌ Error al obtener datos de competencia: {e}")
+
 
 # Página de Explorar Reseñas
 if opcion == "Explorar Reseñas":
