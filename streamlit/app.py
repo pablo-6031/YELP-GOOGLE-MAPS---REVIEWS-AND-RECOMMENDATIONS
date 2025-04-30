@@ -9,7 +9,7 @@ from streamlit_option_menu import option_menu
 import pandas as pd
 import db_dtypes
 import matplotlib.pyplot as plt
-
+import plotly.express as px
 # Estilo general con fondo oscuro
 st.markdown("""
     <style>
@@ -167,14 +167,33 @@ def run_query(query):
     return pd.DataFrame(rows)
 # Competencia functions
 
-def show_competencia():
-    st.title("Competidores & Sucursales de El Torito (Mexicana)")
 
-  
+
+
+def show_competencia():
+    st.title("Competidores y Sucursales de El Torito (Categoría: Mexican)")
+
+    # --- 1. Consultas SQL ---
+    # Competencia aleatoria (10 negocios mexicanos aleatorios)
+    q_comp = """
+    SELECT b.business_name,
+           AVG(r.stars) AS avg_rating,
+           COUNT(r.review_text) AS num_reviews
+    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+      ON b.business_id = r.business_id
+    WHERE b.categories LIKE '%Mexican%'
+    GROUP BY b.business_name
+    ORDER BY RAND()
+    LIMIT 10
+    """
+    df_comp = run_query(q_comp)
+
+    # Sucursales de El Torito
     q_torito = """
     SELECT b.business_id,
            b.business_name,
-           AVG(r.stars)    AS avg_rating,
+           AVG(r.stars) AS avg_rating,
            COUNT(r.review_text) AS num_reviews
     FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
     JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
@@ -185,44 +204,24 @@ def show_competencia():
     """
     df_torito = run_query(q_torito)
 
-   
-
-
-    # 1) Obtener 10 competidores aleatorios
-    q_comp_random = """
-    SELECT b.business_name,
-           AVG(r.stars)    AS avg_rating,
-           COUNT(r.review_text) AS num_reviews
-    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-      ON b.business_id = r.business_id
-    WHERE b.categories LIKE '%Mexican%'
-    GROUP BY b.business_name
-    ORDER BY RAND()
-    LIMIT 10
+    # Distribución de estrellas (El Torito)
+    q_torito_pie = """
+    SELECT stars, COUNT(*) AS cantidad
+    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
+    WHERE business_id IN (
+        SELECT business_id
+        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
+        WHERE business_name LIKE '%Torito%'
+    )
+    GROUP BY stars
+    ORDER BY stars
     """
-    df_comp = run_query(q_comp_random)
+    df_torito_pie = run_query(q_torito_pie)
 
-    # 2) Scatter plot: avg_rating vs num_reviews
-    st.subheader("Dispersión: Número de Reseñas vs Calificación Promedio")
-    if not df_comp.empty:
-        fig_scatter, ax_scatter = plt.subplots()
-        ax_scatter.scatter(df_comp['num_reviews'], df_comp['avg_rating'], s=50, alpha=0.7)
-        for i, name in enumerate(df_comp['business_name']):
-            ax_scatter.annotate(name, (df_comp['num_reviews'][i], df_comp['avg_rating'][i]),
-                                textcoords="offset points", xytext=(5,5), ha="left", fontsize=8)
-        ax_scatter.set_xlabel("Número de Reseñas")
-        ax_scatter.set_ylabel("Calificación Promedio")
-        ax_scatter.set_title("Competidores Mexican – Dispersión")
-        st.pyplot(fig_scatter)
-    else:
-        st.warning("No hay datos de competidores para mostrar.")
-
-    # 3) Gráfico de torta: distribución de estrellas en toda la categoría
-    st.subheader("Distribución de Estrellas – Categoría Mexican")
+    # Distribución de estrellas en general (categoría Mexican)
     q_dist = """
-    SELECT r.stars    AS star,
-           COUNT(*)   AS count
+    SELECT r.stars AS star,
+           COUNT(*) AS count
     FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
     JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
       ON b.business_id = r.business_id
@@ -232,16 +231,56 @@ def show_competencia():
     """
     df_dist = run_query(q_dist)
 
+    # --- 2. Visualizaciones ---
+
+    # Tablas
+    st.subheader("10 Competidores Aleatorios (Mexican)")
+    st.dataframe(df_comp)
+
+    st.subheader("Sucursales de El Torito")
+    st.dataframe(df_torito)
+
+    # Scatter Plot
+    st.subheader("Dispersión: Número de Reseñas vs Calificación Promedio")
+    if not df_comp.empty:
+        fig_scatter, ax = plt.subplots()
+        ax.scatter(df_comp['num_reviews'], df_comp['avg_rating'], alpha=0.7)
+        for i, row in df_comp.iterrows():
+            ax.annotate(row['business_name'], (row['num_reviews'], row['avg_rating']),
+                        textcoords="offset points", xytext=(5,5), ha="left", fontsize=8)
+        ax.set_xlabel("Número de Reseñas")
+        ax.set_ylabel("Calificación Promedio")
+        ax.set_title("Competidores Mexican – Dispersión")
+        st.pyplot(fig_scatter)
+    else:
+        st.warning("No hay datos de competidores para mostrar.")
+
+    # Pie Chart - El Torito
+    st.subheader("Distribución de Estrellas – El Torito")
+    if not df_torito_pie.empty:
+        fig_torito = px.pie(
+            df_torito_pie,
+            names="stars",
+            values="cantidad",
+            title="Distribución de Calificaciones en El Torito",
+            color_discrete_sequence=px.colors.sequential.RdBu
+        )
+        st.plotly_chart(fig_torito)
+    else:
+        st.info("No hay datos de calificaciones para El Torito.")
+
+    # Pie Chart - General Mexican
+    st.subheader("Distribución de Estrellas – Categoría Mexican")
     if not df_dist.empty:
-        fig_pie, ax_pie = plt.subplots()
-        ax_pie.pie(
+        fig_pie, ax = plt.subplots()
+        ax.pie(
             df_dist['count'],
             labels=df_dist['star'].astype(int).astype(str),
             autopct='%1.1f%%',
             startangle=90
         )
-        ax_pie.set_title("Porcentaje de Reseñas por Estrellas")
-        ax_pie.axis('equal')
+        ax.axis('equal')
+        ax.set_title("Porcentaje de Reseñas por Estrellas")
         st.pyplot(fig_pie)
     else:
         st.info("No hay datos de distribución de estrellas.")
