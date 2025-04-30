@@ -261,14 +261,13 @@ if opcion == "Mapas":
     st.map(df_map[['latitude', 'longitude']])
 
 # --- RECOMENDADOR ---
-# --- RECOMENDADOR ---
 if opcion == "Recomendador":
     st.title("💡 Recomendador para Torito Comida Mexicana")
     st.markdown("""
     Este módulo analiza las reseñas **positivas** de la competencia directa de *El Torito* para detectar las frases más frecuentes
     que los clientes valoran. A partir de eso, generamos recomendaciones accionables para mejorar la propuesta del local.
     """)
-    
+
     st.divider()
     st.subheader("📦 Cargando reseñas positivas de competidores...")
 
@@ -285,7 +284,7 @@ if opcion == "Recomendador":
           AND r.review_text IS NOT NULL
         """
         return client.query(query).to_dataframe()
-    
+
     df = cargar_datos()
 
     # --- Procesamiento ---
@@ -301,30 +300,52 @@ if opcion == "Recomendador":
     # --- Visualizaciones ---
     st.divider()
     st.subheader("🔍 Frases más frecuentes en reseñas positivas")
-    
+
     top_n = st.slider("Seleccioná cuántas frases mostrar", 5, 50, 20)
     st.dataframe(pd.DataFrame(phrases_freq[:top_n], columns=["Frase", "Frecuencia"]))
 
     # --- Opcional: nube de palabras ---
     if st.checkbox("Mostrar nube de palabras"):
-        from wordcloud import WordCloud
-        import matplotlib.pyplot as plt
+        wordcloud = WordCloud(width=800, height=400).generate_from_frequencies(dict(phrases_freq[:top_n]))
 
-        text = " ".join(df['review_text'])
-        wc = WordCloud(width=800, height=400, background_color='white', colormap='Dark2').generate(text)
-        st.pyplot(plt.imshow(wc, interpolation="bilinear"))
-        plt.axis("off")
-        plt.tight_layout(pad=0)
+        # Mostrar la nube de palabras en Streamlit
+        st.subheader("📝 Nube de palabras de las frases más mencionadas")
+        fig, ax = plt.subplots(figsize=(10, 5))  # Crear un gráfico para la nube de palabras
+        ax.imshow(wordcloud, interpolation="bilinear")
+        ax.axis("off")  # Quitar los ejes
+        st.pyplot(fig)
 
     # --- Recomendaciones ---
     st.divider()
     st.subheader("💡 Recomendaciones basadas en la voz del cliente")
 
-    for frase, freq in phrases_freq[:top_n]:
-        st.markdown(f"- Considerá destacar, mejorar o incorporar: **'{frase}'** (mencionada {freq} veces)")
+    recomendaciones = []
+
+    # Mejorar la calidad de la comida
+    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["good food", "mexican food", "great food", "delicious food"]):
+        recomendaciones.append("🍽️ Mejorar la calidad de los platillos, enfocándose en sabores auténticos y frescura de los ingredientes.")
+
+    # Mejorar el servicio
+    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["good service", "great service", "customer service", "service great"]):
+        recomendaciones.append("👨‍🍳 Mejorar la atención al cliente y ofrecer un servicio más rápido y personalizado.")
+
+    # Resaltar la autenticidad de los platillos
+    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["authentic mexican", "mexican food", "carne asada"]):
+        recomendaciones.append("🌮 Resaltar la autenticidad de la comida mexicana en el menú, destacando platillos tradicionales como la carne asada.")
+
+    # Mejorar la visibilidad online
+    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["google good", "translated google"]):
+        recomendaciones.append("🌐 Mejorar la visibilidad en plataformas como Google Reviews, asegurándose de tener reseñas positivas y respuestas a las mismas.")
+
+    # Crear un ambiente agradable
+    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["great place", "love place", "great food"]):
+        recomendaciones.append("🏡 Mejorar el ambiente del restaurante, creando un espacio acogedor y cómodo para los comensales.")
+
+    # Mostrar las recomendaciones dinámicas
+    for recomendacion in recomendaciones:
+        st.markdown(f"- {recomendacion}")
 
     st.caption("Análisis basado en reseñas positivas de negocios mexicanos con alta calificación.")
-
 
 # --- ANÁLISIS DE SENTIMIENTO ---
 if opcion == "Análisis de Sentimiento":
