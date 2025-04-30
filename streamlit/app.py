@@ -159,9 +159,8 @@ client = bigquery.Client(credentials=credentials)
 @st.cache_data(ttl=600)
 def run_query(query):
     query_job = client.query(query)
-    rows_raw = query_job.result()
-    rows = [dict(row) for row in rows_raw]
-    return rows
+    return query_job.result().to_dataframe()
+
 
 # Navegación en el sidebar
 with st.sidebar:
@@ -227,10 +226,6 @@ elif opcion == "Recomendador":
 # Continuar con las demás páginas...
 
 
-
-
-import streamlit as st
-import pandas as pd
 
 # Otras importaciones y configuraciones que ya tienes...
 
@@ -304,35 +299,32 @@ if opcion == "Distribución de Reseñas por Año y Sucursal":
     st.title("Distribución de Reseñas de El Torito por Año y Sucursal")
 
 # Página de Competencia
+
 if opcion == "Competencia":
     st.title("Análisis de Competencia para El Torito")
 
     try:
-        # Consulta SQL
         query = """
-            SELECT business_name, AVG(stars) AS avg_rating
-            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` AS b
-            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` AS r
-            ON b.business_id = r.business_id
-            WHERE b.categories LIKE '%Mexican%' AND b.business_id != '7yr4oqcapzbkckrlb3isig'
-            GROUP BY business_name
-            ORDER BY avg_rating DESC
-            LIMIT 5
+        SELECT business_name, AVG(stars) AS avg_rating
+        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` AS b
+        JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` AS r
+        ON b.business_id = r.business_id
+        WHERE b.categories LIKE '%Mexican%' AND b.business_id != '7yr4oqcapzbkckrlb3isig'
+        GROUP BY business_name
+        ORDER BY avg_rating DESC
+        LIMIT 5
         """
 
-        # Ejecutar la consulta (asumiendo que ya definiste la función run_query)
-        competencia_df = run_query(query)
+        competition_df = run_query(query)
 
-        # Mostrar resultados
-        if not competencia_df.empty:
-            st.subheader("Top 5 negocios similares a El Torito")
-            st.dataframe(competencia_df)
+        if not competition_df.empty:
+            st.subheader("Top 5 competidores (categoría Mexicana):")
+            st.dataframe(competition_df)
         else:
-            st.warning("No se encontraron negocios similares con reseñas.")
-
+            st.warning("No se encontraron resultados para la competencia.")
+    
     except Exception as e:
-        st.error(f"❌ Error al obtener datos de competencia: {e}")
-
+        st.error(f"Error al obtener datos de competencia: {str(e)}")
 
 # Página de Explorar Reseñas
 if opcion == "Explorar Reseñas":
