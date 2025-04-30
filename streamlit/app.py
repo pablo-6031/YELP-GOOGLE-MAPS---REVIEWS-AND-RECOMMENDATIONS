@@ -8,6 +8,8 @@ from google.oauth2 import service_account
 from streamlit_option_menu import option_menu
 import pandas as pd
 import db_dtypes
+import matplotlib.pyplot as plt
+import seaborn as sns
 # Estilo general con fondo oscuro
 st.markdown("""
     <style>
