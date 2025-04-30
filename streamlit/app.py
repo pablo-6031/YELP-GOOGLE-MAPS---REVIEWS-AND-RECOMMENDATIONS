@@ -427,75 +427,102 @@ if opcion == "Competencia":
     st.title("Competidores & Sucursales de El Torito")
     show_competencia()
 
-#pagina distribusion reseñas
 
-# Diccionario de sucursales con sus business_id
-sucursales = {
-    "El Torito Sucursal 1": "0x80844a01be660f09:0x661fee46237228d7",
-    "El Torito Sucursal 2": "0x808fc9e896f1d559:0x8c0b57a8edd4fd5d",
-    "El Torito Sucursal 3": "0x808fccb4507dc323:0x297d7fd58fc8ff91",
-    "El Torito Sucursal 4": "0x809ade1814a05da3:0xad096a803d166a4c",
-    "El Torito Sucursal 5": "0x80c280a9a282d2e9:0xf3a894f129f38b2f",
-    "El Torito Sucursal 6": "0x80c29794c7e2d44d:0xda1266db4b03e83c",
-    "El Torito Sucursal 7": "0x80c297ce3cd0f54b:0xececf01e9eeee6f7",
-    "El Torito Sucursal 8": "0x80c2b4d2ca3e19c9:0xcf83f70eaba7a203",
-    "El Torito Sucursal 9": "0x80c2bfcf8cc535fd:0xea7ffe91727d1946",
-    "El Torito Sucursal 10": "0x80dbf8ec8ade5d45:0x952d1e263dadc54e",
-    "El Torito Sucursal 11": "0x80dcd43a352d3ae3:0xae921b0c9e9cbdb7",
-    "El Torito Sucursal 12": "0x80dd2ddc6a24e4af:0xcadb76671ddbc94d",
-    "El Torito Sucursal 13": "0x80dd32f142b8252b:0x1af197c9399f5231",
-    "El Torito Sucursal 14": "0x80e9138c2f68bd4f:0x64f25be6f8d56d95",
-    "El Torito Sucursal 15": "0x80ea4fe71c447a1b:0x17232153c8e87293",
-    "El Torito Sucursal 16": "7yr4oqcapzbkckrlb3isig",
-}
+# Página de Distribución de Reseñas
+if opcion == "Distribución de Reseñas":
 
-# Interfaz de usuario para seleccionar sucursal
-sucursal_seleccionada = st.selectbox("Selecciona una sucursal de El Torito:", list(sucursales.keys()))
+    st.title("Distribución de Reseñas de El Torito")
 
-# Obtener el business_id de la sucursal seleccionada
-business_id = sucursales[sucursal_seleccionada]
+    # --- GRÁFICO GENERAL PARA TODAS LAS SUCURSALES ---
+    st.subheader("Distribución General de Reseñas (todas las sucursales)")
 
-# Consulta a BigQuery para obtener la distribución de reseñas por año y sentimiento
-q_reseñas = f"""
-SELECT r.business_id,
-       b.business_name,
-       EXTRACT(YEAR FROM r.review_date) AS anio,
-       CASE 
-         WHEN r.stars <= 2.5 THEN 'Negativo'
-         WHEN r.stars > 2.5 AND r.stars <= 3.5 THEN 'Neutro'
-         ELSE 'Positivo'
-       END AS sentimiento,
-       COUNT(*) AS cantidad
-FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-  ON r.business_id = b.business_id
-WHERE b.business_id = '{business_id}'
-GROUP BY r.business_id, b.business_name, anio, sentimiento
-ORDER BY anio
-"""
+    q_general = """
+    SELECT 
+        EXTRACT(YEAR FROM r.review_date) AS anio,
+        CASE 
+            WHEN r.stars <= 2.5 THEN 'Negativo'
+            WHEN r.stars > 2.5 AND r.stars <= 3.5 THEN 'Neutro'
+            ELSE 'Positivo'
+        END AS sentimiento,
+        COUNT(*) AS cantidad
+    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+    JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+      ON r.business_id = b.business_id
+    WHERE LOWER(b.business_name) LIKE '%torito%'
+    GROUP BY anio, sentimiento
+    ORDER BY anio;
+    """
 
-# Obtener los datos desde BigQuery
-df_reseñas = run_query(q_reseñas)
+    df_general = run_query(q_general)
 
-# Verificar si se obtuvieron datos
-if not df_reseñas.empty:
-    st.write(f"Distribución de Reseñas de {sucursal_seleccionada} por Año y Sentimiento")
-    
-    # Pivotar el DataFrame para facilitar el gráfico
-    df_pivot = df_reseñas.pivot_table(index='anio', columns='sentimiento', values='cantidad', aggfunc='sum', fill_value=0)
+    if not df_general.empty:
+        fig1, ax1 = plt.subplots(figsize=(10, 6))
+        for sentimiento in df_general["sentimiento"].unique():
+            subset = df_general[df_general["sentimiento"] == sentimiento]
+            ax1.bar(subset["anio"], subset["cantidad"], label=sentimiento, bottom=df_general[df_general["sentimiento"] < sentimiento].groupby("anio")["cantidad"].sum() if sentimiento != "Negativo" else None)
+        ax1.set_title("Distribución General de Sentimientos por Año")
+        ax1.set_xlabel("Año")
+        ax1.set_ylabel("Cantidad de Reseñas")
+        ax1.legend(title="Sentimiento")
+        st.pyplot(fig1)
+    else:
+        st.warning("No hay datos para El Torito.")
 
-    # Crear gráfico de barras apiladas usando matplotlib
-    fig, ax = plt.subplots(figsize=(10, 6))
-    df_pivot.plot(kind='bar', stacked=True, ax=ax)
+    # --- GRÁFICO POR SUCURSAL SELECCIONADA ---
+    st.subheader("Distribución de Reseñas por Sucursal")
 
-    ax.set_title(f"Distribución de Sentimientos de las Reseñas de {sucursal_seleccionada}")
-    ax.set_xlabel("Año")
-    ax.set_ylabel("Número de Reseñas")
-    ax.legend(title="Sentimiento")
+    sucursales = {
+        "El Torito Sucursal 1": "0x80844a01be660f09:0x661fee46237228d7",
+        "El Torito Sucursal 2": "0x808fc9e896f1d559:0x8c0b57a8edd4fd5d",
+        "El Torito Sucursal 3": "0x808fccb4507dc323:0x297d7fd58fc8ff91",
+        "El Torito Sucursal 4": "0x809ade1814a05da3:0xad096a803d166a4c",
+        "El Torito Sucursal 5": "0x80c280a9a282d2e9:0xf3a894f129f38b2f",
+        "El Torito Sucursal 6": "0x80c29794c7e2d44d:0xda1266db4b03e83c",
+        "El Torito Sucursal 7": "0x80c297ce3cd0f54b:0xececf01e9eeee6f7",
+        "El Torito Sucursal 8": "0x80c2b4d2ca3e19c9:0xcf83f70eaba7a203",
+        "El Torito Sucursal 9": "0x80c2bfcf8cc535fd:0xea7ffe91727d1946",
+        "El Torito Sucursal 10": "0x80dbf8ec8ade5d45:0x952d1e263dadc54e",
+        "El Torito Sucursal 11": "0x80dcd43a352d3ae3:0xae921b0c9e9cbdb7",
+        "El Torito Sucursal 12": "0x80dd2ddc6a24e4af:0xcadb76671ddbc94d",
+        "El Torito Sucursal 13": "0x80dd32f142b8252b:0x1af197c9399f5231",
+        "El Torito Sucursal 14": "0x80e9138c2f68bd4f:0x64f25be6f8d56d95",
+        "El Torito Sucursal 15": "0x80ea4fe71c447a1b:0x17232153c8e87293",
+        "El Torito Sucursal 16": "7yr4oqcapzbkckrlb3isig",
+    }
 
-    st.pyplot(fig)
-else:
-    st.warning("No hay datos de reseñas para la sucursal seleccionada.")
+    sucursal_seleccionada = st.selectbox("Selecciona una sucursal:", list(sucursales.keys()))
+    business_id = sucursales[sucursal_seleccionada]
+
+    q_sucursal = f"""
+    SELECT 
+        EXTRACT(YEAR FROM r.review_date) AS anio,
+        CASE 
+            WHEN r.stars <= 2.5 THEN 'Negativo'
+            WHEN r.stars > 2.5 AND r.stars <= 3.5 THEN 'Neutro'
+            ELSE 'Positivo'
+        END AS sentimiento,
+        COUNT(*) AS cantidad
+    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+    WHERE r.business_id = '{business_id}'
+    GROUP BY anio, sentimiento
+    ORDER BY anio;
+    """
+
+    df_sucursal = run_query(q_sucursal)
+
+    if not df_sucursal.empty:
+        fig2, ax2 = plt.subplots(figsize=(10, 6))
+        for sentimiento in df_sucursal["sentimiento"].unique():
+            subset = df_sucursal[df_sucursal["sentimiento"] == sentimiento]
+            ax2.bar(subset["anio"], subset["cantidad"], label=sentimiento, bottom=df_sucursal[df_sucursal["sentimiento"] < sentimiento].groupby("anio")["cantidad"].sum() if sentimiento != "Negativo" else None)
+        ax2.set_title(f"Distribución de Sentimientos en {sucursal_seleccionada}")
+        ax2.set_xlabel("Año")
+        ax2.set_ylabel("Cantidad de Reseñas")
+        ax2.legend(title="Sentimiento")
+        st.pyplot(fig2)
+    else:
+        st.warning("No hay datos para la sucursal seleccionada.")
+
 
 #explorar reseñas
     # Diccionario de sucursales de El Torito con su business_id
