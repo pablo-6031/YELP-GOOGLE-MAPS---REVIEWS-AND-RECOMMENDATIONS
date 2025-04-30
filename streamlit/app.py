@@ -346,7 +346,7 @@ elif opcion == "Mapas":
 elif opcion == "Recomendador":
     st.title("Recomendador")
     st.markdown("Aquí va el sistema recomendador...")
-# Continuar con las demás páginas...
+
 
 
 
@@ -428,9 +428,45 @@ if opcion == "Competencia":
     show_competencia()
 
 
-# Página de Explorar Reseñas
-if opcion == "Explorar Reseñas":
-    st.title("Explorar Reseñas de El Torito")
+# Pagina de Distribución de Reseñas por Año y Sucursal:
+    if opcion == "Distribución de Reseñas por Año y Sucursal":
+    st.title("Distribución de Reseñas de El Torito por Año y Sucursal")
+
+    # Consulta: cantidad de reseñas por año y sucursal
+    q_dist_anio = """
+    SELECT b.business_name,
+           EXTRACT(YEAR FROM r.review_date) AS anio,
+           COUNT(*) AS cantidad
+    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+      ON b.business_id = r.business_id
+    WHERE b.business_name LIKE '%Torito%'
+    GROUP BY b.business_name, anio
+    ORDER BY anio, cantidad DESC
+    """
+    df_dist_anio = run_query(q_dist_anio)
+
+    # Validar que haya datos
+    if df_dist_anio.empty:
+        st.warning("No se encontraron datos para El Torito.")
+    else:
+        # Selector de año
+        años_disponibles = sorted(df_dist_anio['anio'].unique())
+        año_seleccionado = st.selectbox("Seleccioná un año:", años_disponibles, index=len(años_disponibles)-1)
+
+        df_filtrado = df_dist_anio[df_dist_anio['anio'] == año_seleccionado]
+
+        st.subheader(f"Cantidad de Reseñas por Sucursal – Año {año_seleccionado}")
+        fig_bar, ax_bar = plt.subplots(figsize=(10, 5))
+        ax_bar.bar(df_filtrado['business_name'], df_filtrado['cantidad'], color='teal')
+        ax_bar.set_xlabel("Sucursal")
+        ax_bar.set_ylabel("Cantidad de Reseñas")
+        ax_bar.set_title(f"Distribución de Reseñas – Año {año_seleccionado}")
+        ax_bar.tick_params(axis='x', rotation=45)
+        st.pyplot(fig_bar)
+        
+Página de Explorar Reseñas
+
 
     # Diccionario de sucursales de El Torito con su business_id
     sucursales = {
