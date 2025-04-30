@@ -12,7 +12,8 @@ import plotly.express as px
 from sklearn.feature_extraction.text import CountVectorizer
 from wordcloud import WordCloud
 import openai
-
+# Configuración de la página
+st.set_page_config(page_title="Yelp & Google Reviews - Torito Comida Mexicana", layout="wide")
 # === CONFIGURACIÓN GENERAL ===
 url_logo_torito = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logo%20Torito.png"
 url_logo_hype = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logo%20hype.png"
@@ -124,13 +125,6 @@ st.image(logo_torito, width=200)
 # === CONFIGURACIÓN BIGQUERY ===
 credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
 client = bigquery.Client(credentials=credentials)
-
-# Configuración de la página
-st.set_page_config(page_title="Asistente Torito", page_icon="🤖")
-st.title("🗨️ Asistente Virtual de Torito Comida Mexicana")
-
-# Configurar clave API de OpenAI
-openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # Inicializar historial del chat si no existe
 if "chat_history" not in st.session_state:
