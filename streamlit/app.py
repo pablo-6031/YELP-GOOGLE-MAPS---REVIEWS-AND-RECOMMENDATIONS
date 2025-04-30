@@ -91,53 +91,6 @@ BUSINESS_ID_EL_TORITO = "7yr4oqcapzbkckrlb3isig"
 
 
 
-# Consulta SQL para traer reseñas positivas de negocios mexicanos que no sean "Torito"
-@st.cache_data
-def cargar_datos():
-    query = """
-    SELECT
-      r.review_text
-    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-      ON r.business_id = b.business_id
-    WHERE LOWER(b.categories) LIKE '%mexican%'
-      AND LOWER(b.business_name) NOT LIKE '%torito%'
-      AND r.stars >= 4
-      AND r.review_text IS NOT NULL
-    """
-    return client.query(query).to_dataframe()
-
-df = cargar_datos()
-
-# Preprocesamiento básico
-df['review_text'] = df['review_text'].str.lower().str.replace(r'[^\w\s]', '', regex=True)
-
-# Extraer frases (n-gramas)
-vectorizer = CountVectorizer(ngram_range=(2, 3), stop_words='english')
-X = vectorizer.fit_transform(df['review_text'])
-
-# Contar frecuencia de frases
-sum_words = X.sum(axis=0)
-phrases_freq = [(phrase, int(sum_words[0, idx])) for phrase, idx in vectorizer.vocabulary_.items()]
-phrases_freq = sorted(phrases_freq, key=lambda x: x[1], reverse=True)
-
-# Mostrar tabla
-st.subheader("📈 Frases más comunes en reseñas positivas de la competencia")
-top_n = st.slider("Seleccioná cuántas frases mostrar:", 5, 50, 20)
-st.dataframe(pd.DataFrame(phrases_freq[:top_n], columns=["Frase", "Frecuencia"]))
-if st.checkbox("Mostrar nube de palabras"):
-
-
-     text = " ".join(df['review_text'])
-     wc = WordCloud(width=800, height=400, background_color='white', colormap='Dark2').generate(text)
-     st.pyplot(plt.imshow(wc, interpolation="bilinear"))
-     plt.axis("off")
-     plt.tight_layout(pad=0)
-  
-# Generar recomendaciones
-st.subheader("💡 Recomendaciones para El Torito")
-for frase, freq in phrases_freq[:top_n]:
-    st.markdown(f"- Considerar destacar, mejorar o incorporar: **'{frase}'** (mencionada {freq} veces)")
 
 # === FUNCIÓN DE COMPETENCIA ===
 
@@ -308,16 +261,70 @@ if opcion == "Mapas":
     st.map(df_map[['latitude', 'longitude']])
 
 # --- RECOMENDADOR ---
+# --- RECOMENDADOR ---
 if opcion == "Recomendador":
-   st.title("💡 Recomendador para Torito Comida Mexicana")
+    st.title("💡 Recomendador para Torito Comida Mexicana")
     st.markdown("""
     Este módulo analiza las reseñas **positivas** de la competencia directa de *El Torito* para detectar las frases más frecuentes
     que los clientes valoran. A partir de eso, generamos recomendaciones accionables para mejorar la propuesta del local.
     """)
     
     st.divider()
-    st.subheader("📦 Cargando reseñas positivas de competidores...") 
-    cargar_datos():
+    st.subheader("📦 Cargando reseñas positivas de competidores...")
+
+    @st.cache_data
+    def cargar_datos():
+        query = """
+        SELECT review_text
+        FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+        JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+          ON r.business_id = b.business_id
+        WHERE LOWER(b.categories) LIKE '%mexican%'
+          AND LOWER(b.business_name) NOT LIKE '%torito%'
+          AND r.stars >= 4
+          AND r.review_text IS NOT NULL
+        """
+        return client.query(query).to_dataframe()
+    
+    df = cargar_datos()
+
+    # --- Procesamiento ---
+    df['review_text'] = df['review_text'].str.lower().str.replace(r'[^\w\s]', '', regex=True)
+
+    vectorizer = CountVectorizer(ngram_range=(2, 3), stop_words='english')
+    X = vectorizer.fit_transform(df['review_text'])
+    sum_words = X.sum(axis=0)
+
+    phrases_freq = [(phrase, int(sum_words[0, idx])) for phrase, idx in vectorizer.vocabulary_.items()]
+    phrases_freq = sorted(phrases_freq, key=lambda x: x[1], reverse=True)
+
+    # --- Visualizaciones ---
+    st.divider()
+    st.subheader("🔍 Frases más frecuentes en reseñas positivas")
+    
+    top_n = st.slider("Seleccioná cuántas frases mostrar", 5, 50, 20)
+    st.dataframe(pd.DataFrame(phrases_freq[:top_n], columns=["Frase", "Frecuencia"]))
+
+    # --- Opcional: nube de palabras ---
+    if st.checkbox("Mostrar nube de palabras"):
+        from wordcloud import WordCloud
+        import matplotlib.pyplot as plt
+
+        text = " ".join(df['review_text'])
+        wc = WordCloud(width=800, height=400, background_color='white', colormap='Dark2').generate(text)
+        st.pyplot(plt.imshow(wc, interpolation="bilinear"))
+        plt.axis("off")
+        plt.tight_layout(pad=0)
+
+    # --- Recomendaciones ---
+    st.divider()
+    st.subheader("💡 Recomendaciones basadas en la voz del cliente")
+
+    for frase, freq in phrases_freq[:top_n]:
+        st.markdown(f"- Considerá destacar, mejorar o incorporar: **'{frase}'** (mencionada {freq} veces)")
+
+    st.caption("Análisis basado en reseñas positivas de negocios mexicanos con alta calificación.")
+
 
 # --- ANÁLISIS DE SENTIMIENTO ---
 if opcion == "Análisis de Sentimiento":
