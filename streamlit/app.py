@@ -257,6 +257,27 @@ if all(col in df_comp.columns for col in required_columns) and all(col in df_tor
     st.pyplot(fig3)
 else:
     st.warning("No se pudo concatenar porque faltan columnas.")
+# 4) Gráfico de torta: distribución de estrellas en categoría Mexican
+    st.subheader("Distribución de Estrellas — Categoría Mexican")
+    q_dist = """
+    SELECT r.stars AS star, COUNT(*) AS count
+    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+      ON b.business_id = r.business_id
+    WHERE b.categories LIKE '%Mexican%'
+    GROUP BY r.stars
+    ORDER BY r.stars
+    """
+    df_dist = run_query(q_dist)
+
+    if not df_dist.empty:
+        fig4, ax4 = plt.subplots()
+        ax4.pie(df_dist['count'], labels=df_dist['star'].astype(str), autopct='%1.1f%%', startangle=90)
+        ax4.set_title("Porcentaje de Reseñas por Estrellas")
+        ax4.axis('equal')
+        st.pyplot(fig4)
+    else:
+        st.info("No hay datos de distribución de estrellas.")
 
 # Navegación en el sidebar
 with st.sidebar:
