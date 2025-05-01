@@ -162,7 +162,7 @@ def show_competencia():
 # --- SIDEBAR ---
 with st.sidebar:
     opcion = option_menu("Navegación", 
-        ["Inicio", "KPIs", "Mapas", "Recomendador", "Análisis de Sentimiento", "Predicciones", "Distribución de Reseñas", "Competencia", "Explorar Reseñas"],
+        ["Inicio", "KPIs", "Recomendador", "Análisis de Sentimiento", "Predicciones", "Distribución de Reseñas", "Competencia", "Explorar Reseñas"],
         icons=['house', 'bar-chart', 'map', 'robot', 'chat', 'graph-up', 'folder', 'flag', 'search'],
         menu_icon="cast", default_index=0, orientation="vertical"
     )
@@ -250,22 +250,23 @@ if opcion == "Recomendador":
 
     df = cargar_datos(business_id_seleccionado, stars_filter)
 
-    # --- Procesamiento ---
-    df['review_text'] = df['review_text'].str.lower().str.replace(r'[^\w\s]', '', regex=True)
+    if df.empty:
+        st.warning("No se encontraron reseñas para este negocio con el tipo seleccionado.")
+    else:
+        # --- Procesamiento ---
+        df['review_text'] = df['review_text'].fillna('').str.lower().str.replace(r'[^\w\s]', '', regex=True)
 
-    vectorizer = CountVectorizer(ngram_range=(2, 3), stop_words='english')
-    X = vectorizer.fit_transform(df['review_text'])
-    sum_words = X.sum(axis=0)
+        vectorizer = CountVectorizer(ngram_range=(2, 3), stop_words='english')
+        X = vectorizer.fit_transform(df['review_text'])
+        sum_words = X.sum(axis=0)
 
-    phrases_freq = [(phrase, int(sum_words[0, idx])) for phrase, idx in vectorizer.vocabulary_.items()]
-    phrases_freq = sorted(phrases_freq, key=lambda x: x[1], reverse=True)
+        phrases_freq = [(phrase, int(sum_words[0, idx])) for phrase, idx in vectorizer.vocabulary_.items()]
+        phrases_freq = sorted(phrases_freq, key=lambda x: x[1], reverse=True)
 
-    # --- Visualizaciones ---
-    st.divider()
-    st.subheader("🔍 Frases más frecuentes en reseñas")
-
-    top_n = st.slider("Selecciona cuántas frases mostrar", 5, 50, 20)
-    st.dataframe(pd.DataFrame(phrases_freq[:top_n], columns=["Frase", "Frecuencia"]))
+        # Mostrar resultados
+        st.subheader("🔍 Frases más frecuentes en reseñas")
+        top_n = st.slider("Selecciona cuántas frases mostrar", 5, 50, 20)
+        st.dataframe(pd.DataFrame(phrases_freq[:top_n], columns=["Frase", "Frecuencia"]))
 
     # --- Opcional: nube de palabras ---
     if st.checkbox("Mostrar nube de palabras"):
