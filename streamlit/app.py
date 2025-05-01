@@ -359,6 +359,8 @@ if opcion == "Predicciones":
 
 
 if opcion == "Distribución de Reseñas":
+    # tu código aquí
+
     st.subheader("Distribución de Reseñas por Año y Sentimiento")
 
     # Cargar negocios con reseñas
