@@ -416,6 +416,7 @@ if opcion == "Distribución de Reseñas":
         st.pyplot(fig)
     else:
         st.warning("No se encontraron reseñas para este negocio.")
+        
 if opcion == "Explorar Reseñas":
     st.subheader("📝 Últimas reseñas de El Camino Real")
 
@@ -475,4 +476,51 @@ if opcion == "Explorar Reseñas":
 
     else:
         st.warning("No hay reseñas disponibles para el período o filtro seleccionado.")
+if opcion == "KPIs":
+    st.title("KPIs de El Camino Real")
+    
+    # Nuevo ID de negocio para El Camino Real
+    business_id = "julsvvavzvghwffkkm0nlg"  # Aquí usas el nuevo ID
+
+    # Selección de frecuencia de análisis (mensual o anual)
+    frecuencia = st.radio("Selecciona la frecuencia de análisis:", ('Mensual', 'Anual'))
+
+    # Selección de rango de fechas
+    fecha_desde = st.date_input("Desde:", value=pd.to_datetime("2020-01-01"))
+    fecha_hasta = st.date_input("Hasta:", value=pd.to_datetime("2023-12-31"))
+
+    # Construcción de la query SQL para El Camino Real
+    filtro = f"WHERE business_id = '{business_id}'"
+
+    # Ajuste del formato de la fecha dependiendo de la frecuencia seleccionada
+    if frecuencia == 'Mensual':
+        formato_periodo = "FORMAT_TIMESTAMP('%Y-%m', review_date) AS periodo"
+    else:
+        formato_periodo = "FORMAT_TIMESTAMP('%Y', review_date) AS periodo"
+
+    # Query para obtener los KPIs
+    query_kpi = f"""
+    SELECT 
+        {formato_periodo},
+        COUNT(*) AS volumen_resenas,
+        ROUND(AVG(stars), 2) AS calificacion_promedio
+    FROM shining-rampart-455602-a7.dw_restaurantes.fact_review
+    {filtro}
+    AND review_date BETWEEN '{fecha_desde}' AND '{fecha_hasta}'
+    GROUP BY periodo
+    ORDER BY periodo
+    """
+
+    # Ejecutar la consulta
+    df_kpi = run_query(query_kpi)
+
+    # Visualizar resultados
+    if not df_kpi.empty:
+        st.subheader(f"KPIs por Periodo - El Camino Real")
+
+        # Gráfico 1: Calificación promedio
+        fig1, ax1 = plt.subplots(figsize=(10, 4))
+        ax1.plot(df_kpi["periodo"], df_kpi["calificacion_promedio"], marker='o', color='green')
+        ax1.set_title("Calificación Promedio por Periodo")
+
 
