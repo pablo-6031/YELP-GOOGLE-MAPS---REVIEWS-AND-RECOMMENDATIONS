@@ -112,46 +112,30 @@ def run_query(query):
 def show_competencia():
     st.title("🔍 Análisis de Competencia por Categoría")
 
-    # --- INPUT DINÁMICO (Selector de Categoría) ---
-    categorias_disponibles = ['Mexican', 'Pizza', 'Chinese', 'Italian', 'Indian', 'Japanese', 'Thai', 'American']
-    
-    # Usamos el selectbox para seleccionar la categoría
-    categoria = st.selectbox("🍽️ Elige una categoría", categorias_disponibles)
+    # --- INPUT DINÁMICO ---
 
-    # Verificar que se haya seleccionado una categoría válida
-    if not categoria:
-        st.warning("⚠️ Por favor selecciona una categoría para continuar.")
-        return
+# Lista de categorías disponibles
+categorias = ["Mexican", "Pizza", "Chinese", "Italian", "Japanese", "Indian"]
 
-    st.write(f"Categoría seleccionada: {categoria}")
+# Crear un selectbox para elegir la categoría
+categoria = st.selectbox("🍽️ Elige la categoría", categorias, index=categorias.index("Pizza"))
 
-    # --- Número de competidores a mostrar ---
-    n_competidores = st.slider("📊 Número de competidores aleatorios a mostrar", min_value=5, max_value=50, value=10)
+st.write(f"Categoría seleccionada: {categoria}")
 
-    # --- QUERIES DINÁMICAS ---
-    query_competidores = f"""
-        SELECT 
-          b.business_name,
-          l.latitude,
-          l.longitude,
-          AVG(r.stars) AS avg_rating,
-          COUNT(r.review_text) AS num_reviews
-        FROM 
-          `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-        JOIN 
-          `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-          ON b.business_id = r.business_id
-        JOIN
-          `shining-rampart-455602-a7.dw_restaurantes.dim_locations` l
-          ON b.business_id = l.business_id
-        WHERE 
-          LOWER(b.categories) LIKE '%{categoria.lower()}%'
-        GROUP BY 
-          b.business_name, l.latitude, l.longitude
-        ORDER BY 
-          RAND()
-        LIMIT {n_competidores}
-    """
+# Ahora, utiliza esta categoría para la consulta
+query_competidores = f"""
+SELECT b.business_name, l.latitude, l.longitude, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
+FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+ON b.business_id = r.business_id
+JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_locations` l
+ON b.business_id = l.business_id
+WHERE LOWER(b.categories) LIKE '%{categoria.lower()}%'
+GROUP BY b.business_name, l.latitude, l.longitude
+ORDER BY RAND()
+LIMIT 10
+"""
+
     
     # Ejecutamos la consulta y obtenemos los datos
     df_comp = run_query(query_competidores)
