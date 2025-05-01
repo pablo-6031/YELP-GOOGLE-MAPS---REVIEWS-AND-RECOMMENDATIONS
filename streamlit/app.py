@@ -13,7 +13,7 @@ import plotly.express as px
 from sklearn.feature_extraction.text import CountVectorizer
 from wordcloud import WordCloud 
 import pydeck as pdk
-
+import pandas_gbq
 # === CONFIGURACIÓN GENERAL ===
 
 # URLs de imágenes desde GitHub
@@ -89,9 +89,12 @@ def run_query(query):
 # ID fijo del negocio principal
 BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
 
-import streamlit as st
-import matplotlib.pyplot as plt
-import pandas as pd
+
+
+# Función para ejecutar la consulta
+def run_query(query):
+    df = pandas_gbq.read_gbq(query, project_id="shining-rampart-455602-a7", dialect='standard')
+    return df
 
 def show_competencia():
     st.title("🔍 Análisis de Competencia por Categoría")
@@ -106,67 +109,42 @@ def show_competencia():
 
     # --- QUERIES DINÁMICAS ---
     query_competidores = f"""
-        SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
-        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-        JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-        ON b.business_id = r.business_id
-        WHERE LOWER(b.categories) LIKE '%{categoria.lower()}%'
-        GROUP BY b.business_name
-        ORDER BY RAND()
+        SELECT 
+          b.business_name,
+          l.latitude,
+          l.longitude,
+          AVG(r.stars) AS avg_rating,
+          COUNT(r.review_text) AS num_reviews
+        FROM 
+          `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+        JOIN 
+          `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+          ON b.business_id = r.business_id
+        JOIN
+          `shining-rampart-455602-a7.dw_restaurantes.dim_locations` l
+          ON b.business_id = l.business_id
+        WHERE 
+          LOWER(b.categories) LIKE '%{categoria.lower()}%'
+        GROUP BY 
+          b.business_name, l.latitude, l.longitude
+        ORDER BY 
+          RAND()
         LIMIT {n_competidores}
     """
-
-    query_distribucion = f"""
-        SELECT r.stars AS star, COUNT(*) AS count
-        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-        JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-        ON b.business_id = r.business_id
-        WHERE LOWER(b.categories) LIKE '%{categoria.lower()}%'
-        GROUP BY r.stars
-        ORDER BY r.stars
-    """
-
-    # --- OBTENER DATOS ---
+    
+    # Ejecutamos la consulta y obtenemos los datos
     df_comp = run_query(query_competidores)
-    df_dist = run_query(query_distribucion)
 
     # --- MOSTRAR DATOS Y GRÁFICOS ---
     st.subheader(f"📋 {n_competidores} Competidores Aleatorios – Categoría: {categoria.title()}")
     st.dataframe(df_comp)
 
-    st.subheader("📈 Dispersión – Reseñas vs Rating Promedio")
-    if not df_comp.empty:
-        fig1, ax1 = plt.subplots()
-        ax1.scatter(df_comp["num_reviews"], df_comp["avg_rating"], alpha=0.7)
-        for _, row in df_comp.iterrows():
-            ax1.annotate(row["business_name"], (row["num_reviews"], row["avg_rating"]),
-                         fontsize=7, xytext=(3,3), textcoords='offset points')
-        ax1.set_xlabel("Número de Reseñas")
-        ax1.set_ylabel("Rating Promedio")
-        ax1.set_title(f"Competencia – Categoría: {categoria.title()}")
-        st.pyplot(fig1)
-    else:
-        st.info("No se encontraron competidores con esa categoría.")
-
-    st.subheader(f"📊 Distribución de Estrellas – {categoria.title()}")
-    if not df_dist.empty:
-        fig2, ax2 = plt.subplots()
-        ax2.pie(df_dist['count'], labels=df_dist['star'], autopct='%1.1f%%', startangle=90)
-        ax2.axis('equal')
-        st.pyplot(fig2)
-    else:
-        st.info("No hay suficientes datos para mostrar la distribución de estrellas.")
-import pydeck as pdk
-
-# ... (dentro de show_competencia, después de obtener df_comp)
-
-# --- MAPA INTERACTIVO ---
-st.subheader("🗺️ Mapa de Competidores por Ubicación y Calificación")
-
-# Validación robusta
-if 'df_comp' in locals() and not df_comp.empty:
+    # --- Mapa Interactivo ---
+    st.subheader("🗺️ Mapa de Competidores por Ubicación y Calificación")
+    
+    # Comprobamos si tenemos latitud y longitud
     if "latitude" in df_comp.columns and "longitude" in df_comp.columns:
-        # Normalizamos estrellas para el color
+        # Normalizamos las estrellas para el color
         def rating_to_color(stars):
             if stars >= 4.5:
                 return [0, 200, 0]    # verde
@@ -177,6 +155,7 @@ if 'df_comp' in locals() and not df_comp.empty:
 
         df_comp["color"] = df_comp["avg_rating"].apply(rating_to_color)
 
+        # Creamos el mapa con pydeck
         st.pydeck_chart(pdk.Deck(
             map_style="mapbox://styles/mapbox/light-v9",
             initial_view_state=pdk.ViewState(
@@ -192,15 +171,15 @@ if 'df_comp' in locals() and not df_comp.empty:
                     get_position='[longitude, latitude]',
                     get_color='color',
                     get_radius=150,
-                    pickable=True
+                    pickable=True,
+                    tooltip=True
                 )
             ],
-            tooltip={"text": "{business_name}\n⭐ {avg_rating} estrellas\nCategoría: " + categoria.title()}
+            tooltip={"text": "{business_name}\n⭐ {avg_rating} estrellas"}
         ))
     else:
         st.warning("⚠️ El DataFrame no contiene columnas de latitud y longitud para mostrar el mapa.")
-else:
-    st.info("No hay datos disponibles para mostrar en el mapa.")
+
 
 # --- SIDEBAR ---
 with st.sidebar:
