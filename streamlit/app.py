@@ -90,11 +90,6 @@ def run_query(query):
 BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
 
 
-
-import streamlit as st
-import pandas as pd
-import pandas_gbq
-
 # Función para ejecutar la consulta
 def run_query(query):
     try:
@@ -104,6 +99,7 @@ def run_query(query):
         st.error(f"❌ Error al ejecutar la consulta: {e}")
         return pd.DataFrame()  # Retorna un DataFrame vacío en caso de error
 
+# Función para mostrar el análisis de competencia
 # Función para mostrar el análisis de competencia
 def show_competencia():
     st.title("🔍 Análisis de Competencia por Categoría")
@@ -158,6 +154,34 @@ def show_competencia():
     st.subheader(f"📋 {n_competidores} Competidores Aleatorios – Categoría: {categoria.title()}")
     st.dataframe(df_comp)
 
+    # --- Dispersión – Reseñas vs Rating Promedio ---
+    st.subheader("📈 Dispersión – Reseñas vs Rating Promedio")
+    if not df_comp.empty:
+        fig1, ax1 = plt.subplots()
+        ax1.scatter(df_comp["num_reviews"], df_comp["avg_rating"], alpha=0.7)
+        for _, row in df_comp.iterrows():
+            ax1.annotate(row["business_name"], (row["num_reviews"], row["avg_rating"]),
+                         fontsize=7, xytext=(3,3), textcoords='offset points')
+        ax1.set_xlabel("Número de Reseñas")
+        ax1.set_ylabel("Rating Promedio")
+        ax1.set_title(f"Competencia – Categoría: {categoria.title()}")
+        st.pyplot(fig1)
+    else:
+        st.info("No se encontraron competidores con esa categoría.")
+
+    # --- Distribución de Estrellas ---
+    st.subheader(f"📊 Distribución de Estrellas – {categoria.title()}")
+    # Si tienes un DataFrame `df_dist` con la distribución de estrellas, puedes visualizarlo
+    # Aquí te doy un ejemplo de cómo crear un DataFrame con la distribución de estrellas:
+    df_dist = df_comp.groupby("avg_rating").size().reset_index(name='count')
+    if not df_dist.empty:
+        fig2, ax2 = plt.subplots()
+        ax2.pie(df_dist['count'], labels=df_dist['avg_rating'], autopct='%1.1f%%', startangle=90)
+        ax2.axis('equal')
+        st.pyplot(fig2)
+    else:
+        st.info("No hay suficientes datos para mostrar la distribución de estrellas.")
+
     # --- Mapa Interactivo ---
     st.subheader("🗺️ Mapa de Competidores por Ubicación y Calificación")
     
@@ -199,8 +223,7 @@ def show_competencia():
     else:
         st.warning("⚠️ El DataFrame no contiene columnas válidas de latitud y longitud para mostrar el mapa.")
 
-# Llamar a la función
-show_competencia()
+
 
 
 # --- SIDEBAR ---
