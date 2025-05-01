@@ -408,7 +408,7 @@ if opcion == "Explorar Reseñas":
     WHERE business_id = '{business_id}'
     ORDER BY review_date DESC
     LIMIT 10
-    """
+    
     reviews = run_query(query)
 
     if not reviews.empty:
