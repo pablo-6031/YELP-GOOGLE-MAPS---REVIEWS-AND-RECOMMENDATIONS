@@ -96,16 +96,20 @@ def run_query(query):
     df = pandas_gbq.read_gbq(query, project_id="shining-rampart-455602-a7", dialect='standard')
     return df
 
+# Función para mostrar el análisis de competencia
 def show_competencia():
     st.title("🔍 Análisis de Competencia por Categoría")
 
-    # --- INPUT DINÁMICO ---
-    categoria = st.text_input("🍽️ Ingresá la categoría (ej: Mexican, Pizza, Chinese)", value="Mexican")
-    n_competidores = st.slider("📊 Número de competidores aleatorios a mostrar", min_value=5, max_value=50, value=10)
+    # --- INPUT DINÁMICO (Selector de Categoría) ---
+    categorias_disponibles = ['Mexican', 'Pizza', 'Chinese', 'Italian', 'Indian', 'Japanese', 'Thai', 'American']
+    categoria = st.selectbox("🍽️ Elige una categoría", categorias_disponibles)
 
+    # Verificar que se haya seleccionado una categoría válida
     if not categoria:
-        st.warning("Por favor ingresá una categoría válida.")
+        st.warning("⚠️ Por favor selecciona una categoría para continuar.")
         return
+
+    n_competidores = st.slider("📊 Número de competidores aleatorios a mostrar", min_value=5, max_value=50, value=10)
 
     # --- QUERIES DINÁMICAS ---
     query_competidores = f"""
@@ -134,6 +138,11 @@ def show_competencia():
     
     # Ejecutamos la consulta y obtenemos los datos
     df_comp = run_query(query_competidores)
+
+    # Verificar que haya datos
+    if df_comp.empty:
+        st.warning(f"⚠️ No se encontraron competidores para la categoría: {categoria}")
+        return
 
     # --- MOSTRAR DATOS Y GRÁFICOS ---
     st.subheader(f"📋 {n_competidores} Competidores Aleatorios – Categoría: {categoria.title()}")
@@ -179,7 +188,6 @@ def show_competencia():
         ))
     else:
         st.warning("⚠️ El DataFrame no contiene columnas de latitud y longitud para mostrar el mapa.")
-
 
 # --- SIDEBAR ---
 with st.sidebar:
