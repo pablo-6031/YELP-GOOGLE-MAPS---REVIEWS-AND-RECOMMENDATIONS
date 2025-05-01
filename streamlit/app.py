@@ -476,51 +476,68 @@ if opcion == "Explorar Reseñas":
 
     else:
         st.warning("No hay reseñas disponibles para el período o filtro seleccionado.")
+
 if opcion == "KPIs":
     st.title("KPIs de El Camino Real")
     
     # Nuevo ID de negocio para El Camino Real
     business_id = "julsvvavzvghwffkkm0nlg"  # Aquí usas el nuevo ID
 
-    # Selección de frecuencia de análisis (mensual o anual)
-    frecuencia = st.radio("Selecciona la frecuencia de análisis:", ('Mensual', 'Anual'))
-
     # Selección de rango de fechas
     fecha_desde = st.date_input("Desde:", value=pd.to_datetime("2020-01-01"))
     fecha_hasta = st.date_input("Hasta:", value=pd.to_datetime("2023-12-31"))
+    
+    # Botón para confirmar la selección de fechas
+    if st.button('Confirmar Fechas'):
+        # Construcción de la query SQL para El Camino Real
+        filtro = f"WHERE business_id = '{business_id}'"
 
-    # Construcción de la query SQL para El Camino Real
-    filtro = f"WHERE business_id = '{business_id}'"
+        # Ajuste del formato de la fecha dependiendo de la frecuencia seleccionada
+        frecuencia = st.radio("Selecciona la frecuencia de análisis:", ('Mensual', 'Anual'))
 
-    # Ajuste del formato de la fecha dependiendo de la frecuencia seleccionada
-    if frecuencia == 'Mensual':
-        formato_periodo = "FORMAT_TIMESTAMP('%Y-%m', review_date) AS periodo"
-    else:
-        formato_periodo = "FORMAT_TIMESTAMP('%Y', review_date) AS periodo"
+        if frecuencia == 'Mensual':
+            formato_periodo = "FORMAT_TIMESTAMP('%Y-%m', review_date) AS periodo"
+        else:
+            formato_periodo = "FORMAT_TIMESTAMP('%Y', review_date) AS periodo"
 
-    # Query para obtener los KPIs
-    query_kpi = f"""
-    SELECT 
-        {formato_periodo},
-        COUNT(*) AS volumen_resenas,
-        ROUND(AVG(stars), 2) AS calificacion_promedio
-    FROM shining-rampart-455602-a7.dw_restaurantes.fact_review
-    {filtro}
-    AND review_date BETWEEN '{fecha_desde}' AND '{fecha_hasta}'
-    GROUP BY periodo
-    ORDER BY periodo
-    """
+        # Query para obtener los KPIs
+        query_kpi = f"""
+        SELECT 
+            {formato_periodo},
+            COUNT(*) AS volumen_resenas,
+            ROUND(AVG(stars), 2) AS calificacion_promedio
+        FROM shining-rampart-455602-a7.dw_restaurantes.fact_review
+        {filtro}
+        AND review_date BETWEEN '{fecha_desde}' AND '{fecha_hasta}'
+        GROUP BY periodo
+        ORDER BY periodo
+        """
 
-    # Ejecutar la consulta
-    df_kpi = run_query(query_kpi)
+        # Ejecutar la consulta
+        df_kpi = run_query(query_kpi)
 
-    # Visualizar resultados
-    if not df_kpi.empty:
-        st.subheader(f"KPIs por Periodo - El Camino Real")
+        # Visualizar resultados
+        if not df_kpi.empty:
+            st.subheader(f"KPIs por Periodo - El Camino Real")
 
-        # Gráfico 1: Calificación promedio
-        fig1, ax1 = plt.subplots(figsize=(10, 4))
-        ax1.plot(df_kpi["periodo"], df_kpi["calificacion_promedio"], marker='o', color='green')
-        ax1.set_title("Calificación Promedio por Periodo")
+            # Gráfico 1: Calificación promedio
+            fig1, ax1 = plt.subplots(figsize=(10, 4))
+            ax1.plot(df_kpi["periodo"], df_kpi["calificacion_promedio"], marker='o', color='green')
+            ax1.set_title("Calificación Promedio por Periodo")
+            ax1.set_xlabel("Periodo")
+            ax1.set_ylabel("Calificación Promedio")
+            ax1.tick_params(axis='x', rotation=45)
+            st.pyplot(fig1)
 
+            # Gráfico 2: Volumen de reseñas
+            fig2, ax2 = plt.subplots(figsize=(10, 4))
+            ax2.bar(df_kpi["periodo"], df_kpi["volumen_resenas"], color='skyblue')
+            ax2.set_title("Volumen de Reseñas por Periodo")
+            ax2.set_xlabel("Periodo")
+            ax2.set_ylabel("Cantidad de Reseñas")
+            ax2.tick_params(axis='x', rotation=45)
+            st.pyplot(fig2)
+
+        else:
+            st.warning("No hay datos disponibles para El Camino Real en el periodo seleccionado.")
 
