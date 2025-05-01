@@ -324,7 +324,7 @@ if opcion == "Explorar Reseñas y KPIs":
         st.markdown(f"- {recomendacion}")
 
     st.caption("Análisis basado en reseñas filtradas de negocios mexicanos con alta calificación.")
-    if opcion == "Análisis Integral de Competencia":
+if opcion == "Análisis Integral de Competencia":
     st.title("📊 Análisis Integral de la Competencia para El Camino Real")
     st.markdown("""
     En esta sección combinamos tres herramientas clave para analizar la competencia directa de *El Camino Real*:
