@@ -172,23 +172,15 @@ with st.sidebar:
 
 if opcion == "Inicio":
     st.title("Análisis de Reseñas: El Camino Real")
+    
+    # Descripción actualizada según lo que hace la aplicación
     st.markdown(""" 
-    ## ¿Quiénes somos?
-    Somos **HYPE Analytics**, especialistas en proporcionar información relevante para mejorar el rendimiento de nuestros clientes.
+    ## ¿Qué hace esta aplicación?
+    **El Camino Real** es una plataforma que analiza las reseñas de clientes sobre el restaurante. Utilizando datos de **Yelp** y **Google Maps**, extraemos **KPIs clave**, analizamos **sentimientos**, generamos **recomendaciones personalizadas**, y comparamos el desempeño con la **competencia** para mejorar la estrategia del negocio.
+    ## Producto del Proyecto
+    Este producto es una aplicación interactiva desarrollada con **Streamlit**, que permite al restaurante **El Camino Real** obtener información valiosa a partir de las reseñas de clientes. A través de la visualización de KPIs y análisis de sentimiento, ayudamos a los dueños y gerentes a tomar decisiones informadas para mejorar la experiencia de los comensales y optimizar la operación del restaurante.
 
-    ## Objetivo del Proyecto
-    Analizar las reseñas de clientes del restaurante **El Camino Real**, extrayendo KPIs, sentimientos y comparativas que permitan optimizar la estrategia del negocio.
-
-    ## Nuestro Equipo de Trabajo
-    - **Harry Guevara** – Functional Analyst
-    - **Yanina Spina** – Data Scientist
-    - **Elvis Bernuy** – Data Analyst
-    - **Pablo Carrizo** – Data Engineer
-    - **Pablo Mizzau** – Data Engineer
-
-    ## ¿Qué hacemos?
-    Consultamos datos de Yelp y Google Maps desde **Google BigQuery**, y desarrollamos esta app interactiva con **Streamlit**.
-
+    
     ### Funcionalidades:
     - KPIs clave (promedio de rating, volumen de reseñas)
     - Análisis de Sentimiento
@@ -197,11 +189,14 @@ if opcion == "Inicio":
     - Comparativas con la competencia
 
     ---
+    ### Recursos adicionales:
 
-    🔗 [Ver Dashboard Interactivo en Looker Studio](https://lookerstudio.google.com/u/0/reporting/df20fc98-f8fa-42bf-8734-92d4ff90e6f5/page/7xbIF)
+    🔗 [![Looker Studio](https://upload.wikimedia.org/wikipedia/commons/9/9b/Google_Looker_Studio_logo.svg)](https://lookerstudio.google.com/u/0/reporting/df20fc98-f8fa-42bf-8734-92d4ff90e6f5/page/7xbIF) Ver Dashboard Interactivo en Looker Studio
 
-    📄 [Leer README del Proyecto en GitHub](https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/README.md)
+    📄 [![GitHub](https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg)](https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/README.md) Leer README del Proyecto en GitHub
     """)
+    """)
+
 if opcion == "KPIs":
     st.title("KPIs de El Torito - El Camino Real")
 
