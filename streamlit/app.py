@@ -216,10 +216,10 @@ if opcion == "Mapas":
 # --- RECOMENDADOR ---
 if opcion == "Recomendador":
     st.title("💡 Recomendador para El Camino Real")
-    st.markdown("""
+    st.markdown(""
     Este módulo analiza las reseñas **positivas** de la competencia directa de *El Camino Real* para detectar las frases más frecuentes
     que los clientes valoran. A partir de eso, generamos recomendaciones accionables para mejorar la propuesta del local.
-    """)
+    "")
 
     st.divider()
     st.subheader("📦 Cargando reseñas positivas de competidores...")
