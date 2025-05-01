@@ -93,13 +93,21 @@ BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
 # Función para ejecutar la consulta
 def run_query(query):
     try:
+        # Mostramos la consulta para depurar
+        st.write(f"Ejecutando consulta: {query}")
+        
+        # Ejecutamos la consulta y obtenemos el DataFrame
         df = pandas_gbq.read_gbq(query, project_id="shining-rampart-455602-a7", dialect='standard')
+        
+        # Verificamos que los datos fueron obtenidos
+        if df.empty:
+            st.warning("⚠️ La consulta no retornó datos.")
         return df
     except Exception as e:
+        # Si ocurre un error, lo mostramos
         st.error(f"❌ Error al ejecutar la consulta: {e}")
         return pd.DataFrame()  # Retorna un DataFrame vacío en caso de error
 
-# Función para mostrar el análisis de competencia
 # Función para mostrar el análisis de competencia
 def show_competencia():
     st.title("🔍 Análisis de Competencia por Categoría")
@@ -227,6 +235,10 @@ def show_competencia():
         ))
     else:
         st.warning("⚠️ El DataFrame no contiene columnas válidas de latitud y longitud para mostrar el mapa.")
+
+
+
+
 # --- SIDEBAR ---
 with st.sidebar:
     opcion = option_menu("Navegación", 
