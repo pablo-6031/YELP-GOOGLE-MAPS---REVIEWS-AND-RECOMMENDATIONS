@@ -443,7 +443,7 @@ if opcion == "Análisis de Sentimiento":
 
 # --- PREDICCIONES ---
 if opcion == "Predicciones":
-    st.title("Predicción de Rating para El Torito")
+    st.title("Predicción de Rating para El camino real")
 
     st.markdown("""
     Utilizamos modelos de **Machine Learning** para predecir cuántas estrellas podría recibir una nueva reseña, basándonos en su contenido textual.
@@ -463,15 +463,17 @@ if opcion == "Predicciones":
 
 # --- COMPETENCIA ---
 if opcion == "Competencia":
-    st.title("Competidores & Sucursales de El Torito")
+    st.title("Competidores & Sucursales de El camino real")
     show_competencia()
 # --- Página de Distribución de Reseñas ---
-
+# --- Página de Distribución de Reseñas ---
 if opcion == "Distribución de Reseñas":
-    # --- Distribución General de todas las sucursales ---
-    st.subheader("Distribución General de Reseñas (todas las sucursales)")
+    # --- Distribución General ---
+    st.subheader("Distribución General de Reseñas - El Camino Real")
 
-    q_general = """
+    BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
+
+    q_general = f"""
     SELECT 
         EXTRACT(YEAR FROM r.review_date) AS anio,
         CASE 
@@ -483,7 +485,7 @@ if opcion == "Distribución de Reseñas":
     FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
     JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
       ON r.business_id = b.business_id
-    WHERE LOWER(b.business_name) LIKE '%torito%'
+    WHERE b.business_id = '{BUSINESS_ID_EL_CAMINO_REAL}'
     GROUP BY anio, sentimiento
     ORDER BY anio;
     """
@@ -499,104 +501,21 @@ if opcion == "Distribución de Reseñas":
         ax1.bar(pivot_df.index, pivot_df["Neutro"], bottom=pivot_df["Negativo"], label="Neutro", color="gray")
         ax1.bar(pivot_df.index, pivot_df["Positivo"], bottom=pivot_df["Negativo"] + pivot_df["Neutro"], label="Positivo", color="green")
 
-        ax1.set_title("Distribución General de Sentimientos por Año")
+        ax1.set_title("Distribución de Sentimientos por Año - El Camino Real")
         ax1.set_xlabel("Año")
         ax1.set_ylabel("Cantidad de Reseñas")
         ax1.legend(title="Sentimiento")
         st.pyplot(fig1)
     else:
-        st.warning("No hay datos para El Torito.")
+        st.warning("No hay datos para El Camino Real.")
 
-    # --- Distribución por sucursal específica ---
-    # Diccionario de sucursales de El Torito con su business_id
-    sucursales = {
-        "El Torito Sucursal 1": "0x80844a01be660f09:0x661fee46237228d7",
-        "El Torito Sucursal 2": "0x808fc9e896f1d559:0x8c0b57a8edd4fd5d",
-        "El Torito Sucursal 3": "0x808fccb4507dc323:0x297d7fd58fc8ff91",
-        "El Torito Sucursal 4": "0x809ade1814a05da3:0xad096a803d166a4c",
-        "El Torito Sucursal 5": "0x80c280a9a282d2e9:0xf3a894f129f38b2f",
-        "El Torito Sucursal 6": "0x80c29794c7e2d44d:0xda1266db4b03e83c",
-        "El Torito Sucursal 7": "0x80c297ce3cd0f54b:0xececf01e9eeee6f7",
-        "El Torito Sucursal 8": "0x80c2b4d2ca3e19c9:0xcf83f70eaba7a203",
-        "El Torito Sucursal 9": "0x80c2bfcf8cc535fd:0xea7ffe91727d1946",
-        "El Torito Sucursal 10": "0x80dbf8ec8ade5d45:0x952d1e263dadc54e",
-        "El Torito Sucursal 11": "0x80dcd43a352d3ae3:0xae921b0c9e9cbdb7",
-        "El Torito Sucursal 12": "0x80dd2ddc6a24e4af:0xcadb76671ddbc94d",
-        "El Torito Sucursal 13": "0x80dd32f142b8252b:0x1af197c9399f5231",
-        "El Torito Sucursal 14": "0x80e9138c2f68bd4f:0x64f25be6f8d56d95",
-        "El Torito Sucursal 15": "0x80ea4fe71c447a1b:0x17232153c8e87293",
-        "El Torito Sucursal 16": "7yr4oqcapzbkckrlb3isig",
-    }
-
-    sucursal_seleccionada = st.selectbox("Selecciona una sucursal de El Torito:", list(sucursales.keys()))
-    business_id = sucursales[sucursal_seleccionada]
-
-    q_reseñas = f"""
-    SELECT r.business_id,
-           b.business_name,
-           EXTRACT(YEAR FROM r.review_date) AS anio,
-           CASE 
-             WHEN r.stars <= 2.5 THEN 'Negativo'
-             WHEN r.stars > 2.5 AND r.stars <= 3.5 THEN 'Neutro'
-             ELSE 'Positivo'
-           END AS sentimiento,
-           COUNT(*) AS cantidad
-    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-      ON r.business_id = b.business_id
-    WHERE b.business_id = '{business_id}'
-    GROUP BY r.business_id, b.business_name, anio, sentimiento
-    ORDER BY anio
-    """
-
-    df_reseñas = run_query(q_reseñas)
-
-    if not df_reseñas.empty:
-        st.write(f"Distribución de Reseñas de {sucursal_seleccionada} por Año y Sentimiento")
-        
-        df_pivot = df_reseñas.pivot_table(index='anio', columns='sentimiento', values='cantidad', aggfunc='sum', fill_value=0)
-
-        fig, ax = plt.subplots(figsize=(10, 6))
-        df_pivot.plot(kind='bar', stacked=True, ax=ax)
-
-        ax.set_title(f"Distribución de Sentimientos de las Reseñas de {sucursal_seleccionada}")
-        ax.set_xlabel("Año")
-        ax.set_ylabel("Número de Reseñas")
-        ax.legend(title="Sentimiento")
-
-        st.pyplot(fig)
-    else:
-        st.warning("No hay datos de reseñas para la sucursal seleccionada.")
-
-    # --- Últimas reseñas por sucursal ---
 if opcion == "Explorar Reseñas":
-    # Diccionario de sucursales de El Torito con su business_id
-    sucursales = {
-        "El Torito Sucursal 1": "0x80844a01be660f09:0x661fee46237228d7",
-        "El Torito Sucursal 2": "0x808fc9e896f1d559:0x8c0b57a8edd4fd5d",
-        "El Torito Sucursal 3": "0x808fccb4507dc323:0x297d7fd58fc8ff91",
-        "El Torito Sucursal 4": "0x809ade1814a05da3:0xad096a803d166a4c",
-        "El Torito Sucursal 5": "0x80c280a9a282d2e9:0xf3a894f129f38b2f",
-        "El Torito Sucursal 6": "0x80c29794c7e2d44d:0xda1266db4b03e83c",
-        "El Torito Sucursal 7": "0x80c297ce3cd0f54b:0xececf01e9eeee6f7",
-        "El Torito Sucursal 8": "0x80c2b4d2ca3e19c9:0xcf83f70eaba7a203",
-        "El Torito Sucursal 9": "0x80c2bfcf8cc535fd:0xea7ffe91727d1946",
-        "El Torito Sucursal 10": "0x80dbf8ec8ade5d45:0x952d1e263dadc54e",
-        "El Torito Sucursal 11": "0x80dcd43a352d3ae3:0xae921b0c9e9cbdb7",
-        "El Torito Sucursal 12": "0x80dd2ddc6a24e4af:0xcadb76671ddbc94d",
-        "El Torito Sucursal 13": "0x80dd32f142b8252b:0x1af197c9399f5231",
-        "El Torito Sucursal 14": "0x80e9138c2f68bd4f:0x64f25be6f8d56d95",
-        "El Torito Sucursal 15": "0x80ea4fe71c447a1b:0x17232153c8e87293",
-        "El Torito Sucursal 16": "7yr4oqcapzbkckrlb3isig",
-    }
+    st.subheader("Últimas reseñas de  - El Camino Real")
 
-    # Selector de sucursal
-    sucursal_seleccionada = st.selectbox("Selecciona una sucursal de El Torito:", list(sucursales.keys()))
+    # Business ID fijo para El Torito El Camino Real
+    business_id = "0x808fc9e896f1d559:0x8c0b57a8edd4fd5d"
 
-    # Obtener el business_id de la sucursal seleccionada
-    business_id = sucursales[sucursal_seleccionada]
-
-    # Consulta a la base de datos
+    # Consulta a BigQuery
     query = f"""
     SELECT review_text, stars, review_date
     FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
@@ -606,5 +525,7 @@ if opcion == "Explorar Reseñas":
     """
     reviews = run_query(query)
 
-    st.write(f"Últimas 10 reseñas de {sucursal_seleccionada}:")
-    st.dataframe(reviews)
+    if not reviews.empty:
+        st.dataframe(reviews)
+    else:
+        st.warning("No hay reseñas recientes para  - El Camino Real.")
