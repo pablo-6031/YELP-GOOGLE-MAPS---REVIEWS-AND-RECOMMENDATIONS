@@ -278,35 +278,7 @@ if opcion == "Recomendador":
         ax.axis("off")  # Quitar los ejes
         st.pyplot(fig)
 
-    # --- Recomendaciones ---
-    st.divider()
-    st.subheader("💡 Recomendaciones basadas en la voz del cliente")
 
-    recomendaciones = []
-
-    # Mejorar la calidad de la comida
-    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["good food", "mexican food", "great food", "delicious food"]):
-        recomendaciones.append("🍽️ Mejorar la calidad de los platillos, enfocándose en sabores auténticos y frescura de los ingredientes.")
-
-    # Mejorar el servicio
-    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["good service", "great service", "customer service", "service great"]):
-        recomendaciones.append("👨‍🍳 Mejorar la atención al cliente y ofrecer un servicio más rápido y personalizado.")
-
-    # Resaltar la autenticidad de los platillos
-    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["authentic mexican", "mexican food", "carne asada"]):
-        recomendaciones.append("🌮 Resaltar la autenticidad de la comida mexicana en el menú, destacando platillos tradicionales como la carne asada.")
-
-    # Mejorar la visibilidad online
-    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["google good", "translated google"]):
-        recomendaciones.append("🌐 Mejorar la visibilidad en plataformas como Google Reviews, asegurándose de tener reseñas positivas y respuestas a las mismas.")
-
-    # Crear un ambiente agradable
-    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["great place", "love place", "great food"]):
-        recomendaciones.append("🏡 Mejorar el ambiente del restaurante, creando un espacio acogedor y cómodo para los comensales.")
-
-    # Mostrar las recomendaciones dinámicas
-    for recomendacion in recomendaciones:
-        st.markdown(f"- {recomendacion}")
 
     st.caption("Análisis basado en reseñas filtradas de negocios mexicanos con alta calificación.")
 
@@ -416,17 +388,6 @@ if opcion == "Distribución de Reseñas":
     else:
         st.warning("No se encontraron reseñas para este negocio.")
         
-import datetime
-import matplotlib.pyplot as plt
-import pandas as pd
-
-# --- SIDEBAR ---
-with st.sidebar:
-    opcion = option_menu("Navegación", 
-        ["Inicio", "Explorar Reseñas y KPIs", "Recomendador", "Análisis de Sentimiento", "Predicciones", "Distribución de Reseñas", "Competencia"],
-        icons=['house', 'bar-chart', 'map', 'robot', 'chat', 'graph-up', 'folder', 'flag'],
-        menu_icon="cast", default_index=0, orientation="vertical"
-    )
 
 if opcion == "Explorar Reseñas y KPIs":
     st.title("Explorar Reseñas y KPIs de El Camino Real")
