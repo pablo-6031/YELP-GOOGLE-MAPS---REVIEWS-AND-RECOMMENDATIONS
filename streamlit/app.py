@@ -127,26 +127,17 @@ if opcion == "Inicio":
 
 if opcion == "Explorar Reseñas":
  
-    st.title("Explorar Reseñas  El Camino Real")
+    st.title("Explorar Reseñas - El Camino Real")
 
-    # --------------------------------------
-    # 🔍 DESCRIPCIÓN DEL FUNCIONAMIENTO:
-    # Este código permite al usuario:
-    # 1. Seleccionar un rango de fechas para analizar reseñas de un restaurante específico.
-    # 2. Ver KPIs como calificación promedio y volumen de reseñas por mes o año.
-    # 3. Filtrar reseñas por sentimiento (positivo, neutro o negativo).
-    # 4. Visualizar una nube de palabras con los términos más usados en las reseñas.
-    # 5. Obtener recomendaciones automáticas basadas en palabras clave dentro de las reseñas.
-    # --------------------------------------
+    st.write("""
+    En esta sección, podrás explorar las reseñas más recientes de **El Camino Real** y consultar su flujo de opiniones a lo largo del tiempo, mediante un **filtro de fechas personalizado**. Esto te permitirá analizar periodos específicos de interés.
 
-  st.write("""
-  En esta sección, podrás explorar las reseñas más recientes de **El Camino Real** y consultar su flujo de opiniones a lo largo del tiempo.
+    El análisis incluye métricas como la **calificación promedio** y el **volumen de reseñas**, con visualizaciones disponibles de forma **mensual o anual**, lo que facilita la detección de tendencias y patrones.
 
-  Las reseñas pueden ser filtradas por sentimiento (positivo, neutro o negativo) y mediante un **filtro de fechas personalizado**, lo que te permite analizar periodos específicos de interés. Este análisis incluye métricas como la **calificación promedio** y el **volumen de reseñas**, con visualizaciones disponibles de forma **mensual o anual**, facilitando la detección de tendencias y patrones.
+    Las reseñas pueden ser filtradas también por **sentimiento** (positivo, neutro o negativo), devolviendo sugerencias según el contenido de las opiniones analizadas.
 
-  Además, podrás ver una **nube de palabras** generada a partir del contenido de las reseñas más relevantes, lo que permite identificar de forma visual los temas y aspectos más mencionados por los clientes.
-  """)
-
+    Además, podrás ver una **nube de palabras** generada a partir del contenido de las reseñas más relevantes, lo que permite identificar visualmente los temas y aspectos más mencionados por los clientes.
+    """)
 
     # --- Filtros por fecha ---
     col1, col2 = st.columns(2)
@@ -155,10 +146,9 @@ if opcion == "Explorar Reseñas":
     with col2:
         fecha_fin = st.date_input("Hasta", datetime.date.today())
 
-    # Business ID fijo
     business_id = "julsvvavzvghwffkkm0nlg"
 
-    # --- Flujo de reseñas---
+    # --- Flujo de reseñas ---
     st.subheader("📊 KPIs de El Camino Real")
 
     tipo_periodo = st.selectbox("Seleccionar periodo de tiempo", ["Mensual", "Anual"])
