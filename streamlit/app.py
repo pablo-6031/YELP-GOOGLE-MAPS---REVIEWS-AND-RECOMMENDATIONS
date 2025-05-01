@@ -111,30 +111,24 @@ def run_query(query):
 def show_competencia():
     st.title("🔍 Análisis de Competencia por Categoría")
 
-    # --- OBTENER LAS CATEGORÍAS DISPONIBLES ---
-
-    # Consulta para obtener las categorías únicas
+    # --- Cargar las categorías disponibles desde la base de datos ---
     query_categorias = """
-    SELECT DISTINCT category
+    SELECT DISTINCT categories
     FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
-    WHERE category IS NOT NULL
+    WHERE categories IS NOT NULL
+    ORDER BY categories;
     """
     df_categorias = run_query(query_categorias)
 
-    if df_categorias.empty:
-        st.warning("⚠️ No se encontraron categorías.")
-        return
-
-    # Obtener las categorías como una lista
-    categorias = df_categorias['category'].tolist()
-
-    # Crear un selectbox para elegir la categoría
+    # Extraer las categorías en una lista para el selectbox
+    categorias = df_categorias['categories'].dropna().tolist()
+    
+    # Mostrar el selectbox para elegir una categoría
     categoria = st.selectbox("🍽️ Elige la categoría", categorias)
 
     st.write(f"Categoría seleccionada: {categoria}")
 
-    # --- CONSULTA DE COMPETIDORES ---
-
+    # Consulta para obtener los competidores de la categoría seleccionada
     query_competidores = f"""
     SELECT b.business_name, l.latitude, l.longitude, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
     FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
@@ -148,7 +142,7 @@ def show_competencia():
     LIMIT 10
     """
 
-    # Ejecutamos la consulta y obtenemos los datos
+    # Ejecutar la consulta y obtener los datos
     df_comp = run_query(query_competidores)
 
     # Verificar si los datos están vacíos
@@ -158,7 +152,7 @@ def show_competencia():
         st.write(f"Se encontraron {len(df_comp)} competidores.")
         st.write(df_comp.head())  # Muestra las primeras filas para verificar
 
-        # --- MOSTRAR DATOS Y GRÁFICOS ---
+        # --- Mostrar datos y gráficos ---
         st.subheader(f"📋 Competidores Aleatorios – Categoría: {categoria.title()}")
         st.dataframe(df_comp)
 
@@ -179,7 +173,6 @@ def show_competencia():
 
         # --- Distribución de Estrellas ---
         st.subheader(f"📊 Distribución de Estrellas – {categoria.title()}")
-        # Si tienes un DataFrame `df_dist` con la distribución de estrellas, puedes visualizarlo
         df_dist = df_comp.groupby("avg_rating").size().reset_index(name='count')
         if not df_dist.empty:
             fig2, ax2 = plt.subplots()
@@ -188,9 +181,6 @@ def show_competencia():
             st.pyplot(fig2)
         else:
             st.info("No hay suficientes datos para mostrar la distribución de estrellas.")
-
-# Ejecutar la función para mostrar la competencia
-show_competencia()
 
 # --- SIDEBAR ---
 with st.sidebar:
