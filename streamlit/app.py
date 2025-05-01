@@ -286,35 +286,27 @@ if opcion == "Análisis Integral de Competencia":
     - **📈 Distribución de Sentimientos por Año**.
     - **🔍 Análisis general de la competencia por categoría.**
     """)
-    
+
     st.divider()
-
-    # ---------------------- Filtros Comunes -----------------------
-    st.subheader("🔧 Filtros Comunes")
-    
-    categoria = st.text_input("Ingresá una categoría (ej. Mexican)", value="Mexican")
-    n_competidores = st.slider("Cantidad de competidores a mostrar", 5, 50, 10)
-
-    negocio_seleccionado = st.selectbox("Selecciona un negocio", df_negocios['business_name'].tolist())
-    tipo_reseña = st.selectbox("Tipo de reseña", ("Positiva", "Negativa", "Neutra"))
-    
-    # Filtros específicos para Recomendador
-    stars_filter = {"Positiva": "r.stars >= 4", "Negativa": "r.stars <= 2", "Neutra": "r.stars = 3"}[tipo_reseña]
 
     # ---------------------- 💡 Recomendador -----------------------
     st.subheader("💡 Recomendador basado en reseñas")
 
     @st.cache_data
     def cargar_negocios():
-        query = f"""
+        query = """
         SELECT DISTINCT business_id, business_name
         FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
-        WHERE LOWER(categories) LIKE '%{categoria.lower()}%' AND business_id != 'julsvvavzvghwffkkm0nlg'
+        WHERE LOWER(categories) LIKE '%mexican%' AND business_id != 'julsvvavzvghwffkkm0nlg'
         """
         return client.query(query).to_dataframe()
 
     df_negocios = cargar_negocios()
+    negocio_seleccionado = st.selectbox("Selecciona un negocio (Recomendador)", df_negocios['business_name'].tolist())
     business_id_seleccionado = df_negocios[df_negocios['business_name'] == negocio_seleccionado]['business_id'].values[0]
+
+    tipo_reseña = st.selectbox("Tipo de reseña", ("Positiva", "Negativa", "Neutra"))
+    stars_filter = {"Positiva": "r.stars >= 4", "Negativa": "r.stars <= 2", "Neutra": "r.stars = 3"}[tipo_reseña]
 
     @st.cache_data
     def cargar_datos(business_id, stars_filter):
@@ -352,6 +344,21 @@ if opcion == "Análisis Integral de Competencia":
     # ---------------------- 📈 Distribución de Reseñas -----------------------
     st.subheader("📈 Distribución de Sentimientos por Año")
 
+    @st.cache_data
+    def cargar_negocios_disponibles():
+        query = """
+        SELECT DISTINCT b.business_id, b.business_name
+        FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+        JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+        ON r.business_id = b.business_id
+        WHERE r.review_text IS NOT NULL
+        """
+        return run_query(query)
+
+    negocios_df = cargar_negocios_disponibles()
+    negocio_elegido = st.selectbox("Negocio (Distribución)", negocios_df['business_name'].tolist())
+    business_id = negocios_df[negocios_df['business_name'] == negocio_elegido]['business_id'].values[0]
+
     query_sentimiento = f"""
     SELECT 
         EXTRACT(YEAR FROM r.review_date) AS anio,
@@ -362,9 +369,7 @@ if opcion == "Análisis Integral de Competencia":
         END AS sentimiento,
         COUNT(*) AS cantidad
     FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-        JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-        ON r.business_id = b.business_id
-    WHERE LOWER(b.categories) LIKE '%{categoria.lower()}%'
+    WHERE r.business_id = '{business_id}'
     GROUP BY anio, sentimiento
     ORDER BY anio
     """
@@ -377,7 +382,7 @@ if opcion == "Análisis Integral de Competencia":
         ax.bar(pivot_df.index, pivot_df["Negativo"], label="Negativo", color="red")
         ax.bar(pivot_df.index, pivot_df["Neutro"], bottom=pivot_df["Negativo"], label="Neutro", color="gray")
         ax.bar(pivot_df.index, pivot_df["Positivo"], bottom=pivot_df["Negativo"] + pivot_df["Neutro"], label="Positivo", color="green")
-        ax.set_title(f"Distribución de Sentimientos - {negocio_seleccionado}")
+        ax.set_title(f"Distribución de Sentimientos - {negocio_elegido}")
         ax.set_xlabel("Año")
         ax.set_ylabel("Cantidad de Reseñas")
         ax.legend(title="Sentimiento")
@@ -390,45 +395,49 @@ if opcion == "Análisis Integral de Competencia":
     # ---------------------- 🔍 Análisis de Competencia -----------------------
     st.subheader("🔍 Análisis de Competencia por Categoría")
 
-    query_comp = f"""
-    SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
-    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
-    WHERE LOWER(b.categories) LIKE '%{categoria.lower()}%'
-    GROUP BY b.business_name
-    ORDER BY RAND()
-    LIMIT {n_competidores}
-    """
+    categoria = st.text_input("Ingresá una categoría", value="Mexican")
+    n_competidores = st.slider("Cantidad de competidores a mostrar", 5, 50, 10)
 
-    query_dist = f"""
-    SELECT r.stars AS star, COUNT(*) AS count
-    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
-    WHERE LOWER(b.categories) LIKE '%{categoria.lower()}%'
-    GROUP BY r.stars
-    ORDER BY r.stars
-    """
+    if categoria:
+        query_comp = f"""
+        SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
+        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+        JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
+        WHERE LOWER(b.categories) LIKE '%{categoria.lower()}%'
+        GROUP BY b.business_name
+        ORDER BY RAND()
+        LIMIT {n_competidores}
+        """
 
-    df_comp = run_query(query_comp)
-    df_dist = run_query(query_dist)
+        query_dist = f"""
+        SELECT r.stars AS star, COUNT(*) AS count
+        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+        JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
+        WHERE LOWER(b.categories) LIKE '%{categoria.lower()}%'
+        GROUP BY r.stars
+        ORDER BY r.stars
+        """
 
-    st.dataframe(df_comp)
+        df_comp = run_query(query_comp)
+        df_dist = run_query(query_dist)
 
-    if not df_comp.empty:
-        fig1, ax1 = plt.subplots()
-        ax1.scatter(df_comp["num_reviews"], df_comp["avg_rating"], alpha=0.7)
-        for _, row in df_comp.iterrows():
-            ax1.annotate(row["business_name"], (row["num_reviews"], row["avg_rating"]), fontsize=7, xytext=(3,3), textcoords='offset points')
-        ax1.set_xlabel("Número de Reseñas")
-        ax1.set_ylabel("Rating Promedio")
-        ax1.set_title(f"Competencia – Categoría: {categoria.title()}")
-        st.pyplot(fig1)
+        st.dataframe(df_comp)
 
-    if not df_dist.empty:
-        fig2, ax2 = plt.subplots()
-        ax2.pie(df_dist['count'], labels=df_dist['star'], autopct='%1.1f%%', startangle=90)
-        ax2.axis('equal')
-        st.pyplot(fig2)
+        if not df_comp.empty:
+            fig1, ax1 = plt.subplots()
+            ax1.scatter(df_comp["num_reviews"], df_comp["avg_rating"], alpha=0.7)
+            for _, row in df_comp.iterrows():
+                ax1.annotate(row["business_name"], (row["num_reviews"], row["avg_rating"]), fontsize=7, xytext=(3,3), textcoords='offset points')
+            ax1.set_xlabel("Número de Reseñas")
+            ax1.set_ylabel("Rating Promedio")
+            ax1.set_title(f"Competencia – Categoría: {categoria.title()}")
+            st.pyplot(fig1)
 
-    st.divider()
+        if not df_dist.empty:
+            fig2, ax2 = plt.subplots()
+            ax2.pie(df_dist['count'], labels=df_dist['star'], autopct='%1.1f%%', startangle=90)
+            ax2.axis('equal')
+            st.pyplot(fig2)
+    else:
+        st.info("Por favor, ingresá una categoría válida.")
 
