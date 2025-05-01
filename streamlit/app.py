@@ -91,10 +91,18 @@ BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
 
 
 
+import streamlit as st
+import pandas as pd
+import pandas_gbq
+
 # Función para ejecutar la consulta
 def run_query(query):
-    df = pandas_gbq.read_gbq(query, project_id="shining-rampart-455602-a7", dialect='standard')
-    return df
+    try:
+        df = pandas_gbq.read_gbq(query, project_id="shining-rampart-455602-a7", dialect='standard')
+        return df
+    except Exception as e:
+        st.error(f"❌ Error al ejecutar la consulta: {e}")
+        return pd.DataFrame()  # Retorna un DataFrame vacío en caso de error
 
 # Función para mostrar el análisis de competencia
 def show_competencia():
@@ -142,7 +150,9 @@ def show_competencia():
     # Verificar que haya datos
     if df_comp.empty:
         st.warning(f"⚠️ No se encontraron competidores para la categoría: {categoria}")
-        return
+    else:
+        st.write(f"Se encontraron {len(df_comp)} competidores.")
+        st.write(df_comp.head())  # Muestra las primeras filas para verificar
 
     # --- MOSTRAR DATOS Y GRÁFICOS ---
     st.subheader(f"📋 {n_competidores} Competidores Aleatorios – Categoría: {categoria.title()}")
@@ -152,7 +162,7 @@ def show_competencia():
     st.subheader("🗺️ Mapa de Competidores por Ubicación y Calificación")
     
     # Comprobamos si tenemos latitud y longitud
-    if "latitude" in df_comp.columns and "longitude" in df_comp.columns:
+    if "latitude" in df_comp.columns and "longitude" in df_comp.columns and df_comp["latitude"].notnull().all() and df_comp["longitude"].notnull().all():
         # Normalizamos las estrellas para el color
         def rating_to_color(stars):
             if stars >= 4.5:
@@ -187,7 +197,11 @@ def show_competencia():
             tooltip={"text": "{business_name}\n⭐ {avg_rating} estrellas"}
         ))
     else:
-        st.warning("⚠️ El DataFrame no contiene columnas de latitud y longitud para mostrar el mapa.")
+        st.warning("⚠️ El DataFrame no contiene columnas válidas de latitud y longitud para mostrar el mapa.")
+
+# Llamar a la función
+show_competencia()
+
 
 # --- SIDEBAR ---
 with st.sidebar:
