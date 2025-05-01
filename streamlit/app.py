@@ -391,7 +391,7 @@ if opcion == "Predicciones":
 
 # --- COMPETENCIA ---
 if opcion == "Competencia":
-    st.title("Competidores & Sucursales de El camino real")
+   
     show_competencia()
 # --- Página de Distribución de Reseñas ---
 # --- Página de Distribución de Reseñas ---
