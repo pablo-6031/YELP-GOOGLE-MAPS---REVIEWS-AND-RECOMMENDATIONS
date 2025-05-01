@@ -390,5 +390,55 @@ if opcion == "Análisis Integral de Competencia":
             st.pyplot(fig1)
         else:
             st.info("No hay datos suficientes para mostrar la competencia.")
+                    # ---------------- Gráfico de barras de sentimientos ----------------
+        st.subheader("📊 Sentimiento General del Negocio")
+
+        query_sentimiento_total = f"""
+        SELECT 
+            CASE 
+                WHEN r.stars <= 2.5 THEN 'Negativo'
+                WHEN r.stars > 2.5 AND r.stars <= 3.5 THEN 'Neutro'
+                ELSE 'Positivo'
+            END AS sentimiento,
+            COUNT(*) AS cantidad
+        FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+        WHERE r.business_id = '{business_id}'
+        GROUP BY sentimiento
+        """
+        df_sent_total = run_query(query_sentimiento_total)
+
+        if not df_sent_total.empty:
+            fig_bar, ax_bar = plt.subplots()
+            colores = {'Negativo': 'red', 'Neutro': 'gray', 'Positivo': 'green'}
+            ax_bar.bar(df_sent_total['sentimiento'], df_sent_total['cantidad'], color=[colores[s] for s in df_sent_total['sentimiento']])
+            ax_bar.set_ylabel("Cantidad de Reseñas")
+            ax_bar.set_title("Sentimiento General de las Reseñas")
+            st.pyplot(fig_bar)
+        else:
+            st.info("No hay suficientes datos para mostrar el sentimiento general.")
+
+        st.divider()
+
+        # ---------------- Mostrar reseñas reales ----------------
+        st.subheader("🗣️ Reseñas de Usuarios")
+
+        query_resenas = f"""
+        SELECT r.review_text, r.stars, r.review_date
+        FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+        WHERE r.business_id = '{business_id}'
+        AND r.review_text IS NOT NULL
+        ORDER BY r.review_date DESC
+        LIMIT 10
+        """
+        df_resenas = run_query(query_resenas)
+
+        if not df_resenas.empty:
+            for i, row in df_resenas.iterrows():
+                st.markdown(f"**{row['review_date'].date()} – ⭐ {row['stars']}**")
+                st.write(f"> {row['review_text']}")
+                st.markdown("---")
+        else:
+            st.info("No se encontraron reseñas disponibles.")
+
 
 
