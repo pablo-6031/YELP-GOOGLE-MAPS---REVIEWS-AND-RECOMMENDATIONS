@@ -310,5 +310,107 @@ if opcion == "Recomendador":
         st.markdown(f"- {recomendacion}")
 
     st.caption("Análisis basado en reseñas filtradas de negocios mexicanos con alta calificación.")
-  
 
+  
+# --- ANÁLISIS DE SENTIMIENTO ---
+if opcion == "Análisis de Sentimiento":
+    st.title("Análisis de Sentimiento de las Reseñas")
+
+    st.markdown("""
+    Analizamos las opiniones de los clientes para entender su percepción sobre el restaurante **El Torito**.
+
+    Usamos modelos de **Procesamiento de Lenguaje Natural (NLP)** entrenados para identificar si una reseña es **positiva**, **negativa** o **neutral**.
+
+    ### ¿Por qué es importante?
+    - Detectar puntos fuertes (como el servicio o la comida)
+    - Identificar áreas de mejora (como tiempos de espera o precios)
+    - Tomar decisiones estratégicas basadas en la voz del cliente
+    """)
+
+    # Ejemplo visual
+    st.subheader("Ejemplo de clasificación de sentimiento")
+    example_review = st.text_area("Escribe una reseña para analizar:", "La comida fue excelente pero el servicio muy lento.")
+    
+    if st.button("Analizar Sentimiento"):
+        # Aquí va el modelo real, por ahora es una simulación
+        st.success("Resultado: Neutro")
+
+
+
+# --- PREDICCIONES ---
+if opcion == "Predicciones":
+    st.title("Predicción de Rating para El camino real")
+
+    st.markdown("""
+    Utilizamos modelos de **Machine Learning** para predecir cuántas estrellas podría recibir una nueva reseña, basándonos en su contenido textual.
+
+    Esto puede ayudar a:
+    - Anticipar el impacto de nuevos comentarios
+    - Detectar automáticamente reseñas problemáticas
+    - Medir la calidad del servicio en tiempo real
+    """)
+
+    st.subheader("Ingresá una reseña para predecir su calificación")
+    user_input = st.text_area("Reseña del cliente:", "El ambiente es agradable y el personal muy atento.")
+
+    if st.button("Predecir Rating"):
+        # Aquí iría el modelo real de ML, por ahora simulamos
+        st.success("Predicción: ⭐⭐⭐⭐ (4.0 estrellas)")
+
+
+if opcion == "Distribución de Reseñas":
+    st.subheader("Distribución de Reseñas por Año y Sentimiento")
+
+    # Cargar negocios con reseñas
+    @st.cache_data
+    def cargar_negocios_disponibles():
+        query = """
+        SELECT DISTINCT b.business_id, b.business_name
+        FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+        JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+        ON r.business_id = b.business_id
+        WHERE r.review_text IS NOT NULL
+        """
+        return run_query(query)
+
+    negocios_df = cargar_negocios_disponibles()
+    opciones_negocios = negocios_df['business_name'].tolist()
+    negocio_elegido = st.selectbox("Selecciona un negocio para analizar", opciones_negocios)
+
+    # Obtener el business_id correspondiente
+    business_id = negocios_df[negocios_df['business_name'] == negocio_elegido]['business_id'].values[0]
+
+    # Consulta a BigQuery con sentimiento clasificado
+    query_sentimiento = f"""
+    SELECT 
+        EXTRACT(YEAR FROM r.review_date) AS anio,
+        CASE 
+            WHEN r.stars <= 2.5 THEN 'Negativo'
+            WHEN r.stars > 2.5 AND r.stars <= 3.5 THEN 'Neutro'
+            ELSE 'Positivo'
+        END AS sentimiento,
+        COUNT(*) AS cantidad
+    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+    WHERE r.business_id = '{business_id}'
+    GROUP BY anio, sentimiento
+    ORDER BY anio
+    """
+
+    df_general = run_query(query_sentimiento)
+
+    if not df_general.empty:
+        pivot_df = df_general.pivot(index="anio", columns="sentimiento", values="cantidad").fillna(0)
+        pivot_df = pivot_df[["Negativo", "Neutro", "Positivo"]]  # Asegurar orden
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.bar(pivot_df.index, pivot_df["Negativo"], label="Negativo", color="red")
+        ax.bar(pivot_df.index, pivot_df["Neutro"], bottom=pivot_df["Negativo"], label="Neutro", color="gray")
+        ax.bar(pivot_df.index, pivot_df["Positivo"], bottom=pivot_df["Negativo"] + pivot_df["Neutro"], label="Positivo", color="green")
+
+        ax.set_title(f"Distribución de Sentimientos - {negocio_elegido}")
+        ax.set_xlabel("Año")
+        ax.set_ylabel("Cantidad de Reseñas")
+        ax.legend(title="Sentimiento")
+        st.pyplot(fig)
+    else:
+        st.warning("No se encontraron reseñas para este negocio.")
