@@ -97,7 +97,7 @@ BUSINESS_ID_EL_CAMINO_REAL= "julsvvavzvghwffkkm0nlg";
 
 
 def show_competencia():
-  def show_competencia():
+ 
     st.title("Competidores y Desempeño de El Camino Real (Categoría: Mexican)")
 
     # --- CONSULTAS ACTUALIZADAS ---
