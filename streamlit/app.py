@@ -200,44 +200,7 @@ if opcion == "Inicio":
 if opcion == "KPIs":
     st.title("KPIs de El Torito - El Camino Real")
 
-    # Business ID fijo para El Torito El Camino Real
-    business_id = "julsvvavzvghwffkkm0nlg"
-
-    # Selección de frecuencia de análisis (mensual o anual)
-    frecuencia = st.radio("Selecciona la frecuencia de análisis:", ('Mensual', 'Anual'))
-
-    # Selección de rango de fechas
-    fecha_desde = st.date_input("Desde:", value=pd.to_datetime("2020-01-01"))
-    fecha_hasta = st.date_input("Hasta:", value=pd.to_datetime("2023-12-31"))
-
-    # Ajuste del formato de la fecha dependiendo de la frecuencia seleccionada
-    if frecuencia == 'Mensual':
-        formato_periodo = "FORMAT_TIMESTAMP('%Y-%m', review_date) AS periodo"
-    else:
-        formato_periodo = "FORMAT_TIMESTAMP('%Y', review_date) AS periodo"
-
-    # Query para obtener los KPIs
-    query_kpi = f"""
-    SELECT 
-        {formato_periodo},
-        COUNT(*) AS volumen_resenas,
-        ROUND(AVG(stars), 2) AS calificacion_promedio
-    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
-    WHERE business_id = '{business_id}'
-    AND review_date BETWEEN '{fecha_desde}' AND '{fecha_hasta}'
-    GROUP BY periodo
-    ORDER BY periodo
-    """
-
-    # Ejecutar la consulta
-    kpis = run_query(query_kpi)
-
-    if not kpis.empty:
-        st.write(f"KPIs de El Torito - El Camino Real:")
-        st.dataframe(kpis)
-    else:
-        st.warning("No se encontraron datos para los KPIs en el rango seleccionado.")
-
+   
 
 if opcion == "Mapas":
     st.title(f"Ubicación de {BUSINESS_NAME_EL_CAMINO_REAL}")
