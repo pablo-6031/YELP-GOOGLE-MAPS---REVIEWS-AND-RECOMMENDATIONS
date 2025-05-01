@@ -317,6 +317,7 @@ if not reviews.empty:
         st.warning("No hay datos disponibles para El Camino Real en el periodo seleccionado.")
 else:
     st.warning("No hay reseñas disponibles para el período seleccionado.")
+    
     # ---------------------- 🔍 Análisis de Competencia -----------------------
 if opcion == "Análisis Integral de Competencia":
     st.subheader("🔍 Análisis de Competencia por Categoría")
