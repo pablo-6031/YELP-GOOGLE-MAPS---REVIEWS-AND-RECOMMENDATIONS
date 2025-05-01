@@ -109,7 +109,7 @@ def show_competencia():
             SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews, r.review_text
             FROM `TU_PROYECTO.dw_restaurantes.dim_business` b
             JOIN `TU_PROYECTO.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
-            WHERE b.categories LIKE '%Mexican%' AND b.business_id != '{camino_real_id}'
+            WHERE b.categories LIKE '%Mexican%' AND b.business_id != 'julsvvavzvghwffkkm0nlg'
             GROUP BY b.business_name, r.review_text
             ORDER BY RAND() LIMIT 10
         """,
@@ -118,14 +118,14 @@ def show_competencia():
             SELECT b.business_id, b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
             FROM `TU_PROYECTO.dw_restaurantes.dim_business` b
             JOIN `TU_PROYECTO.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
-            WHERE b.business_id = '{camino_real_id}'
+            WHERE b.business_id = 'julsvvavzvghwffkkm0nlg'
             GROUP BY b.business_id, b.business_name
         """,
         # Pie chart de estrellas solo para El Camino Real
         "df_camino_pie": f"""
             SELECT stars, COUNT(*) AS cantidad
             FROM `TU_PROYECTO.dw_restaurantes.fact_review`
-            WHERE business_id = '{camino_real_id}'
+            WHERE business_id = 'julsvvavzvghwffkkm0nlg'
             GROUP BY stars ORDER BY stars
         """,
         # Distribución general de categoría "Mexican"
