@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 from sklearn.feature_extraction.text import CountVectorizer
 from wordcloud import WordCloud 
+import pydeck as pdk
+
 # === CONFIGURACIÓN GENERAL ===
 
 # URLs de imágenes desde GitHub
@@ -154,6 +156,49 @@ def show_competencia():
         st.pyplot(fig2)
     else:
         st.info("No hay suficientes datos para mostrar la distribución de estrellas.")
+import pydeck as pdk
+
+# ... (dentro de show_competencia, después de obtener df_comp)
+
+# --- MAPA INTERACTIVO ---
+st.subheader("🗺️ Mapa de Competidores por Ubicación y Calificación")
+
+# Asegurarse de tener latitud y longitud
+if "latitude" in df_comp.columns and "longitude" in df_comp.columns:
+    # Normalizamos estrellas para el color
+    def rating_to_color(stars):
+        if stars >= 4.5:
+            return [0, 200, 0]    # verde
+        elif stars >= 3.5:
+            return [255, 165, 0]  # naranja
+        else:
+            return [200, 0, 0]    # rojo
+
+    df_comp["color"] = df_comp["avg_rating"].apply(rating_to_color)
+
+    st.pydeck_chart(pdk.Deck(
+        map_style="mapbox://styles/mapbox/light-v9",
+        initial_view_state=pdk.ViewState(
+            latitude=df_comp["latitude"].mean(),
+            longitude=df_comp["longitude"].mean(),
+            zoom=11,
+            pitch=40,
+        ),
+        layers=[
+            pdk.Layer(
+                'ScatterplotLayer',
+                data=df_comp,
+                get_position='[longitude, latitude]',
+                get_color='color',
+                get_radius=150,
+                pickable=True,
+                tooltip=True
+            )
+        ],
+        tooltip={"text": "{business_name}\n⭐ {avg_rating} estrellas\nCategoría: " + categoria.title()}
+    ))
+else:
+    st.warning("⚠️ El DataFrame no contiene columnas de latitud y longitud para mostrar el mapa.")
 
 # --- SIDEBAR ---
 with st.sidebar:
