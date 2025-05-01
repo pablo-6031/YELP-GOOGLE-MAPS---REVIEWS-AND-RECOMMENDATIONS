@@ -89,12 +89,12 @@ def run_query(query):
 # ID fijo del negocio principal
 BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
 
+import streamlit as st
+import pandas as pd
+
 # Función para ejecutar la consulta
 def run_query(query):
     try:
-        # Mostramos la consulta para depurar
-        st.write(f"Ejecutando consulta: {query}")
-        
         # Ejecutamos la consulta y obtenemos el DataFrame
         df = pandas_gbq.read_gbq(query, project_id="shining-rampart-455602-a7", dialect='standard')
         
@@ -107,36 +107,25 @@ def run_query(query):
         st.error(f"❌ Error al ejecutar la consulta: {e}")
         return pd.DataFrame()  # Retorna un DataFrame vacío en caso de error
 
-import streamlit as st
-
 def show_competencia():
     st.title("🔍 Análisis de Competencia por Categoría")
 
     # Definir 5 categorías predefinidas
-    categorias = [
-        "Mexican",
-        "Italian",
-        "Chinese",
-        "American",
-        "Indian"
-    ]
+    categorias = ["Mexican", "Italian", "Chinese", "American", "Indian"]
 
     # Mostrar el selectbox con las opciones predefinidas
     categoria = st.selectbox("🍽️ Elige la categoría", categorias)
 
     st.write(f"Categoría seleccionada: {categoria}")
 
-    # Aquí puedes agregar el código para consultar los competidores en función de la categoría seleccionada.
-    # Este es un ejemplo de consulta SQL para la categoría seleccionada:
+    # Aquí, se va a realizar una consulta para ver si hay competidores disponibles en la base de datos
     query_competidores = f"""
-    SELECT b.business_name, l.latitude, l.longitude, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
+    SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
     FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
     JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
     ON b.business_id = r.business_id
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_locations` l
-    ON b.business_id = l.business_id
     WHERE LOWER(b.categories) LIKE '%{categoria.lower()}%'
-    GROUP BY b.business_name, l.latitude, l.longitude
+    GROUP BY b.business_name
     ORDER BY RAND()
     LIMIT 10
     """
@@ -155,8 +144,7 @@ def show_competencia():
         st.subheader(f"📋 Competidores Aleatorios – Categoría: {categoria.title()}")
         st.dataframe(df_comp)
 
-# Ejecuta la función show_competencia
-show_competencia()
+
 
 # --- SIDEBAR ---
 with st.sidebar:
