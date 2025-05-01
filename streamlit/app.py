@@ -89,12 +89,6 @@ def run_query(query):
 # ID fijo del negocio principal
 BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
 
-import pandas as pd
-import pandas_gbq
-import streamlit as st
-import matplotlib.pyplot as plt
-import pydeck as pdk
-
 # Función para ejecutar la consulta
 def run_query(query):
     try:
@@ -117,17 +111,30 @@ def run_query(query):
 def show_competencia():
     st.title("🔍 Análisis de Competencia por Categoría")
 
-    # --- INPUT DINÁMICO ---
+    # --- OBTENER LAS CATEGORÍAS DISPONIBLES ---
 
-    # Lista de categorías disponibles
-    categorias = ["Mexican", "Pizza", "Chinese", "Italian", "Japanese", "Indian"]
+    # Consulta para obtener las categorías únicas
+    query_categorias = """
+    SELECT DISTINCT category
+    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
+    WHERE category IS NOT NULL
+    """
+    df_categorias = run_query(query_categorias)
+
+    if df_categorias.empty:
+        st.warning("⚠️ No se encontraron categorías.")
+        return
+
+    # Obtener las categorías como una lista
+    categorias = df_categorias['category'].tolist()
 
     # Crear un selectbox para elegir la categoría
-    categoria = st.selectbox("🍽️ Elige la categoría", categorias, index=categorias.index("Pizza"))
+    categoria = st.selectbox("🍽️ Elige la categoría", categorias)
 
     st.write(f"Categoría seleccionada: {categoria}")
 
-    # Consulta dinámica para obtener los competidores
+    # --- CONSULTA DE COMPETIDORES ---
+
     query_competidores = f"""
     SELECT b.business_name, l.latitude, l.longitude, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
     FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
@@ -152,7 +159,7 @@ def show_competencia():
         st.write(df_comp.head())  # Muestra las primeras filas para verificar
 
         # --- MOSTRAR DATOS Y GRÁFICOS ---
-        st.subheader(f"📋 {len(df_comp)} Competidores Aleatorios – Categoría: {categoria.title()}")
+        st.subheader(f"📋 Competidores Aleatorios – Categoría: {categoria.title()}")
         st.dataframe(df_comp)
 
         # --- Dispersión – Reseñas vs Rating Promedio ---
@@ -172,7 +179,7 @@ def show_competencia():
 
         # --- Distribución de Estrellas ---
         st.subheader(f"📊 Distribución de Estrellas – {categoria.title()}")
-        # Aquí agrupamos las calificaciones
+        # Si tienes un DataFrame `df_dist` con la distribución de estrellas, puedes visualizarlo
         df_dist = df_comp.groupby("avg_rating").size().reset_index(name='count')
         if not df_dist.empty:
             fig2, ax2 = plt.subplots()
@@ -182,47 +189,8 @@ def show_competencia():
         else:
             st.info("No hay suficientes datos para mostrar la distribución de estrellas.")
 
-        # --- Mapa Interactivo ---
-        st.subheader("🗺️ Mapa de Competidores por Ubicación y Calificación")
-        
-        # Comprobamos si tenemos latitud y longitud
-        if "latitude" in df_comp.columns and "longitude" in df_comp.columns and df_comp["latitude"].notnull().all() and df_comp["longitude"].notnull().all():
-            # Normalizamos las estrellas para el color
-            def rating_to_color(stars):
-                if stars >= 4.5:
-                    return [0, 200, 0]    # verde
-                elif stars >= 3.5:
-                    return [255, 165, 0]  # naranja
-                else:
-                    return [200, 0, 0]    # rojo
-
-            df_comp["color"] = df_comp["avg_rating"].apply(rating_to_color)
-
-            # Creamos el mapa con pydeck
-            st.pydeck_chart(pdk.Deck(
-                map_style="mapbox://styles/mapbox/light-v9",
-                initial_view_state=pdk.ViewState(
-                    latitude=df_comp["latitude"].mean(),
-                    longitude=df_comp["longitude"].mean(),
-                    zoom=11,
-                    pitch=40,
-                ),
-                layers=[
-                    pdk.Layer(
-                        'ScatterplotLayer',
-                        data=df_comp,
-                        get_position='[longitude, latitude]',
-                        get_color='color',
-                        get_radius=150,
-                        pickable=True,
-                        tooltip=True
-                    )
-                ],
-                tooltip={"text": "{business_name}\n⭐ {avg_rating} estrellas"}
-            ))
-        else:
-            st.warning("⚠️ El DataFrame no contiene columnas válidas de latitud y longitud para mostrar el mapa.")
-
+# Ejecutar la función para mostrar la competencia
+show_competencia()
 
 # --- SIDEBAR ---
 with st.sidebar:
