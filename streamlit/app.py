@@ -188,8 +188,114 @@ if opcion == "Inicio":
 
     ---
     ### Recursos adicionales:
+    
 
-    🔗 [![Looker Studio](https://upload.wikimedia.org/wikipedia/commons/9/9b/Google_Looker_Studio_logo.svg)](https://lookerstudio.google.com/u/0/reporting/df20fc98-f8fa-42bf-8734-92d4ff90e6f5/page/7xbIF) Ver Dashboard Interactivo en Looker Studio
 
-    📄 [![GitHub](https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg)](https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/README.md) Leer README del Proyecto en GitHub
-    """)  # Asegúrate de que la indentación sea correcta
+    🔗 [![Looker Studio](https://img.icons8.com/ios/452/google-looker-studio.png)](https://lookerstudio.google.com/u/0/reporting/df20fc98-f8fa-42bf-8734-92d4ff90e6f5/page/7xbIF) Ver Dashboard Interactivo en Looker Studio
+
+    📄 [![GitHub](https://img.icons8.com/ios/452/github.png)](https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/README.md) Leer README del Proyecto en GitHub
+    """)
+    if opcion == "Recomendador":
+    st.title("💡 Recomendador para El Camino Real")
+    st.markdown("""
+    Este módulo analiza las reseñas **positivas** de la competencia directa de *El Camino Real* para detectar las frases más frecuentes
+    que los clientes valoran. A partir de eso, generamos recomendaciones accionables para mejorar la propuesta del local.
+    """)
+
+    st.divider()
+    st.subheader("📦 Cargando reseñas positivas de competidores...")
+
+    # Obtener los negocios de competencia directamente de la base de datos
+    @st.cache_data
+    def cargar_negocios():
+        query = """
+        SELECT DISTINCT business_id, business_name
+        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
+        WHERE LOWER(categories) LIKE '%mexican%' AND business_id != 'julsvvavzvghwffkkm0nlg'
+        """
+        return client.query(query).to_dataframe()
+
+    # Cargar la lista de negocios para el selector
+    df_negocios = cargar_negocios()
+    negocios_opciones = df_negocios['business_name'].tolist()
+    negocio_seleccionado = st.selectbox("Selecciona un negocio de la competencia", negocios_opciones)
+
+    # Obtener el business_id del negocio seleccionado
+    business_id_seleccionado = df_negocios[df_negocios['business_name'] == negocio_seleccionado]['business_id'].values[0]
+
+    # Cargar reseñas de ese negocio
+    @st.cache_data
+    def cargar_datos(business_id):
+        query = f"""
+        SELECT review_text
+        FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+        JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+          ON r.business_id = b.business_id
+        WHERE b.business_id = '{business_id}'
+          AND r.stars >= 4
+          AND r.review_text IS NOT NULL
+        """
+        return client.query(query).to_dataframe()
+
+    df = cargar_datos(business_id_seleccionado)
+
+    # --- Procesamiento ---
+    df['review_text'] = df['review_text'].str.lower().str.replace(r'[^\w\s]', '', regex=True)
+
+    vectorizer = CountVectorizer(ngram_range=(2, 3), stop_words='english')
+    X = vectorizer.fit_transform(df['review_text'])
+    sum_words = X.sum(axis=0)
+
+    phrases_freq = [(phrase, int(sum_words[0, idx])) for phrase, idx in vectorizer.vocabulary_.items()]
+    phrases_freq = sorted(phrases_freq, key=lambda x: x[1], reverse=True)
+
+    # --- Visualizaciones ---
+    st.divider()
+    st.subheader("🔍 Frases más frecuentes en reseñas positivas")
+
+    top_n = st.slider("Selecciona cuántas frases mostrar", 5, 50, 20)
+    st.dataframe(pd.DataFrame(phrases_freq[:top_n], columns=["Frase", "Frecuencia"]))
+
+    # --- Opcional: nube de palabras ---
+    if st.checkbox("Mostrar nube de palabras"):
+        wordcloud = WordCloud(width=800, height=400).generate_from_frequencies(dict(phrases_freq[:top_n]))
+
+        # Mostrar la nube de palabras en Streamlit
+        st.subheader("📝 Nube de palabras de las frases más mencionadas")
+        fig, ax = plt.subplots(figsize=(10, 5))  # Crear un gráfico para la nube de palabras
+        ax.imshow(wordcloud, interpolation="bilinear")
+        ax.axis("off")  # Quitar los ejes
+        st.pyplot(fig)
+
+    # --- Recomendaciones ---
+    st.divider()
+    st.subheader("💡 Recomendaciones basadas en la voz del cliente")
+
+    recomendaciones = []
+
+    # Mejorar la calidad de la comida
+    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["good food", "mexican food", "great food", "delicious food"]):
+        recomendaciones.append("🍽️ Mejorar la calidad de los platillos, enfocándose en sabores auténticos y frescura de los ingredientes.")
+
+    # Mejorar el servicio
+    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["good service", "great service", "customer service", "service great"]):
+        recomendaciones.append("👨‍🍳 Mejorar la atención al cliente y ofrecer un servicio más rápido y personalizado.")
+
+    # Resaltar la autenticidad de los platillos
+    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["authentic mexican", "mexican food", "carne asada"]):
+        recomendaciones.append("🌮 Resaltar la autenticidad de la comida mexicana en el menú, destacando platillos tradicionales como la carne asada.")
+
+    # Mejorar la visibilidad online
+    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["google good", "translated google"]):
+        recomendaciones.append("🌐 Mejorar la visibilidad en plataformas como Google Reviews, asegurándose de tener reseñas positivas y respuestas a las mismas.")
+
+    # Crear un ambiente agradable
+    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["great place", "love place", "great food"]):
+        recomendaciones.append("🏡 Mejorar el ambiente del restaurante, creando un espacio acogedor y cómodo para los comensales.")
+
+    # Mostrar las recomendaciones dinámicas
+    for recomendacion in recomendaciones:
+        st.markdown(f"- {recomendacion}")
+
+    st.caption("Análisis basado en reseñas positivas de negocios mexicanos con alta calificación.")
+
