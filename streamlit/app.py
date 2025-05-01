@@ -133,7 +133,6 @@ if opcion == "Inicio":
 
   
 
-
 if opcion == "Explorar Reseñas y KPIs":
     st.title("Explorar Reseñas y KPIs de El Camino Real")
     
@@ -197,97 +196,46 @@ if opcion == "Explorar Reseñas y KPIs":
             ax.axis("off")
             st.pyplot(fig)
 
-        st.divider()
+        # --- RECOMENDACIONES ---  
+        st.subheader("💡 Recomendaciones basadas en la voz del cliente")
 
-        # --- KPIs basados en las fechas de las reseñas ---
-        st.subheader("📊 KPIs de El Camino Real")
-        
-        # Construcción de la query SQL para los KPIs
-        filtro = f"WHERE business_id = '{business_id}'"
-        query_kpi = f"""
-        SELECT 
-            FORMAT_TIMESTAMP('%Y-%m', review_date) AS periodo,
-            COUNT(*) AS volumen_resenas,
-            ROUND(AVG(stars), 2) AS calificacion_promedio
-        FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
-        {filtro}
-        AND review_date BETWEEN '{fecha_inicio}' AND '{fecha_fin}'
-        GROUP BY periodo
-        ORDER BY periodo
-        """
+        recomendaciones = []
 
-        # Ejecutar la consulta
-        df_kpi = run_query(query_kpi)
+        # Analizar las palabras más frecuentes en las reseñas
+        from collections import Counter
 
-        # Visualizar resultados
-        if not df_kpi.empty:
-            st.subheader(f"KPIs por Periodo - El Camino Real")
+        # Extraemos las palabras más frecuentes
+        palabras = " ".join(reviews["review_text"].dropna().tolist()).lower().split()
+        palabras_comunes = Counter(palabras).most_common(10)
 
-            # Gráfico 1: Calificación promedio
-            fig1, ax1 = plt.subplots(figsize=(10, 4))
-            ax1.plot(df_kpi["periodo"], df_kpi["calificacion_promedio"], marker='o', color='green')
-            ax1.set_title("Calificación Promedio por Periodo")
-            ax1.set_xlabel("Periodo")
-            ax1.set_ylabel("Calificación Promedio")
-            ax1.tick_params(axis='x', rotation=45)
-            st.pyplot(fig1)
+        # Crear recomendaciones basadas en palabras clave
+        top_n = 10  # Número de palabras clave más comunes
+        for word, count in palabras_comunes[:top_n]:
+            if word in ["comida", "sabrosa", "deliciosa", "plato", "sabor", "fresca"]:  # Términos relacionados con la comida
+                recomendaciones.append("🍽️ Mejorar la calidad de los platillos, enfocándose en sabores auténticos y frescura de los ingredientes.")
+            elif word in ["servicio", "atención", "rápido", "amable"]:  # Términos relacionados con el servicio
+                recomendaciones.append("👨‍🍳 Mejorar la atención al cliente y ofrecer un servicio más rápido y personalizado.")
+            elif word in ["ambiente", "lugar", "acogedor", "cómodo"]:  # Términos relacionados con el ambiente
+                recomendaciones.append("🏡 Mejorar el ambiente del restaurante, creando un espacio acogedor y cómodo para los comensales.")
+            elif word in ["precio", "bueno", "valor"]:  # Términos relacionados con el precio
+                recomendaciones.append("💸 Ofrecer precios competitivos que resalten el valor de la calidad de los platillos.")
+            elif word in ["google", "reseñas", "opciones"]:  # Términos relacionados con visibilidad online
+                recomendaciones.append("🌐 Mejorar la visibilidad en plataformas como Google Reviews, asegurándose de tener reseñas positivas y respuestas a las mismas.")
 
-            # Gráfico 2: Volumen de reseñas
-            fig2, ax2 = plt.subplots(figsize=(10, 4))
-            ax2.bar(df_kpi["periodo"], df_kpi["volumen_resenas"], color='skyblue')
-            ax2.set_title("Volumen de Reseñas por Periodo")
-            ax2.set_xlabel("Periodo")
-            ax2.set_ylabel("Cantidad de Reseñas")
-            ax2.tick_params(axis='x', rotation=45)
-            st.pyplot(fig2)
-
+        # Mostrar las recomendaciones dinámicas
+        if recomendaciones:
+            for recomendacion in recomendaciones:
+                st.markdown(f"- {recomendacion}")
         else:
-            st.warning("No hay datos disponibles para El Camino Real en el periodo seleccionado.")
+            st.warning("No se encontraron recomendaciones basadas en las palabras clave.")
+
+        st.caption("Análisis basado en reseñas filtradas de El Camino Real.")
+        
     else:
         st.warning("No hay reseñas disponibles para el período seleccionado.")
         
     st.divider()
 
-    # --- RECOMENDACIONES ---
-    st.subheader("💡 Recomendaciones basadas en la voz del cliente")
-
-    recomendaciones = []
-
-    # Mejorar la calidad de la comida
-    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["good food", "mexican food", "great food", "delicious food"]):
-        recomendaciones.append("🍽️ Mejorar la calidad de los platillos, enfocándose en sabores auténticos y frescura de los ingredientes.")
-
-    # Mejorar el servicio
-    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["good service", "great service", "customer service", "service great"]):
-        recomendaciones.append("👨‍🍳 Mejorar la atención al cliente y ofrecer un servicio más rápido y personalizado.")
-
-    # Resaltar la autenticidad de los platillos
-    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["authentic mexican", "mexican food", "carne asada"]):
-        recomendaciones.append("🌮 Resaltar la autenticidad de la comida mexicana en el menú, destacando platillos tradicionales como la carne asada.")
-
-    # Mejorar la visibilidad online
-    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["google good", "translated google"]):
-        recomendaciones.append("🌐 Mejorar la visibilidad en plataformas como Google Reviews, asegurándose de tener reseñas positivas y respuestas a las mismas.")
-
-    # Crear un ambiente agradable
-    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["great place", "love place", "great food"]):
-        recomendaciones.append("🏡 Mejorar el ambiente del restaurante, creando un espacio acogedor y cómodo para los comensales.")
-
-    # Mostrar las recomendaciones dinámicas
-    for recomendacion in recomendaciones:
-        st.markdown(f"- {recomendacion}")
-
-    st.caption("Análisis basado en reseñas filtradas de negocios mexicanos con alta calificación.")
-if opcion == "Análisis Integral de Competencia":
-    st.title("📊 Análisis Integral de la Competencia para El Camino Real")
-    st.markdown("""
-    En esta sección combinamos tres herramientas clave para analizar la competencia directa de *El Camino Real*:
-    - **💡 Recomendador** basado en reseñas.
-    - **📈 Distribución de Sentimientos por Año**.
-    - **🔍 Análisis general de la competencia por categoría.**
-    """)
-
-    st.divider()
 
     # ---------------------- 💡 Recomendador -----------------------
     st.subheader("💡 Recomendador basado en reseñas")
