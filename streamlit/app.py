@@ -90,9 +90,6 @@ def run_query(query):
 BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
 
 
-import streamlit as st
-import matplotlib.pyplot as plt
-import pandas as pd
 
 def show_competencia():
     st.title("🔍 Análisis de Competencia por Categoría")
@@ -160,8 +157,8 @@ def show_competencia():
 # --- SIDEBAR ---
 with st.sidebar:
     opcion = option_menu("Navegación", 
-        ["Inicio", "KPIs", "Recomendador", "Análisis de Sentimiento", "Predicciones", "Distribución de Reseñas", "Competencia", "Explorar Reseñas"],
-        icons=['house', 'bar-chart', 'map', 'robot', 'chat', 'graph-up', 'folder', 'flag', 'search'],
+        ["Inicio", "Explorar Reseñas y KPIs", "Recomendador", "Análisis de Sentimiento", "Predicciones", "Distribución de Reseñas", "Competencia"],
+        icons=['house', 'bar-chart', 'map', 'robot', 'chat', 'graph-up', 'folder', 'flag'],
         menu_icon="cast", default_index=0, orientation="vertical"
     )
 
@@ -419,11 +416,20 @@ if opcion == "Distribución de Reseñas":
     else:
         st.warning("No se encontraron reseñas para este negocio.")
         
-if opcion == "Explorar Reseñas":
+if opcion == "Explorar Reseñas y KPIs":
+    st.title("Explorar Reseñas y KPIs de El Camino Real")
+    
+    # Breve explicación introductoria
+    st.write("""
+    En esta sección, podrás explorar las reseñas más recientes de **El Camino Real** y revisar los KPIs de desempeño.
+    Las reseñas se pueden filtrar por sentimiento (positivo, neutro, negativo) y por fecha, mientras que los KPIs permiten ver el comportamiento general de las reseñas, incluyendo la calificación promedio y el volumen de reseñas por periodo.
+    """)
+
+    # --- EXPLORAR RESEÑAS ---
     st.subheader("📝 Últimas reseñas de El Camino Real")
 
     # Business ID fijo
-    business_id = "julsvvavzvghwffkkm0nlg"  # <- usá el correcto para El Camino Real
+    business_id = "julsvvavzvghwffkkm0nlg"  # ID del negocio para El Camino Real
 
     # Filtro por sentimiento
     sentimiento = st.selectbox("Filtrar por sentimiento", ["Todos", "Positivo", "Neutro", "Negativo"])
@@ -479,12 +485,9 @@ if opcion == "Explorar Reseñas":
     else:
         st.warning("No hay reseñas disponibles para el período o filtro seleccionado.")
 
-if opcion == "KPIs":
-    st.title("KPIs de El Camino Real")
+    # --- KPIs ---
+    st.subheader("📊 KPIs de El Camino Real")
     
-    # Nuevo ID de negocio para El Camino Real
-    business_id = "julsvvavzvghwffkkm0nlg"  # Aquí usas el nuevo ID
-
     # Selección de rango de fechas
     fecha_desde = st.date_input("Desde:", value=pd.to_datetime("2020-01-01"))
     fecha_hasta = st.date_input("Hasta:", value=pd.to_datetime("2023-12-31"))
@@ -542,4 +545,3 @@ if opcion == "KPIs":
 
         else:
             st.warning("No hay datos disponibles para El Camino Real en el periodo seleccionado.")
-
