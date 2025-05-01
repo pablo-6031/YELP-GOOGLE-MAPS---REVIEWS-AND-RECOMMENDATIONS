@@ -97,19 +97,20 @@ BUSINESS_ID_EL_CAMINO_REAL= "julsvvavzvghwffkkm0nlg";
 
 
 def show_competencia():
+  def show_competencia():
     st.title("Competidores y Desempeño de El Camino Real (Categoría: Mexican)")
 
     # --- CONSULTAS ACTUALIZADAS ---
     camino_real_id = 'julsvvavzvghwffkkm0nlg'  # ID único de El Camino Real
 
     queries = {
-        # 10 negocios mexicanos aleatorios para comparar
+        # 10 negocios mexicanos aleatorios para comparar, incluyendo reseñas
         "df_comp": f"""
-            SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
+            SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews, r.review_text
             FROM `TU_PROYECTO.dw_restaurantes.dim_business` b
             JOIN `TU_PROYECTO.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
             WHERE b.categories LIKE '%Mexican%' AND b.business_id != '{camino_real_id}'
-            GROUP BY b.business_name
+            GROUP BY b.business_name, r.review_text
             ORDER BY RAND() LIMIT 10
         """,
         # Datos de El Camino Real
@@ -150,6 +151,18 @@ def show_competencia():
     st.subheader("Desempeño de El Camino Real")
     st.dataframe(df_camino)
 
+    st.subheader("Reseñas de Competidores Aleatorios")
+    if not df_comp.empty:
+        st.write("Las reseñas de los competidores aleatorios son las siguientes:")
+        for index, row in df_comp.iterrows():
+            st.write(f"**{row['business_name']}**:")
+            st.write(f"Reseñas: {row['review_text']}")
+            st.write(f"Calificación Promedio: {row['avg_rating']}")
+            st.write(f"Número de Reseñas: {row['num_reviews']}")
+            st.write("---")
+    else:
+        st.warning("No hay datos de competidores para mostrar.")
+
     st.subheader("Dispersión: Número de Reseñas vs Calificación Promedio")
     if not df_comp.empty:
         fig, ax = plt.subplots()
@@ -186,7 +199,7 @@ def show_competencia():
         st.pyplot(fig)
     else:
         st.info("No hay datos de distribución de estrellas.")
-
+ 
 # --- SIDEBAR ---
 with st.sidebar:
     opcion = option_menu("Navegación", 
