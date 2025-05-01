@@ -95,110 +95,90 @@ BUSINESS_ID_EL_CAMINO_REAL= "julsvvavzvghwffkkm0nlg";
 
 # === FUNCIÓN DE COMPETENCIA ===
 
-
 def show_competencia():
- 
-    st.title("Competidores y Desempeño de El Camino Real (Categoría: Mexican)")
+    st.title("Competidores y Sucursales de El Torito (Categoría: Mexican)")
 
-    # --- CONSULTAS ACTUALIZADAS ---
-    camino_real_id = 'julsvvavzvghwffkkm0nlg'  # ID único de El Camino Real
-
+    # --- CONSULTAS ---
     queries = {
-        # 10 negocios mexicanos aleatorios para comparar, incluyendo reseñas
-        "df_comp": f"""
-            SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews, r.review_text
-            FROM `TU_PROYECTO.dw_restaurantes.dim_business` b
-            JOIN `TU_PROYECTO.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
-            WHERE b.categories LIKE '%Mexican%' AND b.business_id != 'julsvvavzvghwffkkm0nlg'
-            GROUP BY b.business_name, r.review_text
+        "df_comp": """
+            SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
+            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
+            WHERE b.categories LIKE '%Mexican%'
+            GROUP BY b.business_name
             ORDER BY RAND() LIMIT 10
         """,
-        # Datos de El Camino Real
-        "df_camino_real": f"""
+        "df_torito": """
             SELECT b.business_id, b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
-            FROM `TU_PROYECTO.dw_restaurantes.dim_business` b
-            JOIN `TU_PROYECTO.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
-            WHERE b.business_id = 'julsvvavzvghwffkkm0nlg'
+            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
+            WHERE b.business_name LIKE '%Torito%'
             GROUP BY b.business_id, b.business_name
+            ORDER BY avg_rating DESC
         """,
-        # Pie chart de estrellas solo para El Camino Real
-        "df_camino_pie": f"""
+        "df_torito_pie": """
             SELECT stars, COUNT(*) AS cantidad
-            FROM `TU_PROYECTO.dw_restaurantes.fact_review`
-            WHERE business_id = 'julsvvavzvghwffkkm0nlg'
+            FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
+            WHERE business_id IN (
+                SELECT business_id FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
+                WHERE business_name LIKE '%Torito%'
+            )
             GROUP BY stars ORDER BY stars
         """,
-        # Distribución general de categoría "Mexican"
         "df_dist": """
             SELECT r.stars AS star, COUNT(*) AS count
-            FROM `TU_PROYECTO.dw_restaurantes.dim_business` b
-            JOIN `TU_PROYECTO.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
+            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
             WHERE b.categories LIKE '%Mexican%'
             GROUP BY r.stars ORDER BY r.stars
         """
     }
 
-    # Ejecutar consultas
     df_comp = run_query(queries["df_comp"])
-    df_camino = run_query(queries["df_camino_real"])
-    df_camino_pie = run_query(queries["df_camino_pie"])
+    df_torito = run_query(queries["df_torito"])
+    df_torito_pie = run_query(queries["df_torito_pie"])
     df_dist = run_query(queries["df_dist"])
 
     # --- VISUALIZACIONES ---
-    st.subheader("10 Competidores Aleatorios (Categoría: Mexican)")
+    st.subheader("10 Competidores Aleatorios (Mexican)")
     st.dataframe(df_comp)
 
-    st.subheader("Desempeño de El Camino Real")
-    st.dataframe(df_camino)
-
-    st.subheader("Reseñas de Competidores Aleatorios")
-    if not df_comp.empty:
-        st.write("Las reseñas de los competidores aleatorios son las siguientes:")
-        for index, row in df_comp.iterrows():
-            st.write(f"**{row['business_name']}**:")
-            st.write(f"Reseñas: {row['review_text']}")
-            st.write(f"Calificación Promedio: {row['avg_rating']}")
-            st.write(f"Número de Reseñas: {row['num_reviews']}")
-            st.write("---")
-    else:
-        st.warning("No hay datos de competidores para mostrar.")
+    st.subheader("Sucursales de El Torito")
+    st.dataframe(df_torito)
 
     st.subheader("Dispersión: Número de Reseñas vs Calificación Promedio")
     if not df_comp.empty:
         fig, ax = plt.subplots()
-        ax.scatter(df_comp['num_reviews'], df_comp['avg_rating'], alpha=0.7, label="Competidores")
-        # Agregar El Camino Real al gráfico
-        if not df_camino.empty:
-            ax.scatter(df_camino['num_reviews'], df_camino['avg_rating'], color='red', label="El Camino Real", s=100)
-            ax.annotate("El Camino Real", 
-                        (df_camino['num_reviews'][0], df_camino['avg_rating'][0]),
-                        textcoords="offset points", xytext=(5,5), ha="left", fontsize=10, color='red')
+        ax.scatter(df_comp['num_reviews'], df_comp['avg_rating'], alpha=0.7)
+        for i, row in df_comp.iterrows():
+            ax.annotate(row['business_name'], (row['num_reviews'], row['avg_rating']),
+                        textcoords="offset points", xytext=(5,5), ha="left", fontsize=8)
         ax.set_xlabel("Número de Reseñas")
         ax.set_ylabel("Calificación Promedio")
-        ax.set_title("Competidores vs El Camino Real")
-        ax.legend()
+        ax.set_title("Competidores Mexican – Dispersión")
         st.pyplot(fig)
     else:
         st.warning("No hay datos de competidores para mostrar.")
 
-    st.subheader("Distribución de Calificaciones – El Camino Real")
-    if not df_camino_pie.empty:
-        fig = px.pie(df_camino_pie, names="stars", values="cantidad",
-                     title="Distribución de Calificaciones en El Camino Real",
+    st.subheader("Distribución de Estrellas – El Torito")
+    if not df_torito_pie.empty:
+        fig = px.pie(df_torito_pie, names="stars", values="cantidad",
+                     title="Distribución de Calificaciones en El Torito",
                      color_discrete_sequence=px.colors.sequential.RdBu)
         st.plotly_chart(fig)
     else:
-        st.info("No hay datos de calificaciones para El Camino Real.")
+        st.info("No hay datos de calificaciones para El Torito.")
 
     st.subheader("Distribución de Estrellas – Categoría Mexican")
     if not df_dist.empty:
         fig, ax = plt.subplots()
         ax.pie(df_dist['count'], labels=df_dist['star'].astype(str), autopct='%1.1f%%', startangle=90)
         ax.axis('equal')
-        ax.set_title("Porcentaje de Reseñas por Estrellas en la Categoría Mexican")
+        ax.set_title("Porcentaje de Reseñas por Estrellas")
         st.pyplot(fig)
     else:
         st.info("No hay datos de distribución de estrellas.")
+
  
 # --- SIDEBAR ---
 with st.sidebar:
