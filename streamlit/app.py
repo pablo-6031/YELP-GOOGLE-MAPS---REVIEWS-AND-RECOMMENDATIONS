@@ -204,7 +204,8 @@ if opcion == "Explorar Reseñas y KPIs":
         palabras = texto_limpio.split()
 
         # Generación de una lista de recomendaciones (esto puede mejorarse con modelos NLP más complejos)
-        palabras_clave = ["comida", "servicio", "precio", "ambiente", "atención", "rapidez", "sabor", "música"]
+        palabras_clave = ["food", "service", "price", "ambience", "attention", "speed", "taste", "music"]
+
         recomendaciones = [f"¡Parece que los clientes mencionan mucho sobre **{palabra}**! ¿Has considerado mejorar esa área?" for palabra in palabras_clave if palabra in palabras]
 
         if recomendaciones:
