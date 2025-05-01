@@ -172,9 +172,7 @@ with st.sidebar:
 if opcion == "Inicio":
     st.title("Análisis de Reseñas: El Camino Real")
     
-    # Descripción actualizada según lo que hace la aplicación
-    
-   st.markdown(""" 
+    st.markdown(""" 
     ## ¿Qué hace esta aplicación?
     **El Camino Real** es una plataforma que analiza las reseñas de clientes sobre el restaurante. Utilizando datos de **Yelp** y **Google Maps**, extraemos **KPIs clave**, analizamos **sentimientos**, generamos **recomendaciones personalizadas**, y comparamos el desempeño con la **competencia** para mejorar la estrategia del negocio.
 
@@ -194,4 +192,4 @@ if opcion == "Inicio":
     🔗 [![Looker Studio](https://upload.wikimedia.org/wikipedia/commons/9/9b/Google_Looker_Studio_logo.svg)](https://lookerstudio.google.com/u/0/reporting/df20fc98-f8fa-42bf-8734-92d4ff90e6f5/page/7xbIF) Ver Dashboard Interactivo en Looker Studio
 
     📄 [![GitHub](https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg)](https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/README.md) Leer README del Proyecto en GitHub
-    """)  # Asegúrate de cerrar aquí las comillas triples
+    """)  # Asegúrate de que la indentación sea correcta
