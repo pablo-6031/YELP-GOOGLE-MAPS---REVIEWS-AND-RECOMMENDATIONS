@@ -132,52 +132,6 @@ if opcion == "Inicio":
     """)
 
   
-# --- ANÁLISIS DE SENTIMIENTO ---
-if opcion == "Análisis de Sentimiento":
-    st.title("Análisis de Sentimiento de las Reseñas")
-
-    st.markdown("""
-    Analizamos las opiniones de los clientes para entender su percepción sobre el restaurante **El Torito**.
-
-    Usamos modelos de **Procesamiento de Lenguaje Natural (NLP)** entrenados para identificar si una reseña es **positiva**, **negativa** o **neutral**.
-
-    ### ¿Por qué es importante?
-    - Detectar puntos fuertes (como el servicio o la comida)
-    - Identificar áreas de mejora (como tiempos de espera o precios)
-    - Tomar decisiones estratégicas basadas en la voz del cliente
-    """)
-
-    # Ejemplo visual
-    st.subheader("Ejemplo de clasificación de sentimiento")
-    example_review = st.text_area("Escribe una reseña para analizar:", "La comida fue excelente pero el servicio muy lento.")
-    
-    if st.button("Analizar Sentimiento"):
-        # Aquí va el modelo real, por ahora es una simulación
-        st.success("Resultado: Neutro")
-
-
-
-# --- PREDICCIONES ---
-if opcion == "Predicciones":
-    st.title("Predicción de Rating para El camino real")
-
-    st.markdown("""
-    Utilizamos modelos de **Machine Learning** para predecir cuántas estrellas podría recibir una nueva reseña, basándonos en su contenido textual.
-
-    Esto puede ayudar a:
-    - Anticipar el impacto de nuevos comentarios
-    - Detectar automáticamente reseñas problemáticas
-    - Medir la calidad del servicio en tiempo real
-    """)
-
-    st.subheader("Ingresá una reseña para predecir su calificación")
-    user_input = st.text_area("Reseña del cliente:", "El ambiente es agradable y el personal muy atento.")
-
-    if st.button("Predecir Rating"):
-        # Aquí iría el modelo real de ML, por ahora simulamos
-        st.success("Predicción: ⭐⭐⭐⭐ (4.0 estrellas)")
-
-
 
 
 if opcion == "Explorar Reseñas y KPIs":
