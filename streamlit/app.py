@@ -196,151 +196,77 @@ if opcion == "Explorar Reseñas y KPIs":
             ax.axis("off")
             st.pyplot(fig)
 
-        # --- RECOMENDACIONES ---  
-        st.subheader("💡 Recomendaciones basadas en la voz del cliente")
+        # --- Recomendaciones basadas en palabras clave ---
+        st.subheader("💡 Recomendaciones basadas en palabras clave")
 
-        recomendaciones = []
+        # Extraer las palabras clave más frecuentes
+        texto_limpio = " ".join(reviews["review_text"].dropna().tolist())
+        palabras = texto_limpio.split()
 
-        # Analizar las palabras más frecuentes en las reseñas
-        from collections import Counter
+        # Generación de una lista de recomendaciones (esto puede mejorarse con modelos NLP más complejos)
+        palabras_clave = ["comida", "servicio", "precio", "ambiente", "atención", "rapidez", "sabor", "música"]
+        recomendaciones = [f"¡Parece que los clientes mencionan mucho sobre **{palabra}**! ¿Has considerado mejorar esa área?" for palabra in palabras_clave if palabra in palabras]
 
-        # Extraemos las palabras más frecuentes
-        palabras = " ".join(reviews["review_text"].dropna().tolist()).lower().split()
-        palabras_comunes = Counter(palabras).most_common(10)
-
-        # Crear recomendaciones basadas en palabras clave
-        top_n = 10  # Número de palabras clave más comunes
-        for word, count in palabras_comunes[:top_n]:
-            if word in ["comida", "sabrosa", "deliciosa", "plato", "sabor", "fresca"]:  # Términos relacionados con la comida
-                recomendaciones.append("🍽️ Mejorar la calidad de los platillos, enfocándose en sabores auténticos y frescura de los ingredientes.")
-            elif word in ["servicio", "atención", "rápido", "amable"]:  # Términos relacionados con el servicio
-                recomendaciones.append("👨‍🍳 Mejorar la atención al cliente y ofrecer un servicio más rápido y personalizado.")
-            elif word in ["ambiente", "lugar", "acogedor", "cómodo"]:  # Términos relacionados con el ambiente
-                recomendaciones.append("🏡 Mejorar el ambiente del restaurante, creando un espacio acogedor y cómodo para los comensales.")
-            elif word in ["precio", "bueno", "valor"]:  # Términos relacionados con el precio
-                recomendaciones.append("💸 Ofrecer precios competitivos que resalten el valor de la calidad de los platillos.")
-            elif word in ["google", "reseñas", "opciones"]:  # Términos relacionados con visibilidad online
-                recomendaciones.append("🌐 Mejorar la visibilidad en plataformas como Google Reviews, asegurándose de tener reseñas positivas y respuestas a las mismas.")
-
-        # Mostrar las recomendaciones dinámicas
         if recomendaciones:
             for recomendacion in recomendaciones:
-                st.markdown(f"- {recomendacion}")
+                st.write(f"- {recomendacion}")
         else:
-            st.warning("No se encontraron recomendaciones basadas en las palabras clave.")
+            st.write("No se encontraron recomendaciones basadas en las palabras clave.")
 
-        st.caption("Análisis basado en reseñas filtradas de El Camino Real.")
+        st.divider()
+
+        # --- KPIs basados en las fechas de las reseñas ---
+        st.subheader("📊 KPIs de El Camino Real")
         
+        # Construcción de la query SQL para los KPIs
+        filtro = f"WHERE business_id = '{business_id}'"
+        query_kpi = f"""
+        SELECT 
+            FORMAT_TIMESTAMP('%Y-%m', review_date) AS periodo,
+            COUNT(*) AS volumen_resenas,
+            ROUND(AVG(stars), 2) AS calificacion_promedio
+        FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
+        {filtro}
+        AND review_date BETWEEN '{fecha_inicio}' AND '{fecha_fin}'
+        GROUP BY periodo
+        ORDER BY periodo
+        """
+
+        # Ejecutar la consulta
+        df_kpi = run_query(query_kpi)
+
+        # Visualizar resultados
+        if not df_kpi.empty:
+            st.subheader(f"KPIs por Periodo - El Camino Real")
+
+            # Gráfico 1: Calificación promedio
+            fig1, ax1 = plt.subplots(figsize=(10, 4))
+            ax1.plot(df_kpi["periodo"], df_kpi["calificacion_promedio"], marker='o', color='green')
+            ax1.set_title("Calificación Promedio por Periodo")
+            ax1.set_xlabel("Periodo")
+            ax1.set_ylabel("Calificación Promedio")
+            ax1.tick_params(axis='x', rotation=45)
+            st.pyplot(fig1)
+
+            # Gráfico 2: Volumen de reseñas
+            fig2, ax2 = plt.subplots(figsize=(10, 4))
+            ax2.bar(df_kpi["periodo"], df_kpi["volumen_resenas"], color='skyblue')
+            ax2.set_title("Volumen de Reseñas por Periodo")
+            ax2.set_xlabel("Periodo")
+            ax2.set_ylabel("Cantidad de Reseñas")
+            ax2.tick_params(axis='x', rotation=45)
+            st.pyplot(fig2)
+
+        else:
+            st.warning("No hay datos disponibles para El Camino Real en el periodo seleccionado.")
     else:
         st.warning("No hay reseñas disponibles para el período seleccionado.")
         
     st.divider()
 
 
-    # ---------------------- 💡 Recomendador -----------------------
-    st.subheader("💡 Recomendador basado en reseñas")
-
-    @st.cache_data
-    def cargar_negocios():
-        query = """
-        SELECT DISTINCT business_id, business_name
-        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
-        WHERE LOWER(categories) LIKE '%mexican%' AND business_id != 'julsvvavzvghwffkkm0nlg'
-        """
-        return client.query(query).to_dataframe()
-
-    df_negocios = cargar_negocios()
-    negocio_seleccionado = st.selectbox("Selecciona un negocio (Recomendador)", df_negocios['business_name'].tolist())
-    business_id_seleccionado = df_negocios[df_negocios['business_name'] == negocio_seleccionado]['business_id'].values[0]
-
-    tipo_reseña = st.selectbox("Tipo de reseña", ("Positiva", "Negativa", "Neutra"))
-    stars_filter = {"Positiva": "r.stars >= 4", "Negativa": "r.stars <= 2", "Neutra": "r.stars = 3"}[tipo_reseña]
-
-    @st.cache_data
-    def cargar_datos(business_id, stars_filter):
-        query = f"""
-        SELECT review_text
-        FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-        JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-        ON r.business_id = b.business_id
-        WHERE b.business_id = '{business_id}' AND {stars_filter} AND r.review_text IS NOT NULL
-        """
-        return client.query(query).to_dataframe()
-
-    df = cargar_datos(business_id_seleccionado, stars_filter)
-    if df.empty:
-        st.warning("No se encontraron reseñas.")
-    else:
-        df['review_text'] = df['review_text'].fillna('').str.lower().str.replace(r'[^\w\s]', '', regex=True)
-        vectorizer = CountVectorizer(ngram_range=(2, 3), stop_words='english')
-        X = vectorizer.fit_transform(df['review_text'])
-        sum_words = X.sum(axis=0)
-        phrases_freq = [(phrase, int(sum_words[0, idx])) for phrase, idx in vectorizer.vocabulary_.items()]
-        phrases_freq = sorted(phrases_freq, key=lambda x: x[1], reverse=True)
-        top_n = st.slider("Frases más frecuentes", 5, 50, 20)
-        st.dataframe(pd.DataFrame(phrases_freq[:top_n], columns=["Frase", "Frecuencia"]))
-
-        if st.checkbox("Mostrar nube de palabras"):
-            wordcloud = WordCloud(width=800, height=400).generate_from_frequencies(dict(phrases_freq[:top_n]))
-            fig, ax = plt.subplots(figsize=(10, 5))
-            ax.imshow(wordcloud, interpolation="bilinear")
-            ax.axis("off")
-            st.pyplot(fig)
-
-    st.divider()
-
-    # ---------------------- 📈 Distribución de Reseñas -----------------------
-    st.subheader("📈 Distribución de Sentimientos por Año")
-
-    @st.cache_data
-    def cargar_negocios_disponibles():
-        query = """
-        SELECT DISTINCT b.business_id, b.business_name
-        FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-        JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-        ON r.business_id = b.business_id
-        WHERE r.review_text IS NOT NULL
-        """
-        return run_query(query)
-
-    negocios_df = cargar_negocios_disponibles()
-    negocio_elegido = st.selectbox("Negocio (Distribución)", negocios_df['business_name'].tolist())
-    business_id = negocios_df[negocios_df['business_name'] == negocio_elegido]['business_id'].values[0]
-
-    query_sentimiento = f"""
-    SELECT 
-        EXTRACT(YEAR FROM r.review_date) AS anio,
-        CASE 
-            WHEN r.stars <= 2.5 THEN 'Negativo'
-            WHEN r.stars > 2.5 AND r.stars <= 3.5 THEN 'Neutro'
-            ELSE 'Positivo'
-        END AS sentimiento,
-        COUNT(*) AS cantidad
-    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-    WHERE r.business_id = '{business_id}'
-    GROUP BY anio, sentimiento
-    ORDER BY anio
-    """
-    df_general = run_query(query_sentimiento)
-
-    if not df_general.empty:
-        pivot_df = df_general.pivot(index="anio", columns="sentimiento", values="cantidad").fillna(0)
-        pivot_df = pivot_df[["Negativo", "Neutro", "Positivo"]]
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.bar(pivot_df.index, pivot_df["Negativo"], label="Negativo", color="red")
-        ax.bar(pivot_df.index, pivot_df["Neutro"], bottom=pivot_df["Negativo"], label="Neutro", color="gray")
-        ax.bar(pivot_df.index, pivot_df["Positivo"], bottom=pivot_df["Negativo"] + pivot_df["Neutro"], label="Positivo", color="green")
-        ax.set_title(f"Distribución de Sentimientos - {negocio_elegido}")
-        ax.set_xlabel("Año")
-        ax.set_ylabel("Cantidad de Reseñas")
-        ax.legend(title="Sentimiento")
-        st.pyplot(fig)
-    else:
-        st.warning("No se encontraron reseñas.")
-
-    st.divider()
-
     # ---------------------- 🔍 Análisis de Competencia -----------------------
+if opcion == "Análisis Integral de Competencia":
     st.subheader("🔍 Análisis de Competencia por Categoría")
 
     categoria = st.text_input("Ingresá una categoría", value="Mexican")
