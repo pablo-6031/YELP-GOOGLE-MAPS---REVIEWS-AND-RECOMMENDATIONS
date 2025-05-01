@@ -130,9 +130,14 @@ if opcion == "Inicio":
 
     📄 [![GitHub](https://img.icons8.com/ios/452/github.png)](https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/README.md) Leer README del Proyecto en GitHub
     """)
+# Función para ejecutar la consulta SQL
+def run_query(query):
+    # Aquí se debe conectar a BigQuery y ejecutar la consulta
+    # Por ejemplo, utilizando pandas_gbq
+    from pandas_gbq import read_gbq
+    return read_gbq(query, project_id="shining-rampart-455602-a7", dialect="standard")
 
-  
-
+# Integración con Streamlit
 if opcion == "Explorar Reseñas y KPIs":
     st.title("Explorar Reseñas y KPIs de El Camino Real")
     
@@ -185,8 +190,6 @@ if opcion == "Explorar Reseñas y KPIs":
 
         # Botón para ver nube de palabras
         if st.button("🔍 Ver palabras más frecuentes"):
-            from wordcloud import WordCloud
-
             texto = " ".join(reviews["review_text"].dropna().tolist())
             wc = WordCloud(width=800, height=400, background_color="white").generate(texto)
 
@@ -264,7 +267,6 @@ if opcion == "Explorar Reseñas y KPIs":
         st.warning("No hay reseñas disponibles para el período seleccionado.")
         
     st.divider()
-
 
     # ---------------------- 🔍 Análisis de Competencia -----------------------
 if opcion == "Análisis Integral de Competencia":
