@@ -92,7 +92,7 @@ BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
 with st.sidebar:
     opcion = option_menu(
         "Navegación", 
-        ["Inicio", "Explorar Reseñas y KPIs", "Análisis Integral de Competencia"],
+        ["Inicio", "Explorar Reseñas ", "Análisis Integral de Competencia"],
         icons=["house", "bar-chart", "graph-up-arrow"],
         menu_icon="cast",
         default_index=0
@@ -125,13 +125,9 @@ if opcion == "Inicio":
     """)
 
 
-if opcion == "Explorar Reseñas y KPIs":
-    import datetime
-    import matplotlib.pyplot as plt
-    import pandas as pd
-    from wordcloud import WordCloud
-
-    st.title("Explorar Reseñas y KPIs de El Camino Real")
+if opcion == "Explorar Reseñas":
+ 
+    st.title("Explorar Reseñas  El Camino Real")
 
     # --------------------------------------
     # 🔍 DESCRIPCIÓN DEL FUNCIONAMIENTO:
@@ -143,10 +139,14 @@ if opcion == "Explorar Reseñas y KPIs":
     # 5. Obtener recomendaciones automáticas basadas en palabras clave dentro de las reseñas.
     # --------------------------------------
 
-    st.write("""
-    En esta sección, podrás explorar las reseñas más recientes de **El Camino Real** y revisar los KPIs de desempeño.
-    Las reseñas se pueden filtrar por sentimiento (positivo, neutro, negativo) y por fecha, mientras que los KPIs permiten ver el comportamiento general de las reseñas, incluyendo la calificación promedio y el volumen de reseñas por periodo.
-    """)
+  st.write("""
+  En esta sección, podrás explorar las reseñas más recientes de **El Camino Real** y consultar su flujo de opiniones a lo largo del tiempo.
+
+  Las reseñas pueden ser filtradas por sentimiento (positivo, neutro o negativo) y mediante un **filtro de fechas personalizado**, lo que te permite analizar periodos específicos de interés. Este análisis incluye métricas como la **calificación promedio** y el **volumen de reseñas**, con visualizaciones disponibles de forma **mensual o anual**, facilitando la detección de tendencias y patrones.
+
+  Además, podrás ver una **nube de palabras** generada a partir del contenido de las reseñas más relevantes, lo que permite identificar de forma visual los temas y aspectos más mencionados por los clientes.
+  """)
+
 
     # --- Filtros por fecha ---
     col1, col2 = st.columns(2)
@@ -158,7 +158,7 @@ if opcion == "Explorar Reseñas y KPIs":
     # Business ID fijo
     business_id = "julsvvavzvghwffkkm0nlg"
 
-    # --- KPIs ---
+    # --- Flujo de reseñas---
     st.subheader("📊 KPIs de El Camino Real")
 
     tipo_periodo = st.selectbox("Seleccionar periodo de tiempo", ["Mensual", "Anual"])
