@@ -160,7 +160,7 @@ import pydeck as pdk
 
 # ... (dentro de show_competencia, después de obtener df_comp)
 
-}# --- MAPA INTERACTIVO ---
+# --- MAPA INTERACTIVO ---
 st.subheader("🗺️ Mapa de Competidores por Ubicación y Calificación")
 
 # Validación robusta
