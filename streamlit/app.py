@@ -106,6 +106,8 @@ def show_competencia():
 
     # --- INPUT DINÁMICO (Selector de Categoría) ---
     categorias_disponibles = ['Mexican', 'Pizza', 'Chinese', 'Italian', 'Indian', 'Japanese', 'Thai', 'American']
+    
+    # Usamos el selectbox para seleccionar la categoría
     categoria = st.selectbox("🍽️ Elige una categoría", categorias_disponibles)
 
     # Verificar que se haya seleccionado una categoría válida
@@ -113,6 +115,9 @@ def show_competencia():
         st.warning("⚠️ Por favor selecciona una categoría para continuar.")
         return
 
+    st.write(f"Categoría seleccionada: {categoria}")
+
+    # --- Número de competidores a mostrar ---
     n_competidores = st.slider("📊 Número de competidores aleatorios a mostrar", min_value=5, max_value=50, value=10)
 
     # --- QUERIES DINÁMICAS ---
@@ -222,10 +227,6 @@ def show_competencia():
         ))
     else:
         st.warning("⚠️ El DataFrame no contiene columnas válidas de latitud y longitud para mostrar el mapa.")
-
-
-
-
 # --- SIDEBAR ---
 with st.sidebar:
     opcion = option_menu("Navegación", 
