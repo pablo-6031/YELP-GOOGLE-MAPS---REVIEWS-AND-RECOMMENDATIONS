@@ -87,103 +87,73 @@ def run_query(query):
 # ID fijo del negocio principal
 BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
 
+import streamlit as st
+import matplotlib.pyplot as plt
+import pandas as pd
+
 def show_competencia():
-    st.title("Análisis de Competencia y Sucursales")
+    st.title("🔍 Análisis de Competencia por Categoría")
 
-    # --- Selección dinámica por parte del usuario ---
-    categoria = st.text_input("Categoría de comida:", value="Mexican")
-    nombre_restaurante = st.text_input("Nombre del restaurante principal:", value="Torito")
-    n_competidores = st.slider("Cantidad de competidores a mostrar:", min_value=5, max_value=50, value=10)
+    # --- INPUT DINÁMICO ---
+    categoria = st.text_input("🍽️ Ingresá la categoría (ej: Mexican, Pizza, Chinese)", value="Mexican")
+    n_competidores = st.slider("📊 Número de competidores aleatorios a mostrar", min_value=5, max_value=50, value=10)
 
-    if not categoria or not nombre_restaurante:
-        st.warning("Por favor completa todos los campos para continuar.")
+    if not categoria:
+        st.warning("Por favor ingresá una categoría válida.")
         return
 
-    # --- CONSULTAS ---
-    queries = {
-        "df_comp": f"""
-            SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
-            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r 
-            ON b.business_id = r.business_id
-            WHERE b.categories LIKE '%{categoria}%'
-            GROUP BY b.business_name
-            ORDER BY RAND() LIMIT {n_competidores}
-        """,
-        "df_rest": f"""
-            SELECT b.business_id, b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
-            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r 
-            ON b.business_id = r.business_id
-            WHERE b.business_name LIKE '%{nombre_restaurante}%'
-            GROUP BY b.business_id, b.business_name
-            ORDER BY avg_rating DESC
-        """,
-        "df_rest_pie": f"""
-            SELECT stars, COUNT(*) AS cantidad
-            FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
-            WHERE business_id IN (
-                SELECT business_id FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
-                WHERE business_name LIKE '%{nombre_restaurante}%'
-            )
-            GROUP BY stars ORDER BY stars
-        """,
-        "df_dist": f"""
-            SELECT r.stars AS star, COUNT(*) AS count
-            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r 
-            ON b.business_id = r.business_id
-            WHERE b.categories LIKE '%{categoria}%'
-            GROUP BY r.stars ORDER BY r.stars
-        """
-    }
+    # --- QUERIES DINÁMICAS ---
+    query_competidores = f"""
+        SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
+        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+        JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+        ON b.business_id = r.business_id
+        WHERE LOWER(b.categories) LIKE '%{categoria.lower()}%'
+        GROUP BY b.business_name
+        ORDER BY RAND()
+        LIMIT {n_competidores}
+    """
 
-    # --- Cargar datos ---
-    df_comp = run_query(queries["df_comp"])
-    df_rest = run_query(queries["df_rest"])
-    df_rest_pie = run_query(queries["df_rest_pie"])
-    df_dist = run_query(queries["df_dist"])
+    query_distribucion = f"""
+        SELECT r.stars AS star, COUNT(*) AS count
+        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+        JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+        ON b.business_id = r.business_id
+        WHERE LOWER(b.categories) LIKE '%{categoria.lower()}%'
+        GROUP BY r.stars
+        ORDER BY r.stars
+    """
 
-    # --- VISUALIZACIONES ---
-    st.subheader(f"{n_competidores} Competidores Aleatorios ({categoria})")
+    # --- OBTENER DATOS ---
+    df_comp = run_query(query_competidores)
+    df_dist = run_query(query_distribucion)
+
+    # --- MOSTRAR DATOS Y GRÁFICOS ---
+    st.subheader(f"📋 {n_competidores} Competidores Aleatorios – Categoría: {categoria.title()}")
     st.dataframe(df_comp)
 
-    st.subheader("Dispersión: Número de Reseñas vs Calificación Promedio")
+    st.subheader("📈 Dispersión – Reseñas vs Rating Promedio")
     if not df_comp.empty:
-        fig, ax = plt.subplots()
-        ax.scatter(df_comp['num_reviews'], df_comp['avg_rating'], alpha=0.7)
-        for i, row in df_comp.iterrows():
-            ax.annotate(row['business_name'], (row['num_reviews'], row['avg_rating']),
-                        textcoords="offset points", xytext=(5,5), ha="left", fontsize=8)
-        ax.set_xlabel("Número de Reseñas")
-        ax.set_ylabel("Calificación Promedio")
-        ax.set_title(f"Competidores {categoria} – Dispersión")
-        st.pyplot(fig)
+        fig1, ax1 = plt.subplots()
+        ax1.scatter(df_comp["num_reviews"], df_comp["avg_rating"], alpha=0.7)
+        for _, row in df_comp.iterrows():
+            ax1.annotate(row["business_name"], (row["num_reviews"], row["avg_rating"]),
+                         fontsize=7, xytext=(3,3), textcoords='offset points')
+        ax1.set_xlabel("Número de Reseñas")
+        ax1.set_ylabel("Rating Promedio")
+        ax1.set_title(f"Competencia – Categoría: {categoria.title()}")
+        st.pyplot(fig1)
     else:
-        st.warning("No hay datos de competidores para mostrar.")
+        st.info("No se encontraron competidores con esa categoría.")
 
-    st.subheader(f"Distribución de Estrellas – Categoría {categoria}")
+    st.subheader(f"📊 Distribución de Estrellas – {categoria.title()}")
     if not df_dist.empty:
-        fig, ax = plt.subplots()
-        ax.pie(df_dist['count'], labels=df_dist['star'].astype(str), autopct='%1.1f%%', startangle=90)
-        ax.axis('equal')
-        ax.set_title("Porcentaje de Reseñas por Estrellas")
-        st.pyplot(fig)
+        fig2, ax2 = plt.subplots()
+        ax2.pie(df_dist['count'], labels=df_dist['star'], autopct='%1.1f%%', startangle=90)
+        ax2.axis('equal')
+        st.pyplot(fig2)
     else:
-        st.info("No hay datos de distribución de estrellas.")
-
-    st.subheader(f"Análisis de {nombre_restaurante}")
-    st.dataframe(df_rest)
-
-    st.subheader("Distribución de Reseñas por Estrellas (Solo el Restaurante)")
-    if not df_rest_pie.empty:
-        fig, ax = plt.subplots()
-        ax.pie(df_rest_pie['cantidad'], labels=df_rest_pie['stars'].astype(str), autopct='%1.1f%%', startangle=90)
-        ax.axis('equal')
-        ax.set_title(f"Distribución de Estrellas – {nombre_restaurante}")
-        st.pyplot(fig)
-    else:
-        st.info("No hay reseñas disponibles para este restaurante.")
+        st.info("No hay suficientes datos para mostrar la distribución de estrellas.")
 
 # --- SIDEBAR ---
 with st.sidebar:
