@@ -286,6 +286,7 @@ if opcion == "Explorar Reseñas":
         else:
             st.write("No se encontraron menciones suficientes para generar recomendaciones.")
 
+
 if opcion == "Análisis Integral de Competencia":
     st.subheader("🔍 Análisis de Competencia por Categoría")
 
@@ -327,7 +328,7 @@ if opcion == "Análisis Integral de Competencia":
         negocio_elegido = st.selectbox("Elegí un negocio para ver su distribución de sentimientos", negocios_df['business_name'].tolist())
         business_id = negocios_df[negocios_df['business_name'] == negocio_elegido]['business_id'].values[0]
 
-        # ---------------- Distribución de sentimientos por año ----------------
+        # ---------------- Distribución de Sentimientos por Año ----------------
         st.subheader("📈 Distribución de Sentimientos por Año")
 
         query_sentimiento = f"""
@@ -390,32 +391,26 @@ if opcion == "Análisis Integral de Competencia":
             st.pyplot(fig1)
         else:
             st.info("No hay datos suficientes para mostrar la competencia.")
-                    # ---------------- Gráfico de barras de sentimientos ----------------
-        st.subheader("📊 Sentimiento General del Negocio")
 
-        query_sentimiento_total = f"""
-        SELECT 
-            CASE 
-                WHEN r.stars <= 2.5 THEN 'Negativo'
-                WHEN r.stars > 2.5 AND r.stars <= 3.5 THEN 'Neutro'
-                ELSE 'Positivo'
-            END AS sentimiento,
-            COUNT(*) AS cantidad
+        # ---------------- Gráfico de torta de estrellas ----------------
+        st.subheader("📊 Distribución de Estrellas")
+
+        query_estrellas = f"""
+        SELECT r.stars, COUNT(*) AS cantidad
         FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
         WHERE r.business_id = '{business_id}'
-        GROUP BY sentimiento
+        GROUP BY r.stars
+        ORDER BY r.stars DESC
         """
-        df_sent_total = run_query(query_sentimiento_total)
+        df_estrellas = run_query(query_estrellas)
 
-        if not df_sent_total.empty:
-            fig_bar, ax_bar = plt.subplots()
-            colores = {'Negativo': 'red', 'Neutro': 'gray', 'Positivo': 'green'}
-            ax_bar.bar(df_sent_total['sentimiento'], df_sent_total['cantidad'], color=[colores[s] for s in df_sent_total['sentimiento']])
-            ax_bar.set_ylabel("Cantidad de Reseñas")
-            ax_bar.set_title("Sentimiento General de las Reseñas")
-            st.pyplot(fig_bar)
+        if not df_estrellas.empty:
+            fig_pie, ax_pie = plt.subplots(figsize=(7, 7))
+            ax_pie.pie(df_estrellas['cantidad'], labels=df_estrellas['stars'], autopct='%1.1f%%', colors=['#ff9999','#66b3ff','#99ff99','#ffcc99','#c2c2f0'])
+            ax_pie.set_title(f"Distribución de Estrellas - {negocio_elegido}")
+            st.pyplot(fig_pie)
         else:
-            st.info("No hay suficientes datos para mostrar el sentimiento general.")
+            st.info("No hay suficientes datos para mostrar la distribución de estrellas.")
 
         st.divider()
 
