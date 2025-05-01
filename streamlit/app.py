@@ -160,15 +160,6 @@ def show_competencia():
     else:
         st.warning("No hay datos de competidores para mostrar.")
 
-    st.subheader("Distribución de Estrellas – El Torito")
-    if not df_torito_pie.empty:
-        fig = px.pie(df_torito_pie, names="stars", values="cantidad",
-                     title="Distribución de Calificaciones en El Torito",
-                     color_discrete_sequence=px.colors.sequential.RdBu)
-        st.plotly_chart(fig)
-    else:
-        st.info("No hay datos de calificaciones para El Torito.")
-
     st.subheader("Distribución de Estrellas – Categoría Mexican")
     if not df_dist.empty:
         fig, ax = plt.subplots()
@@ -179,7 +170,6 @@ def show_competencia():
     else:
         st.info("No hay datos de distribución de estrellas.")
 
- 
 # --- SIDEBAR ---
 with st.sidebar:
     opcion = option_menu("Navegación", 
