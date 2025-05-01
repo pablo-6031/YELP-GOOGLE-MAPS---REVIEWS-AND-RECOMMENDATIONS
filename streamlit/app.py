@@ -92,7 +92,7 @@ BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
 with st.sidebar:
     opcion = option_menu(
         "Navegación", 
-        ["Inicio", "Explorar Reseñas ", "Análisis Integral de Competencia"],
+        ["Inicio", "Explorar Reseñas", "Análisis Integral de Competencia"],
         icons=["house", "bar-chart", "graph-up-arrow"],
         menu_icon="cast",
         default_index=0
