@@ -128,12 +128,21 @@ if opcion == "Inicio":
 if opcion == "Explorar Reseñas y KPIs":
     import datetime
     import matplotlib.pyplot as plt
-    import random
     import pandas as pd
+    from wordcloud import WordCloud
 
     st.title("Explorar Reseñas y KPIs de El Camino Real")
 
-    # Breve explicación introductoria
+    # --------------------------------------
+    # 🔍 DESCRIPCIÓN DEL FUNCIONAMIENTO:
+    # Este código permite al usuario:
+    # 1. Seleccionar un rango de fechas para analizar reseñas de un restaurante específico.
+    # 2. Ver KPIs como calificación promedio y volumen de reseñas por mes o año.
+    # 3. Filtrar reseñas por sentimiento (positivo, neutro o negativo).
+    # 4. Visualizar una nube de palabras con los términos más usados en las reseñas.
+    # 5. Obtener recomendaciones automáticas basadas en palabras clave dentro de las reseñas.
+    # --------------------------------------
+
     st.write("""
     En esta sección, podrás explorar las reseñas más recientes de **El Camino Real** y revisar los KPIs de desempeño.
     Las reseñas se pueden filtrar por sentimiento (positivo, neutro, negativo) y por fecha, mientras que los KPIs permiten ver el comportamiento general de las reseñas, incluyendo la calificación promedio y el volumen de reseñas por periodo.
@@ -146,12 +155,55 @@ if opcion == "Explorar Reseñas y KPIs":
     with col2:
         fecha_fin = st.date_input("Hasta", datetime.date.today())
 
-    st.subheader("📝 Reseñas y KPIs de El Camino Real")
-
     # Business ID fijo
     business_id = "julsvvavzvghwffkkm0nlg"
 
-    # Filtro por sentimiento
+    # --- KPIs ---
+    st.subheader("📊 KPIs de El Camino Real")
+
+    tipo_periodo = st.selectbox("Seleccionar periodo de tiempo", ["Mensual", "Anual"])
+    formato_periodo = "%Y-%m" if tipo_periodo == "Mensual" else "%Y"
+
+    query_kpi = f"""
+    SELECT 
+        FORMAT_TIMESTAMP('{formato_periodo}', review_date) AS periodo,
+        COUNT(*) AS volumen_resenas,
+        ROUND(AVG(stars), 2) AS calificacion_promedio
+    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
+    WHERE business_id = '{business_id}'
+    AND review_date BETWEEN '{fecha_inicio}' AND '{fecha_fin}'
+    GROUP BY periodo
+    ORDER BY periodo
+    """
+
+    df_kpi = run_query(query_kpi)
+
+    if not df_kpi.empty:
+        st.subheader(f"KPIs por Periodo - El Camino Real")
+
+        fig1, ax1 = plt.subplots(figsize=(10, 4))
+        ax1.plot(df_kpi["periodo"], df_kpi["calificacion_promedio"], marker='o', color='green')
+        ax1.set_title("Calificación Promedio por Periodo")
+        ax1.set_xlabel("Periodo")
+        ax1.set_ylabel("Calificación Promedio")
+        ax1.tick_params(axis='x', rotation=45)
+        st.pyplot(fig1)
+
+        fig2, ax2 = plt.subplots(figsize=(10, 4))
+        ax2.bar(df_kpi["periodo"], df_kpi["volumen_resenas"], color='skyblue')
+        ax2.set_title("Volumen de Reseñas por Periodo")
+        ax2.set_xlabel("Periodo")
+        ax2.set_ylabel("Cantidad de Reseñas")
+        ax2.tick_params(axis='x', rotation=45)
+        st.pyplot(fig2)
+    else:
+        st.warning("No hay datos disponibles para El Camino Real en el periodo seleccionado.")
+
+    st.divider()
+
+    # --- Reseñas y filtros ---
+    st.subheader("📝 Reseñas de El Camino Real")
+
     sentimiento = st.selectbox("Filtrar por sentimiento", ["Todos", "Positivo", "Neutro", "Negativo"])
     filtro_sentimiento = ""
     if sentimiento == "Positivo":
@@ -161,7 +213,6 @@ if opcion == "Explorar Reseñas y KPIs":
     elif sentimiento == "Neutro":
         filtro_sentimiento = "AND stars = 3"
 
-    # Consulta SQL para reseñas filtradas
     query_reseñas = f"""
     SELECT review_text, stars, review_date
     FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
@@ -178,10 +229,7 @@ if opcion == "Explorar Reseñas y KPIs":
         reviews["calificación"] = reviews["stars"].apply(lambda x: "⭐" * int(round(x)))
         st.dataframe(reviews[["review_date", "calificación", "review_text"]])
 
-        # Botón de nube de palabras
         if st.button("🔍 Ver palabras más frecuentes"):
-            from wordcloud import WordCloud
-
             texto = " ".join(reviews["review_text"].dropna().tolist())
             wc = WordCloud(width=800, height=400, background_color="white").generate(texto)
 
@@ -193,116 +241,61 @@ if opcion == "Explorar Reseñas y KPIs":
 
         st.divider()
 
-        # --- KPIs ---
-        st.subheader("📊 KPIs de El Camino Real")
-
-        tipo_periodo = st.selectbox("Seleccionar periodo de tiempo", ["Mensual", "Anual"])
-        formato_periodo = "%Y-%m" if tipo_periodo == "Mensual" else "%Y"
-
-        query_kpi = f"""
-        SELECT 
-            FORMAT_TIMESTAMP('{formato_periodo}', review_date) AS periodo,
-            COUNT(*) AS volumen_resenas,
-            ROUND(AVG(stars), 2) AS calificacion_promedio
-        FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
-        WHERE business_id = '{business_id}'
-        AND review_date BETWEEN '{fecha_inicio}' AND '{fecha_fin}'
-        GROUP BY periodo
-        ORDER BY periodo
-        """
-
-        df_kpi = run_query(query_kpi)
-
-        if not df_kpi.empty:
-            st.subheader(f"KPIs por Periodo - El Camino Real")
-
-            fig1, ax1 = plt.subplots(figsize=(10, 4))
-            ax1.plot(df_kpi["periodo"], df_kpi["calificacion_promedio"], marker='o', color='green')
-            ax1.set_title("Calificación Promedio por Periodo")
-            ax1.set_xlabel("Periodo")
-            ax1.set_ylabel("Calificación Promedio")
-            ax1.tick_params(axis='x', rotation=45)
-            st.pyplot(fig1)
-
-            fig2, ax2 = plt.subplots(figsize=(10, 4))
-            ax2.bar(df_kpi["periodo"], df_kpi["volumen_resenas"], color='skyblue')
-            ax2.set_title("Volumen de Reseñas por Periodo")
-            ax2.set_xlabel("Periodo")
-            ax2.set_ylabel("Cantidad de Reseñas")
-            ax2.tick_params(axis='x', rotation=45)
-            st.pyplot(fig2)
-        else:
-            st.warning("No hay datos disponibles para El Camino Real en el periodo seleccionado.")
-        
-        st.divider()
-
-               # --- Recomendaciones basadas en palabras clave ---
+        # --- Recomendaciones ---
         st.subheader("💡 Recomendaciones basadas en palabras clave")
 
-        # Palabras clave a buscar
         palabras_clave = ["food", "service", "price", "taste", "ambience", "attention", "speed", "music"]
 
-        # Diccionarios con recomendaciones según sentimiento
         recomendaciones_dict = {
             "Positivo": {
-                "food": "Los clientes disfrutan de la comida. Considera seguir innovando en la presentación o variedad de platillos.",
-                "service": "El servicio ha sido bien valorado. Mantén los estándares y refuerza la capacitación para conservar esta experiencia.",
-                "price": "Los precios son bien recibidos. Podrías explorar nuevas promociones sin comprometer la rentabilidad.",
-                "taste": "El sabor es un punto fuerte. Podrías experimentar con nuevas combinaciones para sorprender gratamente.",
-                "ambience": "El ambiente agrada a los clientes. Tal vez podrías renovar algunos elementos decorativos o musicales para mantenerlo fresco.",
-                "attention": "La atención al cliente ha sido destacada. Enfócate en mantener esa calidez y disposición.",
-                "speed": "La rapidez del servicio fue positiva. Podrías revisar si hay más oportunidades de eficiencia sin perder calidad.",
-                "music": "La música contribuye a una buena experiencia. Considera actualizar playlists o variar estilos según el horario."
+                "food": "Los clientes disfrutan de la comida...",
+                "service": "El servicio ha sido bien valorado...",
+                "price": "Los precios son bien recibidos...",
+                "taste": "El sabor es un punto fuerte...",
+                "ambience": "El ambiente agrada a los clientes...",
+                "attention": "La atención al cliente ha sido destacada...",
+                "speed": "La rapidez del servicio fue positiva...",
+                "music": "La música contribuye a una buena experiencia..."
             },
             "Negativo": {
-                "food": "Algunos clientes mencionan insatisfacción con la comida. Revisa calidad, presentación o variedad.",
-                "service": "El servicio podría mejorarse. Tal vez un refuerzo en capacitación o personal sería beneficioso.",
-                "price": "El precio genera preocupación. Revisa si la percepción de valor es clara o considera ajustes.",
-                "taste": "El sabor parece no cumplir con expectativas. Tal vez podrías revisar ingredientes o procesos de preparación.",
-                "ambience": "El ambiente no fue del agrado de algunos. Evalúa ajustes en decoración, música o iluminación.",
-                "attention": "Hay observaciones sobre la atención. Reforzar empatía y tiempos de respuesta podría ayudar.",
-                "speed": "La espera fue mencionada negativamente. Revisa procesos para mejorar los tiempos de servicio.",
-                "music": "Algunos comentarios sobre la música fueron negativos. Evalúa volumen, estilo o relevancia con el público."
+                "food": "Algunos clientes mencionan insatisfacción...",
+                "service": "El servicio podría mejorarse...",
+                "price": "El precio genera preocupación...",
+                "taste": "El sabor parece no cumplir con expectativas...",
+                "ambience": "El ambiente no fue del agrado de algunos...",
+                "attention": "Hay observaciones sobre la atención...",
+                "speed": "La espera fue mencionada negativamente...",
+                "music": "Algunos comentarios sobre la música fueron negativos..."
             },
             "Neutro": {
-                "food": "La comida fue mencionada sin entusiasmo. Quizá una actualización del menú podría generar mayor impacto.",
-                "service": "El servicio fue regular. Ajustes menores en atención y tiempos podrían marcar diferencia.",
-                "price": "Los precios no destacaron. Explora combos u opciones que ofrezcan mayor percepción de valor.",
-                "taste": "El sabor podría mejorarse para destacar más. Prueba nuevas recetas o técnicas.",
-                "ambience": "El ambiente es neutro. Tal vez una iluminación diferente o música ambiental ayude a mejorar la experiencia.",
-                "attention": "La atención necesita refinarse. Pequeños gestos pueden generar una experiencia más memorable.",
-                "speed": "El servicio no fue rápido ni lento. Optimizar tiempos clave podría mejorar la experiencia.",
-                "music": "La música fue mencionada pero sin impacto claro. Evalúa si está alineada al perfil del cliente."
+                "food": "La comida fue mencionada sin entusiasmo...",
+                "service": "El servicio fue regular...",
+                "price": "Los precios no destacaron...",
+                "taste": "El sabor podría mejorarse...",
+                "ambience": "El ambiente es neutro...",
+                "attention": "La atención necesita refinarse...",
+                "speed": "El servicio no fue rápido ni lento...",
+                "music": "La música fue mencionada pero sin impacto claro..."
             }
         }
 
-        # Diccionario para almacenar recomendaciones únicas
         recomendaciones_generadas = {}
-
-        # Detectar menciones y asignar solo una recomendación por palabra clave
         for _, row in reviews.iterrows():
             texto = row["review_text"].lower()
             estrellas = row["stars"]
-
-            if estrellas >= 4:
-                sentimiento = "Positivo"
-            elif estrellas <= 2:
-                sentimiento = "Negativo"
-            else:
-                sentimiento = "Neutro"
+            sentimiento = "Positivo" if estrellas >= 4 else "Negativo" if estrellas <= 2 else "Neutro"
 
             for palabra in palabras_clave:
                 if palabra in texto and palabra not in recomendaciones_generadas:
-                    recomendacion = recomendaciones_dict[sentimiento][palabra]
-                    recomendaciones_generadas[palabra] = recomendacion
+                    recomendaciones_generadas[palabra] = recomendaciones_dict[sentimiento][palabra]
 
-        # Mostrar hasta 5 recomendaciones únicas
         if recomendaciones_generadas:
             st.write("Basado en las reseñas analizadas, te sugerimos lo siguiente:")
             for rec in list(recomendaciones_generadas.values())[:5]:
                 st.write("- " + rec)
         else:
             st.write("No se encontraron menciones suficientes para generar recomendaciones.")
+
 if opcion == "Análisis Integral de Competencia":
    # ---------------------- 🔍 Análisis de Competencia -----------------------
     st.subheader("🔍 Análisis de Competencia por Categoría")
