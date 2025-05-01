@@ -88,51 +88,64 @@ def run_query(query):
 BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
 
 def show_competencia():
-    st.title("Competidores y Sucursales de El Torito (Categoría: Mexican)")
+    st.title("Análisis de Competencia y Sucursales")
+
+    # --- Selección dinámica por parte del usuario ---
+    categoria = st.text_input("Categoría de comida:", value="Mexican")
+    nombre_restaurante = st.text_input("Nombre del restaurante principal:", value="Torito")
+    n_competidores = st.slider("Cantidad de competidores a mostrar:", min_value=5, max_value=50, value=10)
+
+    if not categoria or not nombre_restaurante:
+        st.warning("Por favor completa todos los campos para continuar.")
+        return
 
     # --- CONSULTAS ---
     queries = {
-        "df_comp": """
+        "df_comp": f"""
             SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
             FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
-            WHERE b.categories LIKE '%Mexican%'
+            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r 
+            ON b.business_id = r.business_id
+            WHERE b.categories LIKE '%{categoria}%'
             GROUP BY b.business_name
-            ORDER BY RAND() LIMIT 10
+            ORDER BY RAND() LIMIT {n_competidores}
         """,
-        "df_torito": """
+        "df_rest": f"""
             SELECT b.business_id, b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
             FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
-            WHERE b.business_name LIKE '%Torito%'
+            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r 
+            ON b.business_id = r.business_id
+            WHERE b.business_name LIKE '%{nombre_restaurante}%'
             GROUP BY b.business_id, b.business_name
             ORDER BY avg_rating DESC
         """,
-        "df_torito_pie": """
+        "df_rest_pie": f"""
             SELECT stars, COUNT(*) AS cantidad
             FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
             WHERE business_id IN (
                 SELECT business_id FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
-                WHERE business_name LIKE '%Torito%'
+                WHERE business_name LIKE '%{nombre_restaurante}%'
             )
             GROUP BY stars ORDER BY stars
         """,
-        "df_dist": """
+        "df_dist": f"""
             SELECT r.stars AS star, COUNT(*) AS count
             FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
-            WHERE b.categories LIKE '%Mexican%'
+            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r 
+            ON b.business_id = r.business_id
+            WHERE b.categories LIKE '%{categoria}%'
             GROUP BY r.stars ORDER BY r.stars
         """
     }
 
+    # --- Cargar datos ---
     df_comp = run_query(queries["df_comp"])
-    df_torito = run_query(queries["df_torito"])
-    df_torito_pie = run_query(queries["df_torito_pie"])
+    df_rest = run_query(queries["df_rest"])
+    df_rest_pie = run_query(queries["df_rest_pie"])
     df_dist = run_query(queries["df_dist"])
 
     # --- VISUALIZACIONES ---
-    st.subheader("10 Competidores Aleatorios (Mexican)")
+    st.subheader(f"{n_competidores} Competidores Aleatorios ({categoria})")
     st.dataframe(df_comp)
 
     st.subheader("Dispersión: Número de Reseñas vs Calificación Promedio")
@@ -144,12 +157,12 @@ def show_competencia():
                         textcoords="offset points", xytext=(5,5), ha="left", fontsize=8)
         ax.set_xlabel("Número de Reseñas")
         ax.set_ylabel("Calificación Promedio")
-        ax.set_title("Competidores Mexican – Dispersión")
+        ax.set_title(f"Competidores {categoria} – Dispersión")
         st.pyplot(fig)
     else:
         st.warning("No hay datos de competidores para mostrar.")
 
-    st.subheader("Distribución de Estrellas – Categoría Mexican")
+    st.subheader(f"Distribución de Estrellas – Categoría {categoria}")
     if not df_dist.empty:
         fig, ax = plt.subplots()
         ax.pie(df_dist['count'], labels=df_dist['star'].astype(str), autopct='%1.1f%%', startangle=90)
@@ -158,6 +171,19 @@ def show_competencia():
         st.pyplot(fig)
     else:
         st.info("No hay datos de distribución de estrellas.")
+
+    st.subheader(f"Análisis de {nombre_restaurante}")
+    st.dataframe(df_rest)
+
+    st.subheader("Distribución de Reseñas por Estrellas (Solo el Restaurante)")
+    if not df_rest_pie.empty:
+        fig, ax = plt.subplots()
+        ax.pie(df_rest_pie['cantidad'], labels=df_rest_pie['stars'].astype(str), autopct='%1.1f%%', startangle=90)
+        ax.axis('equal')
+        ax.set_title(f"Distribución de Estrellas – {nombre_restaurante}")
+        st.pyplot(fig)
+    else:
+        st.info("No hay reseñas disponibles para este restaurante.")
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -195,6 +221,10 @@ if opcion == "Inicio":
 
     📄 [![GitHub](https://img.icons8.com/ios/452/github.png)](https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/README.md) Leer README del Proyecto en GitHub
     """)
+# --- COMPETENCIA ---
+if opcion == "Competencia":
+   
+    show_competencia()
 if opcion == "Recomendador":
     st.title("💡 Recomendador para El Camino Real")
     st.markdown("""
