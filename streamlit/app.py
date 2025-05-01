@@ -195,7 +195,7 @@ if opcion == "Inicio":
 
     📄 [![GitHub](https://img.icons8.com/ios/452/github.png)](https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/README.md) Leer README del Proyecto en GitHub
     """)
-  if opcion == "Recomendador":
+if opcion == "Recomendador":
     st.title("💡 Recomendador para El Camino Real")
     st.markdown("""
     Este módulo analiza las reseñas de la competencia directa de *El Camino Real* para detectar las frases más frecuentes 
