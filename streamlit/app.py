@@ -88,13 +88,6 @@ def run_query(query):
 # ID fijo del negocio principal
 BUSINESS_ID_EL_CAMINO_REAL= "julsvvavzvghwffkkm0nlg";
 
-
-
-
-
-
-# === FUNCIÓN DE COMPETENCIA ===
-
 def show_competencia():
     st.title("Competidores y Sucursales de El Torito (Categoría: Mexican)")
 
@@ -142,9 +135,6 @@ def show_competencia():
     # --- VISUALIZACIONES ---
     st.subheader("10 Competidores Aleatorios (Mexican)")
     st.dataframe(df_comp)
-
-    st.subheader("Sucursales de El Torito")
-    st.dataframe(df_torito)
 
     st.subheader("Dispersión: Número de Reseñas vs Calificación Promedio")
     if not df_comp.empty:
