@@ -195,15 +195,15 @@ if opcion == "Inicio":
 
     📄 [![GitHub](https://img.icons8.com/ios/452/github.png)](https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/blob/main/README.md) Leer README del Proyecto en GitHub
     """)
-if opcion == "Recomendador":
+  if opcion == "Recomendador":
     st.title("💡 Recomendador para El Camino Real")
     st.markdown("""
-    Este módulo analiza las reseñas **positivas** de la competencia directa de *El Camino Real* para detectar las frases más frecuentes
+    Este módulo analiza las reseñas de la competencia directa de *El Camino Real* para detectar las frases más frecuentes 
     que los clientes valoran. A partir de eso, generamos recomendaciones accionables para mejorar la propuesta del local.
     """)
 
     st.divider()
-    st.subheader("📦 Cargando reseñas positivas de competidores...")
+    st.subheader("📦 Cargando reseñas de competidores...")
 
     # Obtener los negocios de competencia directamente de la base de datos
     @st.cache_data
@@ -223,21 +223,32 @@ if opcion == "Recomendador":
     # Obtener el business_id del negocio seleccionado
     business_id_seleccionado = df_negocios[df_negocios['business_name'] == negocio_seleccionado]['business_id'].values[0]
 
-    # Cargar reseñas de ese negocio
+    # Seleccionar el tipo de reseña (Positiva, Negativa, Neutra)
+    tipo_reseña = st.selectbox("Selecciona el tipo de reseña", ("Positiva", "Negativa", "Neutra"))
+
+    # Obtener el rango de estrellas según la selección del usuario
+    if tipo_reseña == "Positiva":
+        stars_filter = "r.stars >= 4"
+    elif tipo_reseña == "Negativa":
+        stars_filter = "r.stars <= 2"
+    else:  # Neutra (3 estrellas)
+        stars_filter = "r.stars = 3"
+
+    # Cargar reseñas de ese negocio según el tipo seleccionado
     @st.cache_data
-    def cargar_datos(business_id):
+    def cargar_datos(business_id, stars_filter):
         query = f"""
         SELECT review_text
         FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
         JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
           ON r.business_id = b.business_id
         WHERE b.business_id = '{business_id}'
-          AND r.stars >= 4
+          AND {stars_filter}
           AND r.review_text IS NOT NULL
         """
         return client.query(query).to_dataframe()
 
-    df = cargar_datos(business_id_seleccionado)
+    df = cargar_datos(business_id_seleccionado, stars_filter)
 
     # --- Procesamiento ---
     df['review_text'] = df['review_text'].str.lower().str.replace(r'[^\w\s]', '', regex=True)
@@ -251,7 +262,7 @@ if opcion == "Recomendador":
 
     # --- Visualizaciones ---
     st.divider()
-    st.subheader("🔍 Frases más frecuentes en reseñas positivas")
+    st.subheader("🔍 Frases más frecuentes en reseñas")
 
     top_n = st.slider("Selecciona cuántas frases mostrar", 5, 50, 20)
     st.dataframe(pd.DataFrame(phrases_freq[:top_n], columns=["Frase", "Frecuencia"]))
@@ -297,5 +308,6 @@ if opcion == "Recomendador":
     for recomendacion in recomendaciones:
         st.markdown(f"- {recomendacion}")
 
-    st.caption("Análisis basado en reseñas positivas de negocios mexicanos con alta calificación.")
+    st.caption("Análisis basado en reseñas filtradas de negocios mexicanos con alta calificación.")
+  
 
