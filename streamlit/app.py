@@ -416,3 +416,63 @@ if opcion == "Distribución de Reseñas":
         st.pyplot(fig)
     else:
         st.warning("No se encontraron reseñas para este negocio.")
+if opcion == "Explorar Reseñas":
+    st.subheader("📝 Últimas reseñas de El Camino Real")
+
+    # Business ID fijo
+    business_id = "julsvvavzvghwffkkm0nlg"  # <- usá el correcto para El Camino Real
+
+    # Filtro por sentimiento
+    sentimiento = st.selectbox("Filtrar por sentimiento", ["Todos", "Positivo", "Neutro", "Negativo"])
+    filtro_sentimiento = ""
+    if sentimiento == "Positivo":
+        filtro_sentimiento = "AND stars >= 4"
+    elif sentimiento == "Negativo":
+        filtro_sentimiento = "AND stars <= 2"
+    elif sentimiento == "Neutro":
+        filtro_sentimiento = "AND stars = 3"
+
+    # Filtro por fecha
+    col1, col2 = st.columns(2)
+    with col1:
+        fecha_inicio = st.date_input("Desde", datetime.date(2020, 1, 1))
+    with col2:
+        fecha_fin = st.date_input("Hasta", datetime.date.today())
+
+    filtro_fecha = f"AND review_date BETWEEN '{fecha_inicio}' AND '{fecha_fin}'"
+
+    # Consulta SQL
+    query = f"""
+    SELECT review_text, stars, review_date
+    FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
+    WHERE business_id = '{business_id}'
+    {filtro_fecha}
+    {filtro_sentimiento}
+    ORDER BY review_date DESC
+    LIMIT 100
+    """
+
+    reviews = run_query(query)
+
+    if not reviews.empty:
+        # Mostrar estrellas visuales
+        reviews["calificación"] = reviews["stars"].apply(lambda x: "⭐" * int(round(x)))
+        st.dataframe(reviews[["review_date", "calificación", "review_text"]])
+        
+        # Botón para ver nube de palabras
+        if st.button("🔍 Ver palabras más frecuentes"):
+            from wordcloud import WordCloud
+            import matplotlib.pyplot as plt
+
+            texto = " ".join(reviews["review_text"].dropna().tolist())
+            wc = WordCloud(width=800, height=400, background_color="white").generate(texto)
+
+            st.subheader("☁️ Nube de palabras más frecuentes")
+            fig, ax = plt.subplots(figsize=(10, 5))
+            ax.imshow(wc, interpolation='bilinear')
+            ax.axis("off")
+            st.pyplot(fig)
+
+    else:
+        st.warning("No hay reseñas disponibles para el período o filtro seleccionado.")
+
