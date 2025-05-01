@@ -86,7 +86,7 @@ def run_query(query):
     return pd.DataFrame([dict(row) for row in client.query(query).result()])
 
 # ID fijo del negocio principal
-BUSINESS_ID_EL_TORITO = "7yr4oqcapzbkckrlb3isig"
+BUSINESS_ID_EL_TORITO = "julsvvavzvghwffkkm0nlg";
 
 
 
@@ -95,79 +95,85 @@ BUSINESS_ID_EL_TORITO = "7yr4oqcapzbkckrlb3isig"
 
 # === FUNCIÓN DE COMPETENCIA ===
 
-def show_competencia():
-    st.title("Competidores y Sucursales de El Torito (Categoría: Mexican)")
 
-    # --- CONSULTAS ---
+def show_competencia():
+    st.title("Competidores y Desempeño de El Camino Real (Categoría: Mexican)")
+
+    # --- CONSULTAS ACTUALIZADAS ---
     queries = {
+        # 10 negocios mexicanos aleatorios para comparar
         "df_comp": """
             SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
-            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
-            WHERE b.categories LIKE '%Mexican%'
+            FROM `TU_PROYECTO.dw_restaurantes.dim_business` b
+            JOIN `TU_PROYECTO.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
+            WHERE b.categories LIKE '%Mexican%' AND b.business_id != 'julsvvavzvghwffkkm0nlg'
             GROUP BY b.business_name
             ORDER BY RAND() LIMIT 10
         """,
-        "df_torito": """
+        # Datos de El Camino Real
+        "df_camino_real": """
             SELECT b.business_id, b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
-            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
-            WHERE b.business_name LIKE '%Torito%'
+            FROM `TU_PROYECTO.dw_restaurantes.dim_business` b
+            JOIN `TU_PROYECTO.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
+            WHERE b.business_id = 'julsvvavzvghwffkkm0nlg'
             GROUP BY b.business_id, b.business_name
-            ORDER BY avg_rating DESC
         """,
-        "df_torito_pie": """
+        # Pie chart de estrellas solo para El Camino Real
+        "df_camino_pie": """
             SELECT stars, COUNT(*) AS cantidad
-            FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
-            WHERE business_id IN (
-                SELECT business_id FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
-                WHERE business_name LIKE '%Torito%'
-            )
+            FROM `TU_PROYECTO.dw_restaurantes.fact_review`
+            WHERE business_id = 'julsvvavzvghwffkkm0nlg'
             GROUP BY stars ORDER BY stars
         """,
+        # Distribución general de categoría "Mexican"
         "df_dist": """
             SELECT r.stars AS star, COUNT(*) AS count
-            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
+            FROM `TU_PROYECTO.dw_restaurantes.dim_business` b
+            JOIN `TU_PROYECTO.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
             WHERE b.categories LIKE '%Mexican%'
             GROUP BY r.stars ORDER BY r.stars
         """
     }
 
+    # Ejecutar consultas
     df_comp = run_query(queries["df_comp"])
-    df_torito = run_query(queries["df_torito"])
-    df_torito_pie = run_query(queries["df_torito_pie"])
+    df_camino = run_query(queries["df_camino_real"])
+    df_camino_pie = run_query(queries["df_camino_pie"])
     df_dist = run_query(queries["df_dist"])
 
     # --- VISUALIZACIONES ---
-    st.subheader("10 Competidores Aleatorios (Mexican)")
+    st.subheader("10 Competidores Aleatorios (Categoría: Mexican)")
     st.dataframe(df_comp)
 
-    st.subheader("Sucursales de El Torito")
-    st.dataframe(df_torito)
+    st.subheader("Desempeño de El Camino Real")
+    st.dataframe(df_camino)
 
     st.subheader("Dispersión: Número de Reseñas vs Calificación Promedio")
     if not df_comp.empty:
         fig, ax = plt.subplots()
-        ax.scatter(df_comp['num_reviews'], df_comp['avg_rating'], alpha=0.7)
-        for i, row in df_comp.iterrows():
-            ax.annotate(row['business_name'], (row['num_reviews'], row['avg_rating']),
-                        textcoords="offset points", xytext=(5,5), ha="left", fontsize=8)
+        ax.scatter(df_comp['num_reviews'], df_comp['avg_rating'], alpha=0.7, label="Competidores")
+        # Agregar El Camino Real al gráfico
+        if not df_camino.empty:
+            ax.scatter(df_camino['num_reviews'], df_camino['avg_rating'], color='red', label="El Camino Real", s=100)
+            ax.annotate("El Camino Real", 
+                        (df_camino['num_reviews'][0], df_camino['avg_rating'][0]),
+                        textcoords="offset points", xytext=(5,5), ha="left", fontsize=10, color='red')
         ax.set_xlabel("Número de Reseñas")
         ax.set_ylabel("Calificación Promedio")
-        ax.set_title("Competidores Mexican – Dispersión")
+        ax.set_title("Competidores vs El Camino Real")
+        ax.legend()
         st.pyplot(fig)
     else:
         st.warning("No hay datos de competidores para mostrar.")
 
-    st.subheader("Distribución de Estrellas – El Torito")
-    if not df_torito_pie.empty:
-        fig = px.pie(df_torito_pie, names="stars", values="cantidad",
-                     title="Distribución de Calificaciones en El Torito",
+    st.subheader("Distribución de Calificaciones – El Camino Real")
+    if not df_camino_pie.empty:
+        fig = px.pie(df_camino_pie, names="stars", values="cantidad",
+                     title="Distribución de Calificaciones en El Camino Real",
                      color_discrete_sequence=px.colors.sequential.RdBu)
         st.plotly_chart(fig)
     else:
-        st.info("No hay datos de calificaciones para El Torito.")
+        st.info("No hay datos de calificaciones para El Camino Real.")
 
     st.subheader("Distribución de Estrellas – Categoría Mexican")
     if not df_dist.empty:
@@ -179,7 +185,6 @@ def show_competencia():
     else:
         st.info("No hay datos de distribución de estrellas.")
 
-
 # --- SIDEBAR ---
 with st.sidebar:
     opcion = option_menu("Navegación", 
@@ -189,15 +194,15 @@ with st.sidebar:
     )
 
 # --- INICIO ---
-# --- INICIO ---
+
 if opcion == "Inicio":
-    st.title("Análisis de Reseñas: El Torito")
+    st.title("Análisis de Reseñas: El Camino Real")
     st.markdown(""" 
     ## ¿Quiénes somos?
     Somos **HYPE Analytics**, especialistas en proporcionar información relevante para mejorar el rendimiento de nuestros clientes.
 
     ## Objetivo del Proyecto
-    Analizar las reseñas de clientes del restaurante **El Torito**, extrayendo KPIs, sentimientos y comparativas que permitan optimizar la estrategia del negocio.
+    Analizar las reseñas de clientes del restaurante **El Camino Real**, extrayendo KPIs, sentimientos y comparativas que permitan optimizar la estrategia del negocio.
 
     ## Nuestro Equipo de Trabajo
     - **Harry Guevara** – Functional Analyst
@@ -311,56 +316,39 @@ if opcion == "KPIs":
 
     else:
         st.warning("No hay datos disponibles para la selección realizada.")
-# --- MAPAS ---
 if opcion == "Mapas":
-    st.title("Mapa de Ubicaciones de El Torito")
-    locations_data = [
-        {"latitude": 33.8366, "longitude": -117.9145, "name": "Anaheim, CA"},
-        {"latitude": 33.8753, "longitude": -117.5664, "name": "Corona, CA"},
-        {"latitude": 33.8134, "longitude": -118.0201, "name": "Cypress, CA"},
-        {"latitude": 33.9164, "longitude": -118.3526, "name": "Hawthorne, CA"},
-        {"latitude": 33.6695, "longitude": -117.8231, "name": "Irvine, CA"},
-        {"latitude": 32.7795, "longitude": -117.0340, "name": "La Mesa, CA"},
-        {"latitude": 33.8530, "longitude": -118.1326, "name": "Lakewood, CA"},
-        {"latitude": 33.9765, "longitude": -118.4682, "name": "Marina del Rey, CA"},
-        {"latitude": 37.4284, "longitude": -122.0296, "name": "Milpitas, CA"},
-        {"latitude": 36.6002, "longitude": -121.8947, "name": "Monterey, CA"},
-        {"latitude": 34.1897, "longitude": -118.5376, "name": "Northridge, CA"},
-        {"latitude": 34.0633, "longitude": -117.6130, "name": "Ontario, CA"},
-        {"latitude": 34.1457, "longitude": -118.2205, "name": "Palmdale, CA"},
-        {"latitude": 34.1478, "longitude": -118.1349, "name": "Pasadena, CA"},
-        {"latitude": 33.9533, "longitude": -117.3962, "name": "Riverside, CA"},
-        {"latitude": 33.7483, "longitude": -116.4194, "name": "San Bernardino, CA"},
-        {"latitude": 37.7749, "longitude": -122.4194, "name": "San Leandro, CA"},
-        {"latitude": 34.1496, "longitude": -118.4515, "name": "Sherman Oaks, CA"},
-        {"latitude": 33.8358, "longitude": -118.3406, "name": "Torrance, CA"},
-        {"latitude": 33.7457, "longitude": -117.9389, "name": "Tustin, CA"},
-        {"latitude": 34.0686, "longitude": -118.1018, "name": "West Covina, CA"},
-        {"latitude": 34.1698, "longitude": -118.1079, "name": "Westminster, CA"},
-    ]
-    df_map = pd.DataFrame(locations_data)
-    st.map(df_map[['latitude', 'longitude']])
+    st.title(f"Ubicación de {BUSINESS_NAME_EL_CAMINO_REAL}")
+
+    # Reemplaza estos valores con las coordenadas reales obtenidas de la consulta
+    latitude = 34.0522
+    longitude = -118.2437
+
+    df_map = pd.DataFrame([{"latitude": latitude, "longitude": longitude}])
+    st.map(df_map)
+
 
 # --- RECOMENDADOR ---
 if opcion == "Recomendador":
-    st.title("💡 Recomendador para Torito Comida Mexicana")
+    st.title("💡 Recomendador para El Camino Real")
     st.markdown("""
-    Este módulo analiza las reseñas **positivas** de la competencia directa de *El Torito* para detectar las frases más frecuentes
+    Este módulo analiza las reseñas **positivas** de la competencia directa de *El Camino Real* para detectar las frases más frecuentes
     que los clientes valoran. A partir de eso, generamos recomendaciones accionables para mejorar la propuesta del local.
     """)
 
     st.divider()
     st.subheader("📦 Cargando reseñas positivas de competidores...")
 
+    BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
+
     @st.cache_data
     def cargar_datos():
-        query = """
+        query = f"""
         SELECT review_text
         FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
         JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
           ON r.business_id = b.business_id
         WHERE LOWER(b.categories) LIKE '%mexican%'
-          AND LOWER(b.business_name) NOT LIKE '%torito%'
+          AND b.business_id != '{BUSINESS_ID_EL_CAMINO_REAL}'
           AND r.stars >= 4
           AND r.review_text IS NOT NULL
         """
