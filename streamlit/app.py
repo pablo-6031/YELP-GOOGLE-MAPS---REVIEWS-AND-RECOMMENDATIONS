@@ -86,7 +86,7 @@ def run_query(query):
     return pd.DataFrame([dict(row) for row in client.query(query).result()])
 
 # ID fijo del negocio principal
-BUSINESS_ID_EL_TORITO = "julsvvavzvghwffkkm0nlg";
+BUSINESS_ID_EL_CAMINO_REAL= "julsvvavzvghwffkkm0nlg";
 
 
 
@@ -100,29 +100,31 @@ def show_competencia():
     st.title("Competidores y Desempeño de El Camino Real (Categoría: Mexican)")
 
     # --- CONSULTAS ACTUALIZADAS ---
+    camino_real_id = 'julsvvavzvghwffkkm0nlg'  # ID único de El Camino Real
+
     queries = {
         # 10 negocios mexicanos aleatorios para comparar
-        "df_comp": """
+        "df_comp": f"""
             SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
             FROM `TU_PROYECTO.dw_restaurantes.dim_business` b
             JOIN `TU_PROYECTO.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
-            WHERE b.categories LIKE '%Mexican%' AND b.business_id != 'julsvvavzvghwffkkm0nlg'
+            WHERE b.categories LIKE '%Mexican%' AND b.business_id != '{camino_real_id}'
             GROUP BY b.business_name
             ORDER BY RAND() LIMIT 10
         """,
         # Datos de El Camino Real
-        "df_camino_real": """
+        "df_camino_real": f"""
             SELECT b.business_id, b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
             FROM `TU_PROYECTO.dw_restaurantes.dim_business` b
             JOIN `TU_PROYECTO.dw_restaurantes.fact_review` r ON b.business_id = r.business_id
-            WHERE b.business_id = 'julsvvavzvghwffkkm0nlg'
+            WHERE b.business_id = '{camino_real_id}'
             GROUP BY b.business_id, b.business_name
         """,
         # Pie chart de estrellas solo para El Camino Real
-        "df_camino_pie": """
+        "df_camino_pie": f"""
             SELECT stars, COUNT(*) AS cantidad
             FROM `TU_PROYECTO.dw_restaurantes.fact_review`
-            WHERE business_id = 'julsvvavzvghwffkkm0nlg'
+            WHERE business_id = '{camino_real_id}'
             GROUP BY stars ORDER BY stars
         """,
         # Distribución general de categoría "Mexican"
@@ -180,7 +182,7 @@ def show_competencia():
         fig, ax = plt.subplots()
         ax.pie(df_dist['count'], labels=df_dist['star'].astype(str), autopct='%1.1f%%', startangle=90)
         ax.axis('equal')
-        ax.set_title("Porcentaje de Reseñas por Estrellas")
+        ax.set_title("Porcentaje de Reseñas por Estrellas en la Categoría Mexican")
         st.pyplot(fig)
     else:
         st.info("No hay datos de distribución de estrellas.")
