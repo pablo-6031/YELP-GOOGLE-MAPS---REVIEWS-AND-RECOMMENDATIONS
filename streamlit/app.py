@@ -236,78 +236,74 @@ if opcion == "Explorar Reseñas y KPIs":
         
         st.divider()
 
-        # --- Recomendaciones basadas en palabras clave ---
+               # --- Recomendaciones basadas en palabras clave ---
         st.subheader("💡 Recomendaciones basadas en palabras clave")
 
+        # Palabras clave a buscar
         palabras_clave = ["food", "service", "price", "taste", "ambience", "attention", "speed", "music"]
-        recomendaciones = []
 
+        # Diccionarios con recomendaciones según sentimiento
+        recomendaciones_dict = {
+            "Positivo": {
+                "food": "Los clientes disfrutan de la comida. Considera seguir innovando en la presentación o variedad de platillos.",
+                "service": "El servicio ha sido bien valorado. Mantén los estándares y refuerza la capacitación para conservar esta experiencia.",
+                "price": "Los precios son bien recibidos. Podrías explorar nuevas promociones sin comprometer la rentabilidad.",
+                "taste": "El sabor es un punto fuerte. Podrías experimentar con nuevas combinaciones para sorprender gratamente.",
+                "ambience": "El ambiente agrada a los clientes. Tal vez podrías renovar algunos elementos decorativos o musicales para mantenerlo fresco.",
+                "attention": "La atención al cliente ha sido destacada. Enfócate en mantener esa calidez y disposición.",
+                "speed": "La rapidez del servicio fue positiva. Podrías revisar si hay más oportunidades de eficiencia sin perder calidad.",
+                "music": "La música contribuye a una buena experiencia. Considera actualizar playlists o variar estilos según el horario."
+            },
+            "Negativo": {
+                "food": "Algunos clientes mencionan insatisfacción con la comida. Revisa calidad, presentación o variedad.",
+                "service": "El servicio podría mejorarse. Tal vez un refuerzo en capacitación o personal sería beneficioso.",
+                "price": "El precio genera preocupación. Revisa si la percepción de valor es clara o considera ajustes.",
+                "taste": "El sabor parece no cumplir con expectativas. Tal vez podrías revisar ingredientes o procesos de preparación.",
+                "ambience": "El ambiente no fue del agrado de algunos. Evalúa ajustes en decoración, música o iluminación.",
+                "attention": "Hay observaciones sobre la atención. Reforzar empatía y tiempos de respuesta podría ayudar.",
+                "speed": "La espera fue mencionada negativamente. Revisa procesos para mejorar los tiempos de servicio.",
+                "music": "Algunos comentarios sobre la música fueron negativos. Evalúa volumen, estilo o relevancia con el público."
+            },
+            "Neutro": {
+                "food": "La comida fue mencionada sin entusiasmo. Quizá una actualización del menú podría generar mayor impacto.",
+                "service": "El servicio fue regular. Ajustes menores en atención y tiempos podrían marcar diferencia.",
+                "price": "Los precios no destacaron. Explora combos u opciones que ofrezcan mayor percepción de valor.",
+                "taste": "El sabor podría mejorarse para destacar más. Prueba nuevas recetas o técnicas.",
+                "ambience": "El ambiente es neutro. Tal vez una iluminación diferente o música ambiental ayude a mejorar la experiencia.",
+                "attention": "La atención necesita refinarse. Pequeños gestos pueden generar una experiencia más memorable.",
+                "speed": "El servicio no fue rápido ni lento. Optimizar tiempos clave podría mejorar la experiencia.",
+                "music": "La música fue mencionada pero sin impacto claro. Evalúa si está alineada al perfil del cliente."
+            }
+        }
+
+        # Diccionario para almacenar recomendaciones únicas
+        recomendaciones_generadas = {}
+
+        # Detectar menciones y asignar solo una recomendación por palabra clave
         for _, row in reviews.iterrows():
-            review_text = row["review_text"].lower()
+            texto = row["review_text"].lower()
             estrellas = row["stars"]
-            for palabra in palabras_clave:
-                if palabra in review_text:
-                    if estrellas >= 4:
-                        if palabra == "food":
-                            recomendaciones.append("¡Los clientes elogian la comida! Tal vez podrías seguir innovando en la variedad y la presentación de los platillos.")
-                        elif palabra == "service":
-                            recomendaciones.append("El servicio ha recibido buenos comentarios. ¿Has considerado reforzar la capacitación para mantener y mejorar esta experiencia?")
-                        elif palabra == "price":
-                            recomendaciones.append("El precio está bien recibido por los clientes. Podrías explorar nuevas opciones de menú sin alterar mucho los precios.")
-                        elif palabra == "taste":
-                            recomendaciones.append("¡El sabor es un punto fuerte! Tal vez podrías probar con nuevos sabores o combinaciones.")
-                        elif palabra == "ambience":
-                            recomendaciones.append("El ambiente ha sido bien valorado. Considera ajustar la decoración o música para mantener la experiencia.")
-                        elif palabra == "attention":
-                            recomendaciones.append("La atención al cliente ha sido muy positiva. Sigue así para mantener esa excelente experiencia.")
-                        elif palabra == "speed":
-                            recomendaciones.append("La rapidez en el servicio ha sido destacada. ¿Podrías optimizar aún más sin perder calidad?")
-                        elif palabra == "music":
-                            recomendaciones.append("La música ha sido bien recibida. Podrías experimentar con nuevas playlists.")
-                    elif estrellas <= 2:
-                        if palabra == "food":
-                            recomendaciones.append("Parece que los clientes no están satisfechos con la comida. Tal vez deberías revisar recetas o ingredientes.")
-                        elif palabra == "service":
-                            recomendaciones.append("El servicio es una área de mejora. ¿Capacitación adicional o más personal?")
-                        elif palabra == "price":
-                            recomendaciones.append("El precio parece ser una preocupación. Podrías considerar promociones.")
-                        elif palabra == "taste":
-                            recomendaciones.append("El sabor no ha sido bien recibido. Revisa tus métodos de preparación.")
-                        elif palabra == "ambience":
-                            recomendaciones.append("El ambiente podría necesitar mejoras. ¿Un cambio de decoración o música?")
-                        elif palabra == "attention":
-                            recomendaciones.append("La atención necesita mejorar. ¿Un enfoque más personalizado?")
-                        elif palabra == "speed":
-                            recomendaciones.append("La rapidez es crítica. Revisa los tiempos de espera.")
-                        elif palabra == "music":
-                            recomendaciones.append("La música tiene críticas. ¿Cambiar estilo o volumen?")
-                    else:
-                        if palabra == "food":
-                            recomendaciones.append("La comida fue mencionada pero podría mejorar.")
-                        elif palabra == "service":
-                            recomendaciones.append("Podrías hacer ajustes para mejorar el servicio.")
-                        elif palabra == "price":
-                            recomendaciones.append("Explora menús con precios más diversos.")
-                        elif palabra == "taste":
-                            recomendaciones.append("Comentarios mixtos sobre el sabor. Prueba nuevas combinaciones.")
-                        elif palabra == "ambience":
-                            recomendaciones.append("Tal vez una mejora en la ambientación ayudaría.")
-                        elif palabra == "attention":
-                            recomendaciones.append("Capacitación extra podría mejorar la atención.")
-                        elif palabra == "speed":
-                            recomendaciones.append("Optimiza procesos para mejorar la rapidez.")
-                        elif palabra == "music":
-                            recomendaciones.append("Tal vez otro tipo de música sería más agradable.")
 
-        # Mostrar recomendaciones aleatorias
-        if recomendaciones:
-            recomendaciones_aleatorias = random.sample(recomendaciones, k=min(5, len(recomendaciones)))
-            for recomendacion in recomendaciones_aleatorias:
-                st.write("✅", recomendacion)
+            if estrellas >= 4:
+                sentimiento = "Positivo"
+            elif estrellas <= 2:
+                sentimiento = "Negativo"
+            else:
+                sentimiento = "Neutro"
+
+            for palabra in palabras_clave:
+                if palabra in texto and palabra not in recomendaciones_generadas:
+                    recomendacion = recomendaciones_dict[sentimiento][palabra]
+                    recomendaciones_generadas[palabra] = recomendacion
+
+        # Mostrar hasta 5 recomendaciones únicas
+        if recomendaciones_generadas:
+            st.write("Basado en las reseñas analizadas, te sugerimos lo siguiente:")
+            for rec in list(recomendaciones_generadas.values())[:5]:
+                st.write("- " + rec)
         else:
             st.write("No se encontraron menciones suficientes para generar recomendaciones.")
-    else:
-        st.warning("No hay reseñas disponibles para el período seleccionado.")
+if opcion == "Análisis Integral de Competencia":
    # ---------------------- 🔍 Análisis de Competencia -----------------------
     st.subheader("🔍 Análisis de Competencia por Categoría")
     # ---------------------- 📈 Distribución de Reseñas -----------------------
