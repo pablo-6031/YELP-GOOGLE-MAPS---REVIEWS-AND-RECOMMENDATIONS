@@ -107,7 +107,6 @@ def run_query(query):
         st.error(f"❌ Error al ejecutar la consulta: {e}")
         return pd.DataFrame()  # Retorna un DataFrame vacío en caso de error
 
-# Función para mostrar el análisis de competencia
 def show_competencia():
     st.title("🔍 Análisis de Competencia por Categoría")
 
@@ -120,67 +119,74 @@ def show_competencia():
     """
     df_categorias = run_query(query_categorias)
 
-    # Extraer las categorías en una lista para el selectbox
-    categorias = df_categorias['categories'].dropna().tolist()
-    
-    # Mostrar el selectbox para elegir una categoría
-    categoria = st.selectbox("🍽️ Elige la categoría", categorias)
+    # Mostrar el DataFrame para depurar
+    st.write(df_categorias)
 
-    st.write(f"Categoría seleccionada: {categoria}")
+    # Verificar que la columna 'categories' existe antes de acceder a ella
+    if 'categories' in df_categorias.columns:
+        # Extraer las categorías en una lista para el selectbox
+        categorias = df_categorias['categories'].dropna().tolist()
 
-    # Consulta para obtener los competidores de la categoría seleccionada
-    query_competidores = f"""
-    SELECT b.business_name, l.latitude, l.longitude, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
-    FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-    ON b.business_id = r.business_id
-    JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_locations` l
-    ON b.business_id = l.business_id
-    WHERE LOWER(b.categories) LIKE '%{categoria.lower()}%'
-    GROUP BY b.business_name, l.latitude, l.longitude
-    ORDER BY RAND()
-    LIMIT 10
-    """
+        # Mostrar el selectbox para elegir una categoría
+        categoria = st.selectbox("🍽️ Elige la categoría", categorias)
 
-    # Ejecutar la consulta y obtener los datos
-    df_comp = run_query(query_competidores)
+        st.write(f"Categoría seleccionada: {categoria}")
+        
+        # Consulta para obtener los competidores de la categoría seleccionada
+        query_competidores = f"""
+        SELECT b.business_name, l.latitude, l.longitude, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
+        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+        JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+        ON b.business_id = r.business_id
+        JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_locations` l
+        ON b.business_id = l.business_id
+        WHERE LOWER(b.categories) LIKE '%{categoria.lower()}%'
+        GROUP BY b.business_name, l.latitude, l.longitude
+        ORDER BY RAND()
+        LIMIT 10
+        """
 
-    # Verificar si los datos están vacíos
-    if df_comp.empty:
-        st.warning(f"⚠️ No se encontraron competidores para la categoría: {categoria}")
+        # Ejecutar la consulta y obtener los datos
+        df_comp = run_query(query_competidores)
+
+        # Verificar si los datos están vacíos
+        if df_comp.empty:
+            st.warning(f"⚠️ No se encontraron competidores para la categoría: {categoria}")
+        else:
+            st.write(f"Se encontraron {len(df_comp)} competidores.")
+            st.write(df_comp.head())  # Muestra las primeras filas para verificar
+
+            # --- Mostrar datos y gráficos ---
+            st.subheader(f"📋 Competidores Aleatorios – Categoría: {categoria.title()}")
+            st.dataframe(df_comp)
+
+            # --- Dispersión – Reseñas vs Rating Promedio ---
+            st.subheader("📈 Dispersión – Reseñas vs Rating Promedio")
+            if not df_comp.empty:
+                fig1, ax1 = plt.subplots()
+                ax1.scatter(df_comp["num_reviews"], df_comp["avg_rating"], alpha=0.7)
+                for _, row in df_comp.iterrows():
+                    ax1.annotate(row["business_name"], (row["num_reviews"], row["avg_rating"]),
+                                 fontsize=7, xytext=(3,3), textcoords='offset points')
+                ax1.set_xlabel("Número de Reseñas")
+                ax1.set_ylabel("Rating Promedio")
+                ax1.set_title(f"Competencia – Categoría: {categoria.title()}")
+                st.pyplot(fig1)
+            else:
+                st.info("No se encontraron competidores con esa categoría.")
+
+            # --- Distribución de Estrellas ---
+            st.subheader(f"📊 Distribución de Estrellas – {categoria.title()}")
+            df_dist = df_comp.groupby("avg_rating").size().reset_index(name='count')
+            if not df_dist.empty:
+                fig2, ax2 = plt.subplots()
+                ax2.pie(df_dist['count'], labels=df_dist['avg_rating'], autopct='%1.1f%%', startangle=90)
+                ax2.axis('equal')
+                st.pyplot(fig2)
+            else:
+                st.info("No hay suficientes datos para mostrar la distribución de estrellas.")
     else:
-        st.write(f"Se encontraron {len(df_comp)} competidores.")
-        st.write(df_comp.head())  # Muestra las primeras filas para verificar
-
-        # --- Mostrar datos y gráficos ---
-        st.subheader(f"📋 Competidores Aleatorios – Categoría: {categoria.title()}")
-        st.dataframe(df_comp)
-
-        # --- Dispersión – Reseñas vs Rating Promedio ---
-        st.subheader("📈 Dispersión – Reseñas vs Rating Promedio")
-        if not df_comp.empty:
-            fig1, ax1 = plt.subplots()
-            ax1.scatter(df_comp["num_reviews"], df_comp["avg_rating"], alpha=0.7)
-            for _, row in df_comp.iterrows():
-                ax1.annotate(row["business_name"], (row["num_reviews"], row["avg_rating"]),
-                             fontsize=7, xytext=(3,3), textcoords='offset points')
-            ax1.set_xlabel("Número de Reseñas")
-            ax1.set_ylabel("Rating Promedio")
-            ax1.set_title(f"Competencia – Categoría: {categoria.title()}")
-            st.pyplot(fig1)
-        else:
-            st.info("No se encontraron competidores con esa categoría.")
-
-        # --- Distribución de Estrellas ---
-        st.subheader(f"📊 Distribución de Estrellas – {categoria.title()}")
-        df_dist = df_comp.groupby("avg_rating").size().reset_index(name='count')
-        if not df_dist.empty:
-            fig2, ax2 = plt.subplots()
-            ax2.pie(df_dist['count'], labels=df_dist['avg_rating'], autopct='%1.1f%%', startangle=90)
-            ax2.axis('equal')
-            st.pyplot(fig2)
-        else:
-            st.info("No hay suficientes datos para mostrar la distribución de estrellas.")
+        st.error("❌ La columna 'categories' no se encontró en el DataFrame.")
 
 # --- SIDEBAR ---
 with st.sidebar:
