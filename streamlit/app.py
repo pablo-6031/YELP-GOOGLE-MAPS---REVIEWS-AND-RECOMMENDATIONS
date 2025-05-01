@@ -416,6 +416,18 @@ if opcion == "Distribución de Reseñas":
     else:
         st.warning("No se encontraron reseñas para este negocio.")
         
+import datetime
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# --- SIDEBAR ---
+with st.sidebar:
+    opcion = option_menu("Navegación", 
+        ["Inicio", "Explorar Reseñas y KPIs", "Recomendador", "Análisis de Sentimiento", "Predicciones", "Distribución de Reseñas", "Competencia"],
+        icons=['house', 'bar-chart', 'map', 'robot', 'chat', 'graph-up', 'folder', 'flag'],
+        menu_icon="cast", default_index=0, orientation="vertical"
+    )
+
 if opcion == "Explorar Reseñas y KPIs":
     st.title("Explorar Reseñas y KPIs de El Camino Real")
     
@@ -425,8 +437,15 @@ if opcion == "Explorar Reseñas y KPIs":
     Las reseñas se pueden filtrar por sentimiento (positivo, neutro, negativo) y por fecha, mientras que los KPIs permiten ver el comportamiento general de las reseñas, incluyendo la calificación promedio y el volumen de reseñas por periodo.
     """)
 
-    # --- EXPLORAR RESEÑAS ---
-    st.subheader("📝 Últimas reseñas de El Camino Real")
+    # --- Filtro por fecha ---
+    col1, col2 = st.columns(2)
+    with col1:
+        fecha_inicio = st.date_input("Desde", datetime.date(2020, 1, 1))
+    with col2:
+        fecha_fin = st.date_input("Hasta", datetime.date.today())
+
+    # --- EXPLORAR RESEÑAS Y KPIs ---
+    st.subheader("📝 Reseñas y KPIs de El Camino Real")
 
     # Business ID fijo
     business_id = "julsvvavzvghwffkkm0nlg"  # ID del negocio para El Camino Real
@@ -441,37 +460,27 @@ if opcion == "Explorar Reseñas y KPIs":
     elif sentimiento == "Neutro":
         filtro_sentimiento = "AND stars = 3"
 
-    # Filtro por fecha
-    col1, col2 = st.columns(2)
-    with col1:
-        fecha_inicio = st.date_input("Desde", datetime.date(2020, 1, 1))
-    with col2:
-        fecha_fin = st.date_input("Hasta", datetime.date.today())
-
-    filtro_fecha = f"AND review_date BETWEEN '{fecha_inicio}' AND '{fecha_fin}'"
-
-    # Consulta SQL
-    query = f"""
+    # Consulta SQL para obtener las reseñas filtradas
+    query_reseñas = f"""
     SELECT review_text, stars, review_date
     FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
     WHERE business_id = '{business_id}'
-    {filtro_fecha}
+    AND review_date BETWEEN '{fecha_inicio}' AND '{fecha_fin}'
     {filtro_sentimiento}
     ORDER BY review_date DESC
     LIMIT 100
     """
 
-    reviews = run_query(query)
+    reviews = run_query(query_reseñas)
 
     if not reviews.empty:
-        # Mostrar estrellas visuales
+        # Mostrar las reseñas
         reviews["calificación"] = reviews["stars"].apply(lambda x: "⭐" * int(round(x)))
         st.dataframe(reviews[["review_date", "calificación", "review_text"]])
-        
+
         # Botón para ver nube de palabras
         if st.button("🔍 Ver palabras más frecuentes"):
             from wordcloud import WordCloud
-            import matplotlib.pyplot as plt
 
             texto = " ".join(reviews["review_text"].dropna().tolist())
             wc = WordCloud(width=800, height=400, background_color="white").generate(texto)
@@ -482,38 +491,21 @@ if opcion == "Explorar Reseñas y KPIs":
             ax.axis("off")
             st.pyplot(fig)
 
-    else:
-        st.warning("No hay reseñas disponibles para el período o filtro seleccionado.")
+        st.divider()
 
-    # --- KPIs ---
-    st.subheader("📊 KPIs de El Camino Real")
-    
-    # Selección de rango de fechas
-    fecha_desde = st.date_input("Desde:", value=pd.to_datetime("2020-01-01"))
-    fecha_hasta = st.date_input("Hasta:", value=pd.to_datetime("2023-12-31"))
-    
-    # Botón para confirmar la selección de fechas
-    if st.button('Confirmar Fechas'):
-        # Construcción de la query SQL para El Camino Real
+        # --- KPIs basados en las fechas de las reseñas ---
+        st.subheader("📊 KPIs de El Camino Real")
+        
+        # Construcción de la query SQL para los KPIs
         filtro = f"WHERE business_id = '{business_id}'"
-
-        # Ajuste del formato de la fecha dependiendo de la frecuencia seleccionada
-        frecuencia = st.radio("Selecciona la frecuencia de análisis:", ('Mensual', 'Anual'))
-
-        if frecuencia == 'Mensual':
-            formato_periodo = "FORMAT_TIMESTAMP('%Y-%m', review_date) AS periodo"
-        else:
-            formato_periodo = "FORMAT_TIMESTAMP('%Y', review_date) AS periodo"
-
-        # Query para obtener los KPIs
         query_kpi = f"""
         SELECT 
-            {formato_periodo},
+            FORMAT_TIMESTAMP('%Y-%m', review_date) AS periodo,
             COUNT(*) AS volumen_resenas,
             ROUND(AVG(stars), 2) AS calificacion_promedio
-        FROM shining-rampart-455602-a7.dw_restaurantes.fact_review
+        FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review`
         {filtro}
-        AND review_date BETWEEN '{fecha_desde}' AND '{fecha_hasta}'
+        AND review_date BETWEEN '{fecha_inicio}' AND '{fecha_fin}'
         GROUP BY periodo
         ORDER BY periodo
         """
@@ -545,3 +537,38 @@ if opcion == "Explorar Reseñas y KPIs":
 
         else:
             st.warning("No hay datos disponibles para El Camino Real en el periodo seleccionado.")
+    else:
+        st.warning("No hay reseñas disponibles para el período seleccionado.")
+        
+    st.divider()
+
+    # --- RECOMENDACIONES ---
+    st.subheader("💡 Recomendaciones basadas en la voz del cliente")
+
+    recomendaciones = []
+
+    # Mejorar la calidad de la comida
+    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["good food", "mexican food", "great food", "delicious food"]):
+        recomendaciones.append("🍽️ Mejorar la calidad de los platillos, enfocándose en sabores auténticos y frescura de los ingredientes.")
+
+    # Mejorar el servicio
+    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["good service", "great service", "customer service", "service great"]):
+        recomendaciones.append("👨‍🍳 Mejorar la atención al cliente y ofrecer un servicio más rápido y personalizado.")
+
+    # Resaltar la autenticidad de los platillos
+    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["authentic mexican", "mexican food", "carne asada"]):
+        recomendaciones.append("🌮 Resaltar la autenticidad de la comida mexicana en el menú, destacando platillos tradicionales como la carne asada.")
+
+    # Mejorar la visibilidad online
+    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["google good", "translated google"]):
+        recomendaciones.append("🌐 Mejorar la visibilidad en plataformas como Google Reviews, asegurándose de tener reseñas positivas y respuestas a las mismas.")
+
+    # Crear un ambiente agradable
+    if any(phrase in [f[0] for f in phrases_freq[:top_n]] for phrase in ["great place", "love place", "great food"]):
+        recomendaciones.append("🏡 Mejorar el ambiente del restaurante, creando un espacio acogedor y cómodo para los comensales.")
+
+    # Mostrar las recomendaciones dinámicas
+    for recomendacion in recomendaciones:
+        st.markdown(f"- {recomendacion}")
+
+    st.caption("Análisis basado en reseñas filtradas de negocios mexicanos con alta calificación.")
