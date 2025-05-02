@@ -327,58 +327,60 @@ if opcion == "Análisis de Competencia":
     # 📦 Filtros de tiempo
     fecha_inicio = st.date_input("Fecha de inicio", min_value=pd.to_datetime("2010-01-01"))
     fecha_fin = st.date_input("Fecha de fin", max_value=pd.to_datetime("today"))
+def cargar_datos(business_id, stars_filter):
+    try:
+        query = f"""
+        SELECT review_text
+        FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+        JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
+          ON r.business_id = b.business_id
+        WHERE b.business_id = '{business_id}'
+          AND {stars_filter}
+          AND r.review_text IS NOT NULL
+          AND r.review_date BETWEEN '{fecha_inicio}' AND '{fecha_fin}'
+        """
+        return run_query(query)
+    except Exception as e:
+        st.error(f"Error al cargar las reseñas: {e}")
+        return pd.DataFrame()
 
-    # 📦 Cargar los datos de las reseñas
-    @st.cache_data
-    def cargar_datos(business_id, stars_filter):
-        try:
-            query = f"""
-            SELECT review_text
-            FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
-            JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
-              ON r.business_id = b.business_id
-            WHERE b.business_id = '{business_id}'
-              AND {stars_filter}
-              AND r.review_text IS NOT NULL
-              AND r.review_date BETWEEN '{fecha_inicio}' AND '{fecha_fin}'
-            """
-            return run_query(query)
-        except Exception as e:
-            st.error(f"Error al cargar las reseñas: {e}")
-            return pd.DataFrame()
+df_negocios = cargar_negocios_por_categoria(categoria_seleccionada)
 
-    df_negocios = cargar_negocios_por_categoria(categoria_seleccionada)
+if not df_negocios.empty:
+    negocios_opciones = df_negocios['business_name'].tolist()
+    negocio_seleccionado = st.selectbox("Selecciona un negocio", negocios_opciones)
+    business_id_seleccionado = df_negocios[df_negocios['business_name'] == negocio_seleccionado]['business_id'].values[0]
+else:
+    st.warning("No hay negocios para esta categoría.")
+    st.stop()
 
-    if not df_negocios.empty:
-        negocios_opciones = df_negocios['business_name'].tolist()
-        negocio_seleccionado = st.selectbox("Selecciona un negocio", negocios_opciones)
-        business_id_seleccionado = df_negocios[df_negocios['business_name'] == negocio_seleccionado]['business_id'].values[0]
-    else:
-        st.warning("No hay negocios para esta categoría.")
-        st.stop()
+tipo_reseña = st.selectbox("Selecciona el tipo de reseña", ("Positiva", "Negativa", "Neutra", "Todas"))
 
-    tipo_reseña = st.selectbox("Selecciona el tipo de reseña", ("Positiva", "Negativa", "Neutra", "Todas"))
+if tipo_reseña == "Positiva":
+    stars_filter = "r.stars >= 4"
+elif tipo_reseña == "Negativa":
+    stars_filter = "r.stars <= 2"
+elif tipo_reseña == "Neutra":
+    stars_filter = "r.stars = 3"
+else:
+    stars_filter = "1=1"
 
-    if tipo_reseña == "Positiva":
-        stars_filter = "r.stars >= 4"
-    elif tipo_reseña == "Negativa":
-        stars_filter = "r.stars <= 2"
-    elif tipo_reseña == "Neutra":
-        stars_filter = "r.stars = 3"
-    else:
-        stars_filter = "1=1"
+df = cargar_datos(business_id_seleccionado, stars_filter)
 
-    df = cargar_datos(business_id_seleccionado, stars_filter)
+# Verificar si el negocio tiene más de 20 reseñas antes de continuar
+if df.empty:
+    st.warning("No se encontraron reseñas para este negocio con el tipo seleccionado.")
+elif len(df) > 20:
+    # Procesar reseñas solo si hay más de 20
+    df['review_text'] = df['review_text'].fillna('').str.lower().str.replace(r'[^\w\s]', '', regex=True)
+    vectorizer = CountVectorizer(ngram_range=(2, 3), stop_words='english')
+    X = vectorizer.fit_transform(df['review_text'])
+    sum_words = X.sum(axis=0)
+    phrases_freq = [(phrase, int(sum_words[0, idx])) for phrase, idx in vectorizer.vocabulary_.items()]
+    phrases_freq = sorted(phrases_freq, key=lambda x: x[1], reverse=True)
+else:
+    st.warning("El negocio seleccionado tiene menos de 20 reseñas.")
 
-    if df.empty:
-        st.warning("No se encontraron reseñas para este negocio con el tipo seleccionado.")
-    else:
-        df['review_text'] = df['review_text'].fillna('').str.lower().str.replace(r'[^\w\s]', '', regex=True)
-        vectorizer = CountVectorizer(ngram_range=(2, 3), stop_words='english')
-        X = vectorizer.fit_transform(df['review_text'])
-        sum_words = X.sum(axis=0)
-        phrases_freq = [(phrase, int(sum_words[0, idx])) for phrase, idx in vectorizer.vocabulary_.items()]
-        phrases_freq = sorted(phrases_freq, key=lambda x: x[1], reverse=True)
 
     # 📈 Distribución de Sentimientos por Año
     query_sentimiento = f"""
