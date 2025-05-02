@@ -327,12 +327,15 @@ if opcion == "Análisis de Competencia":
     # 📦 Filtros de tiempo
     fecha_inicio = st.date_input("Fecha de inicio", min_value=pd.to_datetime("2010-01-01"))
     fecha_fin = st.date_input("Fecha de fin", max_value=pd.to_datetime("today"))
-def cargar_datos(business_id, stars_filter):
+
+    # 📦 Cargar los datos de las reseñas
+    @st.cache_data
+    def cargar_datos(business_id, stars_filter):
         try:
             query = f"""
             SELECT review_text
-            FROM shining-rampart-455602-a7.dw_restaurantes.fact_review r
-            JOIN shining-rampart-455602-a7.dw_restaurantes.dim_business b
+            FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
+            JOIN `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
               ON r.business_id = b.business_id
             WHERE b.business_id = '{business_id}'
               AND {stars_filter}
@@ -375,7 +378,8 @@ def cargar_datos(business_id, stars_filter):
         X = vectorizer.fit_transform(df['review_text'])
         sum_words = X.sum(axis=0)
         phrases_freq = [(phrase, int(sum_words[0, idx])) for phrase, idx in vectorizer.vocabulary_.items()]
-        phrases_freq = sorted(phrases_freq, key=lambda x: x[1], reverse=True
+        phrases_freq = sorted(phrases_freq, key=lambda x: x[1], reverse=True)
+
     # 📈 Distribución de Sentimientos por Año
     query_sentimiento = f"""
     SELECT 
@@ -446,6 +450,3 @@ def cargar_datos(business_id, stars_filter):
         st.table(df_resenas)
     else:
         st.info("No hay reseñas recientes disponibles.")
-
-
-
