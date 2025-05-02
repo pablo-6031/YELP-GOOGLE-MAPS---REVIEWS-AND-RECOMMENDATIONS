@@ -115,8 +115,8 @@ def predecir_rating(texto):
 def generar_nube_palabras(texto):
     return WordCloud(width=800, height=400, background_color='white').generate(texto)
 
-# === PÁGINA DE ANÁLISIS DE SENTIMIENTO ===
-# === PÁGINA DE ANÁLISIS DE SENTIMIENTO ===
+import streamlit as st
+from io import BytesIO
 
 if opcion == "Análisis de Sentimiento":
     st.title("Análisis de Reseñas de Restaurante")
@@ -131,12 +131,12 @@ if opcion == "Análisis de Sentimiento":
         st.write("**Sentimiento:** Positivo" if sentimiento == 1 else "**Sentimiento:** Negativo")
         st.write(f"**Rating estimado:** {round(rating, 2)} ⭐")
 
-        # Usar un contenedor para evitar conflictos de render
-        contenedor_wc = st.container()
+        # Usar un contenedor vacío para evitar conflictos de renderizado
+        contenedor_wc = st.empty()  # Esto crea un contenedor vacío que luego puedes actualizar
 
         if st.button("🔍 Ver palabras más frecuentes"):
+            wc = generar_nube_palabras(texto)
             with contenedor_wc:
-                wc = generar_nube_palabras(texto)
                 st.subheader("☁️ Nube de palabras más frecuentes")
 
                 # Convertir WordCloud a imagen para evitar bugs
