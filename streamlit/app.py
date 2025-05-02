@@ -121,28 +121,10 @@ def generar_nube_palabras(texto):
     wc = WordCloud(width=800, height=400).generate(texto)
     return wc
 
-import streamlit as st
 
-# Flujo principal de Streamlit
 if opcion == "Análisis de Sentimiento":
     st.title("Análisis de Reseñas de Restaurante")
-    
-    texto = st.text_area("Ingresa una reseña:")
-
-    if texto:
-        sentimiento = predecir_sentimiento(texto)
-        rating = predecir_rating(texto)
-
-        st.write("### Resultado del análisis:")
-        st.write("**Sentimiento:** Positivo" if sentimiento == 1 else "**Sentimiento:** Negativo")
-        st.write(f"**Rating estimado:** {round(rating, 2)} ⭐")
-
-        # Este bloque ya no incluye la nube de palabras
-        # Eliminar la sección de la nube de palabras
-        # Si no hay errores, probablemente el problema estaba relacionado con esa parte.
-    else:
-        st.write("Por favor, ingresa una reseña para analizarla.")
-
+   
 # --- INICIO ---
 
 if opcion == "Inicio":
