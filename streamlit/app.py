@@ -89,6 +89,14 @@ def run_query(query):
 
 # ID fijo del negocio principal
 BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
+with st.sidebar:
+    opcion = option_menu(
+        "Navegación", 
+        ["Inicio", "Explorar Reseñas", "Análisis Integral de Competencia", "Análisis de Sentimiento"],
+        icons=["house", "bar-chart", "graph-up-arrow", "emoji-smile"],
+        menu_icon="cast",
+        default_index=0
+    )
 
 
 import streamlit as st
@@ -130,15 +138,7 @@ def generar_nube_palabras(texto):
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(texto)
     return wordcloud
 
-# Sidebar con las opciones de navegación
-with st.sidebar:
-    opcion = option_menu(
-        "Navegación", 
-        ["Inicio", "Explorar Reseñas", "Análisis Integral de Competencia", "Análisis de Sentimiento"],
-        icons=["house", "bar-chart", "graph-up-arrow", "emoji-smile"],
-        menu_icon="cast",
-        default_index=0
-    )
+
 
 # Condición para mostrar el "Análisis de Sentimiento" cuando se selecciona esa opción
 if opcion == "Análisis de Sentimiento":
