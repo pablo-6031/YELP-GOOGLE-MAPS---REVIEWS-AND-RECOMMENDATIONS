@@ -15,7 +15,8 @@ from wordcloud import WordCloud
 import pydeck as pdk
 import pandas_gbq
 import tempfile
-
+import joblib
+import urllib
 # === CONFIGURACIÓN GENERAL ===
 
 # URLs de imágenes desde GitHub
@@ -90,21 +91,38 @@ def run_query(query):
 BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
 
 
-# URLs de tus archivos en GitHub (¡verificá que estén públicos y sin protección!)
-modelo_url = "https://raw.githubusercontent.com/YaninaSpina/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/models/modelo_sentimiento.joblib"
-vectorizador_url = "https://raw.githubusercontent.com/YaninaSpina/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/models/vectorizador_tfidf.joblib"
-data_url = "https://raw.githubusercontent.com/YaninaSpina/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/data/processed/data_sentiment.csv"
+import streamlit as st
+import joblib
+import urllib
+import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+from streamlit_option_menu import option_menu
 
-# Función para predecir sentimiento
+# Función para cargar los modelos desde URLs
+def cargar_modelos():
+    modelo_sentimiento_url = "https://raw.githubusercontent.com/YaninaSpina/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/models/modelo_sentimiento.joblib"
+    vectorizador_url = "https://raw.githubusercontent.com/YaninaSpina/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/models/vectorizador_tfidf.joblib"
+
+    modelo_sentimiento = joblib.load(urllib.request.urlopen(modelo_sentimiento_url))
+    vectorizador = joblib.load(urllib.request.urlopen(vectorizador_url))
+    
+    return modelo_sentimiento, vectorizador
+
+# Cargar los modelos
+modelo_sentimiento, vectorizador = cargar_modelos()
+
+# Función para predecir sentimiento (Positivo/Negativo)
 def predecir_sentimiento(texto):
-    X_vector = vectorizador.transform([texto])
+    X_vector = vectorizador.transform([texto])  # Convierte el texto en un vector
     pred_sentimiento = modelo_sentimiento.predict(X_vector)[0]
     return pred_sentimiento
 
 # Función para predecir el rating (estrellas)
 def predecir_rating(texto):
-    X_vector = vectorizador.transform([texto])
-    pred_rating = modelo_estrellas.predict(X_vector)[0]
+    X_vector = vectorizador.transform([texto])  # Convierte el texto en un vector
+    pred_rating = modelo_sentimiento.predict(X_vector)[0]  # Usando el mismo modelo para el rating por simplicidad
     return pred_rating
 
 # Función para generar nube de palabras
@@ -112,66 +130,71 @@ def generar_nube_palabras(texto):
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(texto)
     return wordcloud
 
-# Página de la app
-st.title("Análisis de Reseñas de Restaurante")
+# Sidebar con las opciones de navegación
+with st.sidebar:
+    opcion = option_menu(
+        "Navegación", 
+        ["Inicio", "Explorar Reseñas", "Análisis Integral de Competencia", "Análisis de Sentimiento"],
+        icons=["house", "bar-chart", "graph-up-arrow", "emoji-smile"],
+        menu_icon="cast",
+        default_index=0
+    )
 
-# Paso 1: Ingreso de reseña
-texto = st.text_area("Ingresa una reseña:")
+# Condición para mostrar el "Análisis de Sentimiento" cuando se selecciona esa opción
+if opcion == "Análisis de Sentimiento":
+    # Página de la app
+    st.title("Análisis de Reseñas de Restaurante")
 
-if texto:
-    # Paso 2: Análisis de sentimiento
-    sentimiento = predecir_sentimiento(texto)
-    rating = predecir_rating(texto)
+    # Paso 1: Ingreso de reseña
+    texto = st.text_area("Ingresa una reseña:")
 
-    st.write("### Resultado del análisis:")
+    if texto:
+        # Paso 2: Análisis de sentimiento
+        sentimiento = predecir_sentimiento(texto)
+        rating = predecir_rating(texto)
 
-    # Mostrar el sentimiento (Positivo/Negativo)
-    if sentimiento == 1:
-        st.write("**Sentimiento:** Positivo")
+        st.write("### Resultado del análisis:")
+
+        # Mostrar el sentimiento (Positivo/Negativo)
+        if sentimiento == 1:
+            st.write("**Sentimiento:** Positivo")
+        else:
+            st.write("**Sentimiento:** Negativo")
+
+        # Mostrar el rating estimado
+        st.write(f"**Rating estimado:** {round(rating, 2)} ⭐")
+
+        # Paso 3: Generar y mostrar la nube de palabras
+        wordcloud = generar_nube_palabras(texto)
+        fig_wc, ax_wc = plt.subplots(figsize=(10, 5))
+        ax_wc.imshow(wordcloud, interpolation='bilinear')
+        ax_wc.axis("off")
+        st.pyplot(fig_wc)
+
+        # Paso 4: Comparación con otras reseñas (opcional)
+        if st.checkbox("Comparar con otras reseñas similares"):
+            # Supongamos que tienes un DataFrame con reseñas previas (puedes cargar un archivo CSV o usar un DataFrame existente)
+            df_reseñas = pd.DataFrame({
+                'reseña': ["Excelente comida y servicio", "La comida fue regular", "Muy buena experiencia", "No me gustó el ambiente"],
+                'rating': [5, 3, 4, 2]
+            })
+
+            # Convertir las reseñas a vectores TF-IDF
+            df_reseñas_vectorizadas = vectorizador.transform(df_reseñas['reseña'])
+            nueva_reseña_vectorizada = vectorizador.transform([texto])
+
+            # Calcular la similitud del coseno entre la nueva reseña y las existentes
+            similitudes = cosine_similarity(nueva_reseña_vectorizada, df_reseñas_vectorizadas)
+
+            # Mostrar las reseñas más similares
+            idx_similares = similitudes.argsort()[0][-3:]  # Tomar las 3 más similares
+            st.write("### Reseñas más similares:")
+            for idx in idx_similares:
+                st.write(f"Reseña: {df_reseñas.iloc[idx]['reseña']} | Rating: {df_reseñas.iloc[idx]['rating']} ⭐")
+
     else:
-        st.write("**Sentimiento:** Negativo")
+        st.write("Por favor, ingresa una reseña para analizarla.")
 
-    # Mostrar el rating estimado
-    st.write(f"**Rating estimado:** {round(rating, 2)} ⭐")
-
-    # Paso 3: Generar y mostrar la nube de palabras
-    wordcloud = generar_nube_palabras(texto)
-    fig_wc, ax_wc = plt.subplots(figsize=(10, 5))
-    ax_wc.imshow(wordcloud, interpolation='bilinear')
-    ax_wc.axis("off")
-    st.pyplot(fig_wc)
-
-    # Paso 4: Comparación con otras reseñas (opcional)
-    # Este paso podría tomar mucho tiempo si el dataset es grande, por lo que aquí solo lo mostramos de ejemplo
-    if st.checkbox("Comparar con otras reseñas similares"):
-        # Supongamos que tienes un dataframe con reseñas previas, por ejemplo `df_reseñas`
-        # Aquí puedes poner un código para comparar la similitud con otras reseñas
-        # Vamos a crear un ejemplo simple usando pandas y similaridad de texto (puedes personalizarlo más)
-        
-        # Cargar dataset de ejemplo (debes tener un archivo CSV o DataFrame previamente cargado)
-        # df_reseñas = pd.read_csv('path_a_tus_reseñas.csv')
-
-        # Para este ejemplo, simplemente generamos datos de muestra:
-        df_reseñas = pd.DataFrame({
-            'reseña': ["Excelente comida y servicio", "La comida fue regular", "Muy buena experiencia", "No me gustó el ambiente"],
-            'rating': [5, 3, 4, 2]
-        })
-
-        # Convertir las reseñas a vectores TF-IDF
-        df_reseñas_vectorizadas = vectorizador.transform(df_reseñas['reseña'])
-        nueva_reseña_vectorizada = vectorizador.transform([texto])
-
-        # Calcular la similitud del coseno entre la nueva reseña y las existentes
-        from sklearn.metrics.pairwise import cosine_similarity
-        similitudes = cosine_similarity(nueva_reseña_vectorizada, df_reseñas_vectorizadas)
-
-        # Mostrar las reseñas más similares
-        idx_similares = similitudes.argsort()[0][-3:]  # Tomar las 3 más similares
-        st.write("### Reseñas más similares:")
-        for idx in idx_similares:
-            st.write(f"Reseña: {df_reseñas.iloc[idx]['reseña']} | Rating: {df_reseñas.iloc[idx]['rating']} ⭐")
-else:
-    st.write("Por favor, ingresa una reseña para analizarla.")
 # --- INICIO ---
 
 if opcion == "Inicio":
