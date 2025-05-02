@@ -305,23 +305,22 @@ if opcion == "Análisis Integral de Competencia":
 
     # 📦 Cargar las 10 categorías con mayor volumen de reseñas
     @st.cache_data
-    def cargar_top_categorias():
-        query = """
-            SELECT categoria, COUNT(*) AS total_reviews
-            FROM (
-                SELECT LOWER(TRIM(c)) AS categoria
-                FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` AS b
-                JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` AS r
-                ON b.business_id = r.business_id,
-                UNNEST(SPLIT(b.categories, ",")) AS c
-                WHERE b.categories IS NOT NULL
-            )
-            GROUP BY categoria
-            ORDER BY total_reviews DESC
-            LIMIT 10
-        """
-        categorias_raw = run_query(query)
-        return categorias_raw["categoria"].tolist()
+    def cargar_negocios():
+        try:
+            query = """
+            SELECT business_id, business_name
+            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
+            WHERE business_name IS NOT NULL
+            ORDER BY business_name
+            """
+            df = run_query(query)
+            return df
+        except Exception as e:
+            st.error(f"Error al cargar los negocios: {e}")
+            return pd.DataFrame()
+
+    categorias_raw = run_query(query)
+    return categorias_raw["categoria"].tolist()
 
     # 🔍 Mostrar menú con las 10 categorías más reseñadas
     categorias_top10 = cargar_top_categorias()
