@@ -116,10 +116,11 @@ def generar_nube_palabras(texto):
     return WordCloud(width=800, height=400, background_color='white').generate(texto)
 
 # === PÁGINA DE ANÁLISIS DE SENTIMIENTO ===
+# === PÁGINA DE ANÁLISIS DE SENTIMIENTO ===
 
 if opcion == "Análisis de Sentimiento":
     st.title("Análisis de Reseñas de Restaurante")
-
+    
     texto = st.text_area("Ingresa una reseña:")
 
     if texto:
@@ -130,17 +131,21 @@ if opcion == "Análisis de Sentimiento":
         st.write("**Sentimiento:** Positivo" if sentimiento == 1 else "**Sentimiento:** Negativo")
         st.write(f"**Rating estimado:** {round(rating, 2)} ⭐")
 
-        # Mostrar botón para generar nube de palabras
-        if st.button("🔍 Ver palabras más frecuentes"):
-            wc = generar_nube_palabras(texto)
-            st.subheader("☁️ Nube de palabras más frecuentes")
+        # Usar un contenedor para evitar conflictos de render
+        contenedor_wc = st.container()
 
-            # Convertir WordCloud en imagen para evitar errores de render
-            img_buffer = BytesIO()
-            wc.to_image().save(img_buffer, format="PNG")
-            st.image(img_buffer.getvalue(), use_column_width=True)
+        if st.button("🔍 Ver palabras más frecuentes"):
+            with contenedor_wc:
+                wc = generar_nube_palabras(texto)
+                st.subheader("☁️ Nube de palabras más frecuentes")
+
+                # Convertir WordCloud a imagen para evitar bugs
+                img_buffer = BytesIO()
+                wc.to_image().save(img_buffer, format="PNG")
+                st.image(img_buffer.getvalue(), use_column_width=True)
     else:
         st.write("Por favor, ingresa una reseña para analizarla.")
+
 
 # --- INICIO ---
 
