@@ -93,18 +93,6 @@ with st.sidebar:
         default_index=0
     )
 
-# === MODELO DE SENTIMIENTO ===
-
-def cargar_modelos():
-    modelo_sentimiento_url = "https://raw.githubusercontent.com/YaninaSpina/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/models/modelo_sentimiento.joblib"
-    vectorizador_url = "https://raw.githubusercontent.com/YaninaSpina/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/models/vectorizador_tfidf.joblib"
-    modelo_sentimiento = joblib.load(urllib.request.urlopen(modelo_sentimiento_url))
-    vectorizador = joblib.load(urllib.request.urlopen(vectorizador_url))
-    return modelo_sentimiento, vectorizador
-
-modelo_sentimiento, vectorizador = cargar_modelos()
-
-
 
 # --- INICIO ---
 
