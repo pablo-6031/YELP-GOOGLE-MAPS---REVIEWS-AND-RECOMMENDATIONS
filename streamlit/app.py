@@ -140,7 +140,6 @@ def generar_nube_palabras(texto):
 
 
 
-# Condición para mostrar el "Análisis de Sentimiento" cuando se selecciona esa opción
 if opcion == "Análisis de Sentimiento":
     # Página de la app
     st.title("Análisis de Reseñas de Restaurante")
@@ -170,8 +169,6 @@ if opcion == "Análisis de Sentimiento":
         ax_wc.imshow(wordcloud, interpolation='bilinear')
         ax_wc.axis("off")
         st.pyplot(fig_wc)
-
-      
 
     else:
         st.write("Por favor, ingresa una reseña para analizarla.")
