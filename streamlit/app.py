@@ -319,8 +319,22 @@ if opcion == "Análisis Integral de Competencia":
             st.error(f"Error al cargar los negocios: {e}")
             return pd.DataFrame()
 
-    categorias_raw = run_query(query)
-    return categorias_raw["categoria"].tolist()
+    # 🔍 Obtener las categorías más populares (esto debe estar dentro de una función)
+    @st.cache_data
+    def cargar_top_categorias():
+        try:
+            query = """
+            SELECT categoria
+            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
+            GROUP BY categoria
+            ORDER BY COUNT(*) DESC
+            LIMIT 10
+            """
+            categorias_raw = run_query(query)
+            return categorias_raw["categoria"].tolist()
+        except Exception as e:
+            st.error(f"Error al cargar las categorías: {e}")
+            return []
 
     # 🔍 Mostrar menú con las 10 categorías más reseñadas
     categorias_top10 = cargar_top_categorias()
@@ -364,6 +378,7 @@ if opcion == "Análisis Integral de Competencia":
         stars_filter = "1=1"
 
     df = cargar_datos(business_id_seleccionado, stars_filter)
+
 
     if df.empty:
         st.warning("No se encontraron reseñas para este negocio con el tipo seleccionado.")
