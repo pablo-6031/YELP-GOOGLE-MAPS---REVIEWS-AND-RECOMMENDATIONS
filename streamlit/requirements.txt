@@ -16,3 +16,4 @@ requests
 datetime
 pydeck
 pandas_gbq
+tempfile
