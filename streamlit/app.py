@@ -121,6 +121,8 @@ def generar_nube_palabras(texto):
     wc = WordCloud(width=800, height=400).generate(texto)
     return wc
 
+import streamlit as st
+
 # Flujo principal de Streamlit
 if opcion == "Análisis de Sentimiento":
     st.title("Análisis de Reseñas de Restaurante")
@@ -135,18 +137,9 @@ if opcion == "Análisis de Sentimiento":
         st.write("**Sentimiento:** Positivo" if sentimiento == 1 else "**Sentimiento:** Negativo")
         st.write(f"**Rating estimado:** {round(rating, 2)} ⭐")
 
-        # Usar un contenedor vacío para evitar conflictos de renderizado
-        contenedor_wc = st.empty()  # Esto crea un contenedor vacío que luego puedes actualizar
-
-        if st.button("🔍 Ver palabras más frecuentes"):
-            wc = generar_nube_palabras(texto)
-            with contenedor_wc:
-                st.subheader("☁️ Nube de palabras más frecuentes")
-
-                # Convertir WordCloud a imagen para evitar bugs
-                img_buffer = BytesIO()
-                wc.to_image().save(img_buffer, format="PNG")
-                st.image(img_buffer.getvalue(), use_column_width=True)
+        # Este bloque ya no incluye la nube de palabras
+        # Eliminar la sección de la nube de palabras
+        # Si no hay errores, probablemente el problema estaba relacionado con esa parte.
     else:
         st.write("Por favor, ingresa una reseña para analizarla.")
 
