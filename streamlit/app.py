@@ -303,7 +303,7 @@ if opcion == "Análisis Integral de Competencia":
         """
     )
 
-    # 📦 Cargar las 10 categorías con mayor volumen de reseñas
+    # 📦 Cargar los negocios
     @st.cache_data
     def cargar_negocios():
         try:
@@ -319,19 +319,21 @@ if opcion == "Análisis Integral de Competencia":
             st.error(f"Error al cargar los negocios: {e}")
             return pd.DataFrame()
 
-    # 🔍 Obtener las categorías más populares (esto debe estar dentro de una función)
+    # 🔍 Obtener las 10 categorías más populares
     @st.cache_data
     def cargar_top_categorias():
         try:
             query = """
-            SELECT categoria
+            SELECT categories
             FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
-            GROUP BY categoria
+            WHERE categories IS NOT NULL
+            GROUP BY categories
             ORDER BY COUNT(*) DESC
             LIMIT 10
             """
             categorias_raw = run_query(query)
-            return categorias_raw["categoria"].tolist()
+            # Devuelvo las categorías más populares
+            return categorias_raw["categories"].tolist()
         except Exception as e:
             st.error(f"Error al cargar las categorías: {e}")
             return []
@@ -344,6 +346,7 @@ if opcion == "Análisis Integral de Competencia":
         categorias_top10
     )
 
+    # 📦 Cargar los datos de las reseñas
     @st.cache_data
     def cargar_datos(business_id, stars_filter):
         try:
