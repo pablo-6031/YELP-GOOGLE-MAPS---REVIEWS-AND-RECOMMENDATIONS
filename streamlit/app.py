@@ -14,9 +14,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 from wordcloud import WordCloud 
 import pydeck as pdk
 import pandas_gbq
-import tempfile
 import joblib
-import urllib
+import urllib.request
 
 # === CONFIGURACIÓN GENERAL ===
 
@@ -75,9 +74,6 @@ def set_background(image):
     """, unsafe_allow_html=True)
 
 set_background(fondo)
-
-# Mostrar logos
-
 st.image(logo_restaurante, width=200)
 
 # === CONFIGURACIÓN BIGQUERY ===
@@ -88,8 +84,32 @@ client = bigquery.Client(credentials=credentials)
 def run_query(query):
     return pd.DataFrame([dict(row) for row in client.query(query).result()])
 
-# ID fijo del negocio principal
-BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
+# === MODELOS ===
+@st.cache_resource
+def cargar_modelos():
+    modelo_sentimiento_url = "https://raw.githubusercontent.com/YaninaSpina/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/models/modelo_sentimiento.joblib"
+    vectorizador_url = "https://raw.githubusercontent.com/YaninaSpina/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/models/vectorizador_tfidf.joblib"
+    modelo_sentimiento = joblib.load(urllib.request.urlopen(modelo_sentimiento_url))
+    vectorizador = joblib.load(urllib.request.urlopen(vectorizador_url))
+    return modelo_sentimiento, vectorizador
+
+modelo_sentimiento, vectorizador = cargar_modelos()
+
+def predecir_sentimiento(texto):
+    X_vector = vectorizador.transform([texto])
+    pred_sentimiento = modelo_sentimiento.predict(X_vector)[0]
+    return pred_sentimiento
+
+def predecir_rating(texto):
+    X_vector = vectorizador.transform([texto])
+    pred_rating = modelo_sentimiento.predict(X_vector)[0]
+    return pred_rating
+
+def generar_nube_palabras(texto):
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(texto)
+    return wordcloud
+
+# === NAVEGACIÓN ===
 with st.sidebar:
     opcion = option_menu(
         "Navegación", 
@@ -99,11 +119,37 @@ with st.sidebar:
         default_index=0
     )
 
-if opcion == "Análisis de Sentimiento":
-    # Página de la app
-    st.title("Análisis de Reseñas de Restaurante")
+# === PÁGINAS ===
+if opcion == "Inicio":
+    st.title("Bienvenido a la App de Análisis de Reseñas")
+    st.markdown("Explora, analiza y toma decisiones basadas en las reseñas de clientes.")
 
-  
+elif opcion == "Análisis de Sentimiento":
+    st.title("Análisis de Sentimiento de Reseñas")
+    texto = st.text_area("Ingresa una reseña:")
+
+    if texto:
+        sentimiento = predecir_sentimiento(texto)
+        rating = predecir_rating(texto)
+
+        st.subheader("Resultado del análisis:")
+
+        if sentimiento == 1:
+            st.success("**Sentimiento:** Positivo")
+        else:
+            st.error("**Sentimiento:** Negativo")
+
+        st.write(f"**Rating estimado:** {round(rating, 2)} ⭐")
+
+        wordcloud = generar_nube_palabras(texto)
+        fig_wc, ax_wc = plt.subplots(figsize=(10, 5))
+        ax_wc.imshow(wordcloud, interpolation='bilinear')
+        ax_wc.axis("off")
+        st.pyplot(fig_wc)
+
+    else:
+        st.info("Por favor, ingresa una reseña para analizarla.")
+
 # --- INICIO ---
 
 if opcion == "Inicio":
