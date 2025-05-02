@@ -17,12 +17,21 @@ import pydeck as pdk
 import pandas_gbq
 import joblib
 import urllib.request
+import streamlit as st
+import base64
+import requests
+from io import BytesIO
+from PIL import Image
 
-# === CONFIGURACIÓN GENERAL ===
+# === Cargar imágenes desde GitHub ===
+url_logo_restaurante = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/logoCaminoReal.png"
+url_fondo = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/streamlit/fondoTorito.png"
 
+# Cargar imágenes
+logo_restaurante = Image.open(BytesIO(requests.get(url_logo_restaurante).content))
+fondo = Image.open(BytesIO(requests.get(url_fondo).content))
 
-
-# Estilo global y fondo
+# Función para cambiar el fondo de la app
 def set_background(image):
     buffered = BytesIO()
     image.save(buffered, format="PNG")
@@ -68,8 +77,12 @@ def set_background(image):
         </style>
     """, unsafe_allow_html=True)
 
+# Establecer el fondo
 set_background(fondo)
+
+# Mostrar el logo
 st.image(logo_restaurante, width=200)
+
 
 # === CONFIGURACIÓN BIGQUERY ===
 credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
