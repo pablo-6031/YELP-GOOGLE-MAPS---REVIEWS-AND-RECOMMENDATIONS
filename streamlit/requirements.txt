@@ -1,19 +1,23 @@
 
 streamlit
 plotly
-numpy
+numpy==1.20.3
 pyarrow
-pandas
+pandas==1.2.4
 google-cloud-bigquery
 streamlit-option-menu
 matplotlib
 requests
 db-dtypes
-scikit-learn
+scikit-learn==0.24.2
 wordcloud
 transformers
 torch
 datetime
 pydeck
 pandas_gbq
-joblib
+joblib==1.2.0
+nltk==3.6.3
+spacy==3.1.0
+xgboost==1.4.2
+gensim==4.0.1
