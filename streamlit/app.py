@@ -173,6 +173,9 @@ if opcion == "Análisis de Sentimiento":
 
         # Paso 4: Comparación con otras reseñas (opcional)
         if st.checkbox("Comparar con otras reseñas similares"):
+            # Limpiar cualquier componente anterior antes de mostrar el nuevo
+            st.empty()  # Vaciar cualquier salida anterior
+
             # Supongamos que tienes un DataFrame con reseñas previas (puedes cargar un archivo CSV o usar un DataFrame existente)
             df_reseñas = pd.DataFrame({
                 'reseña': ["Excelente comida y servicio", "La comida fue regular", "Muy buena experiencia", "No me gustó el ambiente"],
