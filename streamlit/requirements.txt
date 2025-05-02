@@ -18,5 +18,5 @@ pydeck
 pandas_gbq
 tempfile
 joblib
-urllib
+
 BytesIO
