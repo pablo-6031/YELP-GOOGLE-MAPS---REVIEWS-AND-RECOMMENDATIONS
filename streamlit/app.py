@@ -20,9 +20,7 @@ import urllib.request
 
 # === CONFIGURACIÓN GENERAL ===
 
-# Cargar imágenes locales
-logo_restaurante = Image.open("path/to/your/local/logoCaminoReal.png")
-fondo = Image.open("path/to/your/local/fondoTorito.png")
+
 
 # Estilo global y fondo
 def set_background(image):
