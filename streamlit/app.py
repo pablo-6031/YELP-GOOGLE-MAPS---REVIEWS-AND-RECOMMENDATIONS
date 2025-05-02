@@ -301,6 +301,8 @@ st.write(
 
 # 📦 Cargar las 10 categorías con mayor volumen de reseñas
 @st.cache_data
+# 📦 Cargar las 10 categorías con mayor volumen de reseñas
+@st.cache_data
 def cargar_top_categorias():
     query = """
         SELECT categoria, COUNT(*) AS total_reviews
@@ -318,6 +320,7 @@ def cargar_top_categorias():
     """
     categorias_raw = run_query(query)
     return categorias_raw["categoria"].tolist()
+
 
 # 🔍 Mostrar menú con las 10 categorías más reseñadas
 categorias_top10 = cargar_top_categorias()
