@@ -92,14 +92,14 @@ client = bigquery.Client(credentials=credentials)
 def run_query(query):
     return pd.DataFrame([dict(row) for row in client.query(query).result()])
 
-# === CARGAR MODELOS LOCALES ===
-# Ruta local para los modelos
-modelo_sentimiento_path = "path/to/your/local/modelo_sentimiento.joblib"
-vectorizador_path = "path/to/your/local/vectorizador_tfidf.joblib"
+import joblib
+import os
 
-# Cargar los modelos locales
-modelo_sentimiento = joblib.load(modelo_sentimiento_path)
+vectorizador_path = os.path.join("ml", "models", "vectorizador_tfidf.joblib")
+modelo_sentimiento_path = os.path.join("ml", "models", "modelo_sentimiento.joblib")
+
 vectorizador = joblib.load(vectorizador_path)
+modelo_sentimiento = joblib.load(modelo_sentimiento_path)
 
 def predecir_sentimiento(texto):
     X_vector = vectorizador.transform([texto])
