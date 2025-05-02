@@ -1,123 +1,108 @@
-📊 HYPE Analytics
 
-Proyecto de Análisis Estratégico de Reseñas (Yelp & Google Maps)
+# 📊 HYPE Analytics – Proyecto Final de Análisis de Reseñas Digitales
 
-🧠 Introducción
+---
 
-Este proyecto busca analizar detalladamente las reseñas digitales en plataformas como Yelp y Google Maps para identificar factores clave en las calificaciones otorgadas y determinar patrones específicos en las preferencias del consumidor. Asimismo, pretende proporcionar herramientas analíticas para optimizar estratégicamente la reputación digital en negocios gastronómicos, facilitando la toma de decisiones informadas en cuanto a la apertura de nuevos establecimientos y la mejora continua en calidad y percepción del servicio ofrecido.
+## 🧠 Introducción
 
+**HYPE Analytics** es una iniciativa de análisis inteligente de reseñas, cuyo objetivo es transformar la 
+percepción digital que los negocios gastronómicos tienen en plataformas como Yelp y Google Maps, 
+convirtiéndola en una herramienta **estratégica para la toma de decisiones**.
 
-📌 Definición del Problema
+En un contexto de creciente influencia de la reputación digital, este proyecto utiliza técnicas de NLP, 
+modelos de Machine Learning y visualizaciones de alto impacto para diagnosticar el posicionamiento actual 
+de los restaurantes, anticipar su evolución y sugerir acciones concretas de mejora.
 
-Las reseñas generadas por usuarios en plataformas digitales constituyen una fuente significativa de información sobre percepciones y preferencias del consumidor. No obstante, numerosos negocios gastronómicos aún no aprovechan plenamente el potencial analítico de estos datos, limitando así sus posibilidades estratégicas para mejorar la satisfacción del cliente y optimizar su oferta. Además, persiste una deficiencia en estudios sistemáticos orientados a identificar y comprender en profundidad los factores específicos que determinan las calificaciones de los usuarios.
+---
 
+## 🎯 Objetivo del Proyecto
 
+Desarrollar herramientas analíticas e inteligentes que permitan:
+- Evaluar la reputación digital de negocios a partir de reseñas escritas.
+- Identificar los factores que influyen en la calificación y experiencia del cliente.
+- Recomendar mejoras estratégicas para aumentar la satisfacción.
+- Presentar esta información de forma accesible, visual y útil para la toma de decisiones.
 
-🎯 Objetivos del Proyecto
+---
 
-🔹 Objetivos Generales
-Evaluar factores que influyen en las calificaciones de usuarios, identificar su impacto en la experiencia del cliente y proponer estrategias para mejorar la visibilidad digital y la satisfacción del consumidor.
-Desarrollar un modelo predictivo que recomiende ubicaciones óptimas para la apertura de nuevos restaurantes basados en patrones detectados.
+## 🚀 Productos Finales
 
-🔸 Objetivos Específicos
-1. Determinar la relación existente entre reputación digital y flujo de clientes en negocios gastronómicos.
-2. Determinar factores clave que contribuyen a la consolidación rápida de nuevos restaurantes en plataformas digitales.
-3. Identificar el impacto de aspectos específicos mencionados en reseñas (servicio, precio, calidad y ambiente) sobre la puntuación final otorgada.
+### 1. **Dashboard Interactivo (Looker Studio)**
 
+- Visualiza métricas clave (KPI) como rating promedio, frecuencia de menciones, evolución temporal, etc.
+- Permite filtrar por ubicación, tipo de negocio y comparar tendencias.
+- Facilita una lectura rápida de la situación digital del negocio.
 
+🔗 [Ver Dashboard en Looker Studio](https://lookerstudio.google.com/reporting/
+df20fc98-f8fa-42bf-8734-92d4ff90e6f5)
 
-📊 Indicadores de Éxito (KPIs)
+### 2. **Aplicación Streamlit – Simulador de Reseñas**
 
-Incremento en el tráfico de clientes:  
-  Meta: Incrementar en al menos 10% el tráfico por cada punto adicional en la calificación promedio trimestral.
+- El usuario puede ingresar una reseña escrita.
+- El sistema predice cuántas estrellas recibiría (modelo de ML).
+- Brinda retroalimentación sobre cómo una reseña impactaría la reputación.
+- Integra análisis de palabras clave y posibilidad de extensión a emociones.
 
-Rápida consolidación de restaurantes nuevos:  
-  Meta: 70% de nuevos restaurantes alcanzan valoraciones superiores a 4.0 estrellas en los primeros seis meses.
+🔗 [Probar App en Streamlit](https://yelp-app-maps---reviews-and-recommendations-jv7mxypeg2lwxovdj7.
+streamlit.app/)
 
-Peso de menciones específicas:  
-  Meta: Identificar factores que expliquen al menos 40% de la variabilidad en la calificación total.
+---
 
+## 🧠 Machine Learning Implementado
 
-⚙️ Stack Tecnológico
+- **Modelo principal:** Predicción de calificación (rating) basada en texto de reseñas.
+- **Tipo:** Regresión supervisada.
+- **Algoritmo elegido:** XGBoostRegressor.
+- **Técnicas NLP usadas:** limpieza de texto, lematización, vectorización TF-IDF.
+- **Entrenamiento:** Con dataset etiquetado real de Yelp / Google Maps.
 
-| Proceso            | Herramientas Seleccionadas                     |
-|--------------------|------------------------------------------------|
-| Carga de Datos     | Yelp Fusion API, Google Maps API, Python       |
-| Procesamiento      | Pandas, spaCy, NLTK, TextBlob                  |
-| Almacenamiento     | PostgreSQL/MySQL                               |
-| Automatización/ML  | Scikit-learn, Apache Airflow                   |
-| Visualización      | Power BI, Streamlit                            |
+Este modelo permite simular el impacto de un comentario en la reputación digital antes de que ocurra, 
+ayudando a prevenir descensos de calificación.
 
+---
 
-🔄 Flujo de Trabajo
+## 📈 KPIs Analizados
 
-1. Extracción y carga: Obtención de datos mediante APIs.
-2. Procesamiento: Limpieza, EDA y análisis de sentimientos.
-3. Modelado y predicción: Machine Learning aplicado a reseñas.
-4. Visualización y reportes: Dashboards interactivos con Power BI y Streamlit.
-5. Evaluación continua: Validación de resultados e iteración según métricas definidas.
+| KPI | Descripción |
+|-----|-------------|
+| ⭐ Calificación Promedio | Seguimiento general de reputación |
+| 📝 Volumen de Reseñas | Indicador de visibilidad y flujo |
+| 💬 Palabras Clave | Factores más mencionados: servicio, comida, ambiente |
+| 📉 Variación Mensual | Fluctuaciones en calificación y frecuencia |
+| 🔮 Predicción de Rating | Estimación ML para nuevas reseñas |
 
+---
 
+## 🏗️ Stack Tecnológico
 
-📋 Análisis de Calidad de Datos (preliminar)
+| Proceso            | Herramientas |
+|--------------------|--------------|
+| Extracción         | APIs Yelp / Google Maps |
+| Transformación     | Python, Pandas, NLTK, SpaCy |
+| Almacenamiento     | Google Cloud Storage + BigQuery |
+| Machine Learning   | Scikit-learn, XGBoost |
+| Visualización      | Looker Studio, Streamlit |
+| Automatización     | Airflow (orquestación de procesos) |
 
-Fuentes: Yelp Fusion API y Google Maps API (Places + Reviews).
-Fiabilidad: Datos públicos extraídos mediante APIs oficiales.
-Estructura: JSON con campos como nombre, ubicación, puntuación, categoría, texto de la reseña, fecha, etc.
-Pre-procesamiento:  
-  Eliminación de duplicados.  
-  Normalización de puntuaciones.  
-  Traducción automática en caso de múltiples idiomas (si aplica).  
-Desafíos identificados:  
-  Variabilidad en la cantidad de reseñas por negocio.  
-  Poca estandarización en los textos de reseñas.  
-  Necesidad de limpieza profunda para NLP.
+---
 
+## 👥 Equipo de Desarrollo
 
+- Yanina Spina – Data Scientist
+- Harry Guevara – Functional Analyst & ML Engineer
+- Elvis Bernuy – Data Analyst
+- Pablo Mizzau – Data Engineer
+- Pablo Carrizo – Data Engineer
 
-📆 Cronograma y Gestión
+---
 
-[📌 ClickUp del proyecto](https://app.clickup.com/9013800114/v/f/90135057513/90133246806) – Gestión de tareas, cronograma y roles.  
-📊 Diagrama de Gantt (ver en carpeta `docs/`)  
+## 📄 Licencia
 
+MIT License – Uso académico y educativo.
 
+---
 
-🗂️ Estructura del Repositorio
-
-📦 hype-analytics-yelp-gmaps ├── 📁 data/ Datos recolectados y procesados ├── 📁 notebooks/ EDA, análisis y modelos predictivos ├── 📁 docs/ Documentación del proyecto ├── 📁 scripts/ Scripts de automatización y procesamiento ├── 📁 visuals/ Visualizaciones finales y dashboards ├── README.md Este archivo ├── requirements.txt Librerías y dependencias necesarias └── .gitignore
-
-🚀 Instalación y Ejecución
-
-git clone https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS.git
-cd YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
-pip install -r requirements.txt
-
-📌 Clientes Potenciales y Beneficios
-Cliente Potencial	Beneficio del Proyecto	Potencialidades
-Restaurantes	Mejora estratégica de reputación digital	Incremento en fidelización y tráfico
-Constructoras	Evaluación de zonas atractivas	Reducción de riesgos y optimización urbana
-Transporte	Mejora de puntos de parada estratégicos	Incremento en satisfacción del usuario
-Apps Navegación (Waze)	Optimización de recomendaciones	Fidelización de usuarios y diferenciación
-________________________________________
-🧑‍💻 Equipo de Trabajo
-•	Yanina Spina – Data Scientist
-•	Harry Guevara – Functional Analyst
-•	Elvis Bernuy – Data Analyst
-•	Pablo Mizzau – Data Engineer
-•	Pablo Carrizo – Data Engineer
-________________________________________
-📝 Observación inicial del Proyecto
-Este enfoque permitirá a los clientes obtener información estratégica detallada y procesada sobre su negocio, facilitando decisiones informadas y efectivas. Mediante el análisis avanzado de datos y técnicas predictivas de machine learning, se proporcionará un valor agregado que impactará directamente en el éxito comercial, la calidad del servicio, la reputación digital y la expansión hacia nuevas oportunidades de negocio.
-________________________________________
-📄 Licencia
-MIT License – Libre uso académico y educativo.
-________________________________________
-
-
-
+© Proyecto HYPE Analytics – 2025
 
 
 
