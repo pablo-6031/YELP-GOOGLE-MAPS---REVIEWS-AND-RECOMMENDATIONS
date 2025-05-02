@@ -288,49 +288,49 @@ if opcion == "Explorar Reseñas":
 
 if opcion == "Análisis Integral de Competencia":
     import streamlit as st
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    from wordcloud import WordCloud
+    from sklearn.feature_extraction.text import CountVectorizer
 
-# 📌 Descripción de la funcionalidad
-st.markdown("### Selección de categoría de comida")
-st.write(
-    """
-    En esta sección podés elegir una categoría de lugares gastronómicos.
-    El menú muestra las **10 categorías más populares** en base a la cantidad de reseñas registradas 
-    en nuestra base de datos. Esto permite enfocar los análisis en los rubros con mayor actividad.
-    """
-)
+    # 📌 Descripción de la funcionalidad
+    st.markdown("### Selección de categoría de comida")
+    st.write(
+        """
+        En esta sección podés elegir una categoría de lugares gastronómicos.
+        El menú muestra las **10 categorías más populares** en base a la cantidad de reseñas registradas 
+        en nuestra base de datos. Esto permite enfocar los análisis en los rubros con mayor actividad.
+        """
+    )
 
-# 📦 Cargar las 10 categorías con mayor volumen de reseñas
-@st.cache_data
-# 📦 Cargar las 10 categorías con mayor volumen de reseñas
-@st.cache_data
-def cargar_top_categorias():
-    query = """
-        SELECT categoria, COUNT(*) AS total_reviews
-        FROM (
-            SELECT LOWER(TRIM(c)) AS categoria
-            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` AS b
-            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` AS r
-            ON b.business_id = r.business_id,
-            UNNEST(SPLIT(b.categories, ",")) AS c
-            WHERE b.categories IS NOT NULL
-        )
-        GROUP BY categoria
-        ORDER BY total_reviews DESC
-        LIMIT 10
-    """
-    categorias_raw = run_query(query)
-    return categorias_raw["categoria"].tolist()
+    # 📦 Cargar las 10 categorías con mayor volumen de reseñas
+    @st.cache_data
+    def cargar_top_categorias():
+        query = """
+            SELECT categoria, COUNT(*) AS total_reviews
+            FROM (
+                SELECT LOWER(TRIM(c)) AS categoria
+                FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` AS b
+                JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` AS r
+                ON b.business_id = r.business_id,
+                UNNEST(SPLIT(b.categories, ",")) AS c
+                WHERE b.categories IS NOT NULL
+            )
+            GROUP BY categoria
+            ORDER BY total_reviews DESC
+            LIMIT 10
+        """
+        categorias_raw = run_query(query)
+        return categorias_raw["categoria"].tolist()
 
+    # 🔍 Mostrar menú con las 10 categorías más reseñadas
+    categorias_top10 = cargar_top_categorias()
 
-# 🔍 Mostrar menú con las 10 categorías más reseñadas
-categorias_top10 = cargar_top_categorias()
+    categoria_seleccionada = st.selectbox(
+        "Elegí una categoría de comida (Top 10 por volumen de reseñas)",
+        categorias_top10
+    )
 
-categoria_seleccionada = st.selectbox(
-    "Elegí una categoría de comida (Top 10 por volumen de reseñas)",
-    categorias_top10
-)
-
-    # Cargar reseñas de un negocio según el tipo de reseña seleccionado
     @st.cache_data
     def cargar_datos(business_id, stars_filter):
         try:
@@ -346,62 +346,49 @@ categoria_seleccionada = st.selectbox(
             return run_query(query)
         except Exception as e:
             st.error(f"Error al cargar las reseñas: {e}")
-            return pd.DataFrame()  # Retornar un DataFrame vacío en caso de error
+            return pd.DataFrame()
 
-    # 1. Cargar lista de negocios para seleccionar
     df_negocios = cargar_negocios()
     negocios_opciones = df_negocios['business_name'].tolist()
     negocio_seleccionado = st.selectbox("Selecciona un negocio de la competencia", negocios_opciones)
-
-    # Obtener el business_id del negocio seleccionado
     business_id_seleccionado = df_negocios[df_negocios['business_name'] == negocio_seleccionado]['business_id'].values[0]
 
-    # 2. Seleccionar el tipo de reseña (Positiva, Negativa, Neutra, Todas)
     tipo_reseña = st.selectbox("Selecciona el tipo de reseña", ("Positiva", "Negativa", "Neutra", "Todas"))
 
-    # Obtener el filtro de estrellas según la selección del usuario
     if tipo_reseña == "Positiva":
         stars_filter = "r.stars >= 4"
     elif tipo_reseña == "Negativa":
         stars_filter = "r.stars <= 2"
     elif tipo_reseña == "Neutra":
         stars_filter = "r.stars = 3"
-    else:  # Todas
-        stars_filter = "1=1"  # Esto no filtra las estrellas, seleccionando todas las reseñas.
+    else:
+        stars_filter = "1=1"
 
-    # 3. Cargar reseñas según el tipo de reseña seleccionado
     df = cargar_datos(business_id_seleccionado, stars_filter)
 
     if df.empty:
         st.warning("No se encontraron reseñas para este negocio con el tipo seleccionado.")
     else:
-        # Procesamiento de reseñas
         df['review_text'] = df['review_text'].fillna('').str.lower().str.replace(r'[^\w\s]', '', regex=True)
-
         vectorizer = CountVectorizer(ngram_range=(2, 3), stop_words='english')
         X = vectorizer.fit_transform(df['review_text'])
         sum_words = X.sum(axis=0)
-
         phrases_freq = [(phrase, int(sum_words[0, idx])) for phrase, idx in vectorizer.vocabulary_.items()]
         phrases_freq = sorted(phrases_freq, key=lambda x: x[1], reverse=True)
 
-        # Mostrar resultados de frases frecuentes
         st.subheader("🔍 Frases más frecuentes en reseñas")
         top_n = st.slider("Selecciona cuántas frases mostrar", 5, 50, 20)
         st.dataframe(pd.DataFrame(phrases_freq[:top_n], columns=["Frase", "Frecuencia"]))
 
-        # Nube de palabras opcional
         if st.checkbox("Mostrar nube de palabras"):
             wordcloud = WordCloud(width=800, height=400).generate_from_frequencies(dict(phrases_freq[:top_n]))
             st.subheader("📝 Nube de palabras de las frases más mencionadas")
-            fig, ax = plt.subplots(figsize=(10, 5))  # Crear un gráfico para la nube de palabras
+            fig, ax = plt.subplots(figsize=(10, 5))
             ax.imshow(wordcloud, interpolation="bilinear")
-            ax.axis("off")  # Quitar los ejes
+            ax.axis("off")
             st.pyplot(fig)
 
-    # 4. Consultar Distribución de Sentimientos por Año
     st.subheader("📈 Distribución de Sentimientos por Año")
-
     query_sentimiento = f"""
     SELECT 
         EXTRACT(YEAR FROM r.review_date) AS anio,
@@ -435,10 +422,8 @@ categoria_seleccionada = st.selectbox(
 
     st.divider()
 
-    # 5. Mostrar Competencia y Reseñas
     n_competidores = st.slider("Cantidad de competidores a mostrar", 5, 50, 10)
 
-    # Consultar competidores
     query_comp = f"""
     SELECT b.business_name, AVG(r.stars) AS avg_rating, COUNT(r.review_text) AS num_reviews
     FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` b
@@ -450,7 +435,6 @@ categoria_seleccionada = st.selectbox(
     """
     df_comp = run_query(query_comp)
 
-    # Consultar distribución de estrellas
     query_estrellas = f"""
     SELECT r.stars, COUNT(*) AS cantidad
     FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
@@ -460,7 +444,6 @@ categoria_seleccionada = st.selectbox(
     """
     df_estrellas = run_query(query_estrellas)
 
-    # Mostrar gráficos
     col1, col2 = st.columns(2)
 
     with col1:
@@ -470,7 +453,7 @@ categoria_seleccionada = st.selectbox(
             ax1.scatter(df_comp["num_reviews"], df_comp["avg_rating"], alpha=0.7)
             for _, row in df_comp.iterrows():
                 ax1.annotate(row["business_name"], (row["num_reviews"], row["avg_rating"]),
-                             fontsize=7, xytext=(3,3), textcoords='offset points',
+                             fontsize=7, xytext=(3, 3), textcoords='offset points',
                              bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="gray", alpha=0.5))
             ax1.set_xlabel("Número de Reseñas")
             ax1.set_ylabel("Rating Promedio")
@@ -483,15 +466,14 @@ categoria_seleccionada = st.selectbox(
         st.subheader("📊 Distribución de Estrellas")
         if not df_estrellas.empty:
             fig_pie, ax_pie = plt.subplots(figsize=(6, 6))
-            ax_pie.pie(df_estrellas['cantidad'], labels=df_estrellas['stars'], autopct='%1.1f%%', colors=['#ff9999','#66b3ff','#99ff99','#ffcc99','#c2c2f0'])
+            ax_pie.pie(df_estrellas['cantidad'], labels=df_estrellas['stars'], autopct='%1.1f%%',
+                       colors=['#ff9999','#66b3ff','#99ff99','#ffcc99','#c2c2f0'])
             ax_pie.set_title(f"Distribución de Estrellas - {negocio_seleccionado}")
             st.pyplot(fig_pie)
         else:
             st.info("No hay suficientes datos para mostrar la distribución de estrellas.")
 
-    # 6. Mostrar reseñas recientes del negocio
     st.subheader("🗣️ Reseñas de Usuarios")
-
     query_resenas = f"""
     SELECT r.review_text, r.stars, r.review_date
     FROM `shining-rampart-455602-a7.dw_restaurantes.fact_review` r
@@ -501,11 +483,7 @@ categoria_seleccionada = st.selectbox(
     LIMIT 10
     """
     df_resenas = run_query(query_resenas)
-
     if not df_resenas.empty:
-        for i, row in df_resenas.iterrows():
-            st.markdown(f"**{row['review_date'].date()} – ⭐ {row['stars']}**")
-            st.write(f"> {row['review_text']}")
-            st.markdown("---")
+        st.table(df_resenas)
     else:
-        st.info("No se encontraron reseñas disponibles.")
+        st.info("No hay reseñas recientes disponibles.")
