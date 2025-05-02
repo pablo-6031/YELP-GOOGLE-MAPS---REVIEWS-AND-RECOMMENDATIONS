@@ -171,29 +171,7 @@ if opcion == "Análisis de Sentimiento":
         ax_wc.axis("off")
         st.pyplot(fig_wc)
 
-        # Paso 4: Comparación con otras reseñas (opcional)
-        if st.checkbox("Comparar con otras reseñas similares"):
-            # Limpiar cualquier componente anterior antes de mostrar el nuevo
-            st.empty()  # Vaciar cualquier salida anterior
-
-            # Supongamos que tienes un DataFrame con reseñas previas (puedes cargar un archivo CSV o usar un DataFrame existente)
-            df_reseñas = pd.DataFrame({
-                'reseña': ["Excelente comida y servicio", "La comida fue regular", "Muy buena experiencia", "No me gustó el ambiente"],
-                'rating': [5, 3, 4, 2]
-            })
-
-            # Convertir las reseñas a vectores TF-IDF
-            df_reseñas_vectorizadas = vectorizador.transform(df_reseñas['reseña'])
-            nueva_reseña_vectorizada = vectorizador.transform([texto])
-
-            # Calcular la similitud del coseno entre la nueva reseña y las existentes
-            similitudes = cosine_similarity(nueva_reseña_vectorizada, df_reseñas_vectorizadas)
-
-            # Mostrar las reseñas más similares
-            idx_similares = similitudes.argsort()[0][-3:]  # Tomar las 3 más similares
-            st.write("### Reseñas más similares:")
-            for idx in idx_similares:
-                st.write(f"Reseña: {df_reseñas.iloc[idx]['reseña']} | Rating: {df_reseñas.iloc[idx]['rating']} ⭐")
+      
 
     else:
         st.write("Por favor, ingresa una reseña para analizarla.")
