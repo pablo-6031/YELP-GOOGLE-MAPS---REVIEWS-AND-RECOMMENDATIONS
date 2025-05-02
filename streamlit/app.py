@@ -9,14 +9,12 @@ from google.oauth2 import service_account
 from streamlit_option_menu import option_menu
 import pandas as pd
 import matplotlib.pyplot as plt
-import plotly.express as px
 from sklearn.feature_extraction.text import CountVectorizer
 from wordcloud import WordCloud 
-import pydeck as pdk
 import pandas_gbq
-import tempfile
 import joblib
 import urllib
+
 # === CONFIGURACIÓN GENERAL ===
 
 # URLs de imágenes desde GitHub
@@ -44,7 +42,7 @@ def set_background(image):
             color: #FFFFFF !important;
             background-color: #121212;
         }}
-        h1, h2, h3, h4 {{ color: #FFFFFF !importan; }}
+        h1, h2, h3, h4 {{ color: #FFFFFF !important; }}
         p {{ color: #FFFFFF; }}
         .subtitle {{ color: #FFFFFF; }}
         .css-1r6slb0, .css-1d391kg {{
@@ -74,9 +72,6 @@ def set_background(image):
     """, unsafe_allow_html=True)
 
 set_background(fondo)
-
-# Mostrar logos
-
 st.image(logo_restaurante, width=200)
 
 # === CONFIGURACIÓN BIGQUERY ===
@@ -87,8 +82,7 @@ client = bigquery.Client(credentials=credentials)
 def run_query(query):
     return pd.DataFrame([dict(row) for row in client.query(query).result()])
 
-# ID fijo del negocio principal
-BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
+# Sidebar de navegación
 with st.sidebar:
     opcion = option_menu(
         "Navegación", 
@@ -98,72 +92,49 @@ with st.sidebar:
         default_index=0
     )
 
+# === MODELO DE SENTIMIENTO ===
 
-import streamlit as st
-import joblib
-import urllib
-import pandas as pd
-from sklearn.metrics.pairwise import cosine_similarity
-from wordcloud import WordCloud
-import matplotlib.pyplot as plt
-from streamlit_option_menu import option_menu
-
-# Función para cargar los modelos desde URLs
 def cargar_modelos():
     modelo_sentimiento_url = "https://raw.githubusercontent.com/YaninaSpina/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/models/modelo_sentimiento.joblib"
     vectorizador_url = "https://raw.githubusercontent.com/YaninaSpina/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/models/vectorizador_tfidf.joblib"
-
     modelo_sentimiento = joblib.load(urllib.request.urlopen(modelo_sentimiento_url))
     vectorizador = joblib.load(urllib.request.urlopen(vectorizador_url))
-    
     return modelo_sentimiento, vectorizador
 
-# Cargar los modelos
 modelo_sentimiento, vectorizador = cargar_modelos()
 
-# Función para predecir sentimiento (Positivo/Negativo)
 def predecir_sentimiento(texto):
-    X_vector = vectorizador.transform([texto])  # Convierte el texto en un vector
-    pred_sentimiento = modelo_sentimiento.predict(X_vector)[0]
-    return pred_sentimiento
+    X_vector = vectorizador.transform([texto])
+    return modelo_sentimiento.predict(X_vector)[0]
 
-# Función para predecir el rating (estrellas)
 def predecir_rating(texto):
-    X_vector = vectorizador.transform([texto])  # Convierte el texto en un vector
-    pred_rating = modelo_sentimiento.predict(X_vector)[0]  # Usando el mismo modelo para el rating por simplicidad
-    return pred_rating
+    X_vector = vectorizador.transform([texto])
+    return modelo_sentimiento.predict(X_vector)[0]
 
-# Función para generar nube de palabras
 def generar_nube_palabras(texto):
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(texto)
-    return wordcloud
+    return WordCloud(width=800, height=400, background_color='white').generate(texto)
 
-
+# === PÁGINA DE ANÁLISIS DE SENTIMIENTO ===
 
 if opcion == "Análisis de Sentimiento":
     st.title("Análisis de Reseñas de Restaurante")
-
-    # Paso 1: Ingreso de reseña
     texto = st.text_area("Ingresa una reseña:")
 
     if texto:
-        # Paso 2: Análisis de sentimiento
         sentimiento = predecir_sentimiento(texto)
         rating = predecir_rating(texto)
 
         st.write("### Resultado del análisis:")
-
-        # Mostrar el sentimiento (Positivo/Negativo)
-        if sentimiento == 1:
-            st.write("**Sentimiento:** Positivo")
-        else:
-            st.write("**Sentimiento:** Negativo")
-
-        # Mostrar el rating estimado
+        st.write("**Sentimiento:** Positivo" if sentimiento == 1 else "**Sentimiento:** Negativo")
         st.write(f"**Rating estimado:** {round(rating, 2)} ⭐")
 
-        # Paso 3: Generar y mostrar la nube de palabras si el usuario lo desea
+        if "mostrar_nube" not in st.session_state:
+            st.session_state.mostrar_nube = False
+
         if st.button("🔍 Ver palabras más frecuentes"):
+            st.session_state.mostrar_nube = True
+
+        if st.session_state.mostrar_nube:
             wc = generar_nube_palabras(texto)
             st.subheader("☁️ Nube de palabras más frecuentes")
             fig, ax = plt.subplots(figsize=(10, 5))
