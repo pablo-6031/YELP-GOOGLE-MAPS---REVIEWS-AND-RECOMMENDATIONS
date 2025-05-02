@@ -347,16 +347,18 @@ if opcion == "Análisis Integral de Competencia":
     # Obtener el business_id del negocio seleccionado
     business_id_seleccionado = df_negocios[df_negocios['business_name'] == negocio_seleccionado]['business_id'].values[0]
 
-    # 2. Seleccionar el tipo de reseña (Positiva, Negativa, Neutra)
-    tipo_reseña = st.selectbox("Selecciona el tipo de reseña", ("Positiva", "Negativa", "Neutra"))
+    # 2. Seleccionar el tipo de reseña (Positiva, Negativa, Neutra, Todas)
+    tipo_reseña = st.selectbox("Selecciona el tipo de reseña", ("Positiva", "Negativa", "Neutra", "Todas"))
 
     # Obtener el filtro de estrellas según la selección del usuario
     if tipo_reseña == "Positiva":
         stars_filter = "r.stars >= 4"
     elif tipo_reseña == "Negativa":
         stars_filter = "r.stars <= 2"
-    else:  # Neutra (3 estrellas)
+    elif tipo_reseña == "Neutra":
         stars_filter = "r.stars = 3"
+    else:  # Todas
+        stars_filter = "1=1"  # Esto no filtra las estrellas, seleccionando todas las reseñas.
 
     # 3. Cargar reseñas según el tipo de reseña seleccionado
     df = cargar_datos(business_id_seleccionado, stars_filter)
@@ -498,4 +500,3 @@ if opcion == "Análisis Integral de Competencia":
             st.markdown("---")
     else:
         st.info("No se encontraron reseñas disponibles.")
-
