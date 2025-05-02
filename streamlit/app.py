@@ -104,27 +104,8 @@ def cargar_modelos():
 
 modelo_sentimiento, vectorizador = cargar_modelos()
 
-def predecir_sentimiento(texto):
-    X_vector = vectorizador.transform([texto])
-    return modelo_sentimiento.predict(X_vector)[0]
-
-def predecir_rating(texto):
-    X_vector = vectorizador.transform([texto])
-    return modelo_sentimiento.predict(X_vector)[0]
-
-import streamlit as st
-from wordcloud import WordCloud
-from io import BytesIO
-
-# Definición de la función para generar la nube de palabras
-def generar_nube_palabras(texto):
-    wc = WordCloud(width=800, height=400).generate(texto)
-    return wc
 
 
-if opcion == "Análisis de Sentimiento":
-    st.title("Análisis de Reseñas de Restaurante")
-   
 # --- INICIO ---
 
 if opcion == "Inicio":
