@@ -14,6 +14,7 @@ from wordcloud import WordCloud
 import pandas_gbq
 import joblib
 import urllib
+from io import BytesIO
 
 # === CONFIGURACIÓN GENERAL ===
 
@@ -118,6 +119,7 @@ def generar_nube_palabras(texto):
 
 if opcion == "Análisis de Sentimiento":
     st.title("Análisis de Reseñas de Restaurante")
+
     texto = st.text_area("Ingresa una reseña:")
 
     if texto:
@@ -128,19 +130,15 @@ if opcion == "Análisis de Sentimiento":
         st.write("**Sentimiento:** Positivo" if sentimiento == 1 else "**Sentimiento:** Negativo")
         st.write(f"**Rating estimado:** {round(rating, 2)} ⭐")
 
-        if "mostrar_nube" not in st.session_state:
-            st.session_state.mostrar_nube = False
-
+        # Mostrar botón para generar nube de palabras
         if st.button("🔍 Ver palabras más frecuentes"):
-            st.session_state.mostrar_nube = True
-
-        if st.session_state.mostrar_nube:
             wc = generar_nube_palabras(texto)
             st.subheader("☁️ Nube de palabras más frecuentes")
-            fig, ax = plt.subplots(figsize=(10, 5))
-            ax.imshow(wc, interpolation='bilinear')
-            ax.axis("off")
-            st.pyplot(fig)
+
+            # Convertir WordCloud en imagen para evitar errores de render
+            img_buffer = BytesIO()
+            wc.to_image().save(img_buffer, format="PNG")
+            st.image(img_buffer.getvalue(), use_column_width=True)
     else:
         st.write("Por favor, ingresa una reseña para analizarla.")
 
