@@ -88,15 +88,118 @@ def run_query(query):
 # ID fijo del negocio principal
 BUSINESS_ID_EL_CAMINO_REAL = "julsvvavzvghwffkkm0nlg"
 
- # --- SIDEBAR ---
+
+# --- SIDEBAR ---
 with st.sidebar:
     opcion = option_menu(
         "Navegación", 
-        ["Inicio", "Explorar Reseñas", "Análisis Integral de Competencia"],
-        icons=["house", "bar-chart", "graph-up-arrow"],
+        ["Inicio", "Explorar Reseñas", "Análisis Integral de Competencia", "Análisis de Sentimiento"],
+        icons=["house", "bar-chart", "graph-up-arrow", "emoji-smile"],
         menu_icon="cast",
         default_index=0
     )
+
+# --- CARGA DE MODELOS DESDE GITHUB ---
+@st.cache_resource
+def load_model_from_url(url):
+    response = requests.get(url)
+    response.raise_for_status()
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".joblib") as tmp_file:
+        tmp_file.write(response.content)
+        return joblib.load(tmp_file.name)
+
+modelo_url = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/ml/models/modelo_sentimiento.joblib"
+vectorizador_url = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/ml/models/vectorizador_tfidf.joblib"
+
+model = load_model_from_url(modelo_url)
+vectorizer = load_model_from_url(vectorizador_url)
+
+# --- CARGA DE DATASET DESDE GITHUB ---
+@st.cache_data
+def load_data():
+    url_csv = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/ml/data/data_sentiment.csv"
+    return pd.read_csv(url_csv)
+
+df = load_data()
+
+# --- CONTENIDO DE LA OPCIÓN ---
+if opcion == "Análisis de Sentimiento":
+
+    # Menú interno
+    option = st.selectbox("Selecciona una opción", [
+        "Resumen general",
+        "Distribución de sentiment_score",
+        "Proporción de sentiment_label",
+        "Sentimiento a lo largo del tiempo",
+        "Tópicos (LDA)",
+        "Palabras importantes"
+    ])
+
+    # 1. Resumen general
+    if option == "Resumen general":
+        st.subheader("Resumen de datos")
+        st.write(df.head())
+        st.write(df.describe())
+        st.write("Distribución de etiquetas:")
+        st.bar_chart(df['sentiment_label'].value_counts())
+
+    # 2. Distribución del sentiment_score
+    elif option == "Distribución de sentiment_score":
+        st.subheader("Distribución del Sentiment Score")
+        fig, ax = plt.subplots(1, 2, figsize=(14, 5))
+        sns.histplot(df['sentiment_score'], kde=True, ax=ax[0], bins=30, color='skyblue')
+        ax[0].set_title("Histograma del Sentiment Score")
+        sns.boxplot(x='sentiment_label', y='sentiment_score', data=df, ax=ax[1])
+        ax[1].set_title("Boxplot por Sentiment Label")
+        st.pyplot(fig)
+
+    # 3. Proporción de sentiment_label
+    elif option == "Proporción de sentiment_label":
+        st.subheader("Proporción de Sentimiento")
+        fig, ax = plt.subplots()
+        df['sentiment_label'].value_counts().plot.pie(autopct='%1.1f%%', startangle=90, ax=ax)
+        ax.set_ylabel('')
+        st.pyplot(fig)
+
+    # 4. Sentimiento a lo largo del tiempo
+    elif option == "Sentimiento a lo largo del tiempo":
+        if 'date' in df.columns:
+            st.subheader("Sentimiento a lo largo del tiempo")
+            df['date'] = pd.to_datetime(df['date'])
+            df_time = df.groupby([df['date'].dt.to_period('M'), 'sentiment_label']).size().unstack().fillna(0)
+            st.line_chart(df_time)
+        else:
+            st.warning("No se encontró una columna de fecha ('date') en el DataFrame.")
+
+    # 5. Tópicos (LDA)
+    elif option == "Tópicos (LDA)":
+        st.subheader("Nube de Palabras por Tópico")
+        if 'topic' in df.columns and 'clean_text' in df.columns:
+            for i in sorted(df['topic'].dropna().unique()):
+                st.markdown(f"**Tópico {int(i)+1}**")
+                topic_words = df[df['topic'] == i]['clean_text'].str.cat(sep=' ')
+                wordcloud = WordCloud(width=800, height=400, background_color='white').generate(topic_words)
+                fig, ax = plt.subplots(figsize=(10, 5))
+                ax.imshow(wordcloud, interpolation='bilinear')
+                ax.axis('off')
+                st.pyplot(fig)
+        else:
+            st.warning("No se encontró la columna 'topic' o 'clean_text'.")
+
+    # 6. Palabras importantes
+    elif option == "Palabras importantes":
+        st.subheader("Palabras clave por categoría")
+        if 'important_words' in df.columns:
+            for label in df['sentiment_label'].unique():
+                words = df[df['sentiment_label'] == label]['important_words'].dropna().str.cat(sep=' ')
+                wordcloud = WordCloud(width=800, height=400, background_color='white').generate(words)
+                st.markdown(f"**{label.capitalize()}**")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                ax.imshow(wordcloud, interpolation='bilinear')
+                ax.axis('off')
+                st.pyplot(fig)
+        else:
+            st.warning("No se encontró la columna 'important_words'.")
 
 
 # --- INICIO ---
