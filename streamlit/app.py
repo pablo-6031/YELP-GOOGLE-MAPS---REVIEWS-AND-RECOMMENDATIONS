@@ -235,40 +235,40 @@ if opcion == "Explorar Reseñas":
         st.subheader("💡 Recomendaciones basadas en palabras clave")
 
         palabras_clave = ["food", "service", "price", "taste", "ambience", "attention", "speed", "music"]
-
         recomendaciones_dict = {
-            "Positivo": {
-                "food": "Los clientes disfrutan de la comida...",
-                "service": "El servicio ha sido bien valorado...",
-                "price": "Los precios son bien recibidos...",
-                "taste": "El sabor es un punto fuerte...",
-                "ambience": "El ambiente agrada a los clientes...",
-                "attention": "La atención al cliente ha sido destacada...",
-                "speed": "La rapidez del servicio fue positiva...",
-                "music": "La música contribuye a una buena experiencia..."
-            },
-            "Negativo": {
-                "food": "Algunos clientes mencionan insatisfacción...",
-                "service": "El servicio podría mejorarse...",
-                "price": "El precio genera preocupación...",
-                "taste": "El sabor parece no cumplir con expectativas...",
-                "ambience": "El ambiente no fue del agrado de algunos...",
-                "attention": "Hay observaciones sobre la atención...",
-                "speed": "La espera fue mencionada negativamente...",
-                "music": "Algunos comentarios sobre la música fueron negativos..."
-            },
-            "Neutro": {
-                "food": "La comida fue mencionada sin entusiasmo...",
-                "service": "El servicio fue regular...",
-                "price": "Los precios no destacaron...",
-                "taste": "El sabor podría mejorarse...",
-                "ambience": "El ambiente es neutro...",
-                "attention": "La atención necesita refinarse...",
-                "speed": "El servicio no fue rápido ni lento...",
-                "music": "La música fue mencionada pero sin impacto claro..."
-            }
-        }
+    "Positivo": {
+        "food": "Los clientes expresan gran satisfacción con la calidad de la comida, destacando sabores auténticos y una presentación cuidada.",
+        "service": "El servicio es altamente valorado por su cordialidad, eficiencia y predisposición del personal.",
+        "price": "Los precios son percibidos como justos en relación a la experiencia y calidad ofrecida.",
+        "taste": "El sabor ha sido señalado como uno de los principales atractivos del lugar, generando comentarios entusiastas.",
+        "ambience": "El ambiente es considerado agradable y acogedor, contribuyendo a una experiencia placentera.",
+        "attention": "La atención al cliente ha sido calificada como destacada, con personal atento a los detalles.",
+        "speed": "El tiempo de espera es mínimo, lo que mejora significativamente la percepción general del servicio.",
+        "music": "La música complementa positivamente la experiencia, generando un entorno agradable y relajado."
+    },
+    "Negativo": {
+        "food": "Existen menciones sobre la calidad inconsistente de los platos o falta de sabor en algunas preparaciones.",
+        "service": "Algunos clientes señalaron demoras, falta de amabilidad o atención deficiente durante su visita.",
+        "price": "Se percibe una relación calidad-precio desfavorable, con precios considerados elevados para lo recibido.",
+        "taste": "El sabor no logró cumplir con las expectativas de varios comensales, generando disconformidad.",
+        "ambience": "El entorno fue considerado poco acogedor o ruidoso, afectando la experiencia general.",
+        "attention": "Se detectaron fallas en la atención personalizada, lo que puede impactar negativamente en la fidelización.",
+        "speed": "La lentitud en el servicio fue un punto crítico mencionado de forma recurrente.",
+        "music": "La selección musical no fue del agrado de algunos clientes, afectando la percepción del ambiente."
+    },
+    "Neutro": {
+        "food": "La comida fue considerada aceptable, sin elementos que generen entusiasmo ni rechazo.",
+        "service": "El servicio fue percibido como funcional pero sin destacar en atención o calidez.",
+        "price": "Los precios fueron mencionados sin juicios extremos, lo que sugiere una percepción equilibrada.",
+        "taste": "El sabor no fue un punto especialmente comentado, lo que indica oportunidad de diferenciación.",
+        "ambience": "El ambiente no generó emociones fuertes, mostrando espacio para una mejora experiencial.",
+        "attention": "La atención fue correcta pero sin generar impacto memorable en la experiencia.",
+        "speed": "El tiempo de espera fue moderado, sin sobresalir ni ser motivo de queja.",
+        "music": "La música fue mencionada ocasionalmente, sin influir de forma significativa en la experiencia."
+    }
+}
 
+        
         recomendaciones_generadas = {}
         for _, row in reviews.iterrows():
             texto = row["review_text"].lower()
@@ -287,39 +287,45 @@ if opcion == "Explorar Reseñas":
             st.write("No se encontraron menciones suficientes para generar recomendaciones.")
 
 if opcion == "Análisis Integral de Competencia":
-    st.subheader("🔍 Análisis de Competencia por Categoría")
+    import streamlit as st
 
-    # Cargar categorías de negocios
-    @st.cache_data
-    def cargar_categorias():
-        query = """
-        SELECT DISTINCT LOWER(categories) AS categoria
-        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
-        WHERE categories IS NOT NULL
-        """
-        categorias_raw = run_query(query)
-        categorias = set()
-        for cat in categorias_raw["categoria"]:
-            for c in cat.split(","):
-                categorias.add(c.strip())
-        return sorted(categorias)
+# 📌 Descripción de la funcionalidad
+st.markdown("### Selección de categoría de comida")
+st.write(
+    """
+    En esta sección podés elegir una categoría de lugares gastronómicos.
+    El menú muestra las **10 categorías más populares** en base a la cantidad de reseñas registradas 
+    en nuestra base de datos. Esto permite enfocar los análisis en los rubros con mayor actividad.
+    """
+)
 
-    categorias = cargar_categorias()
-    categoria_seleccionada = st.selectbox(
-        "Elegí una categoría",
-        categorias,
-        index=categorias.index("mexican") if "mexican" in categorias else 0
-    )
+# 📦 Cargar las 10 categorías con mayor volumen de reseñas
+@st.cache_data
+def cargar_top_categorias():
+    query = """
+        SELECT categoria, COUNT(*) AS total_reviews
+        FROM (
+            SELECT LOWER(TRIM(c)) AS categoria
+            FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business` AS b
+            JOIN `shining-rampart-455602-a7.dw_restaurantes.fact_review` AS r
+            ON b.business_id = r.business_id,
+            UNNEST(SPLIT(b.categories, ",")) AS c
+            WHERE b.categories IS NOT NULL
+        )
+        GROUP BY categoria
+        ORDER BY total_reviews DESC
+        LIMIT 10
+    """
+    categorias_raw = run_query(query)
+    return categorias_raw["categoria"].tolist()
 
-    # Cargar negocios
-    @st.cache_data
-    def cargar_negocios():
-        query = """
-        SELECT DISTINCT business_id, business_name
-        FROM `shining-rampart-455602-a7.dw_restaurantes.dim_business`
-        WHERE LOWER(categories) LIKE '%mexican%' AND business_id != 'julsvvavzvghwffkkm0nlg'
-        """
-        return run_query(query)
+# 🔍 Mostrar menú con las 10 categorías más reseñadas
+categorias_top10 = cargar_top_categorias()
+
+categoria_seleccionada = st.selectbox(
+    "Elegí una categoría de comida (Top 10 por volumen de reseñas)",
+    categorias_top10
+)
 
     # Cargar reseñas de un negocio según el tipo de reseña seleccionado
     @st.cache_data
