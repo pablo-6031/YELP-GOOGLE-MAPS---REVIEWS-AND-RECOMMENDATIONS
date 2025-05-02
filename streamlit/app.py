@@ -141,7 +141,6 @@ def generar_nube_palabras(texto):
 
 
 if opcion == "Análisis de Sentimiento":
-    # Página de la app
     st.title("Análisis de Reseñas de Restaurante")
 
     # Paso 1: Ingreso de reseña
@@ -163,13 +162,14 @@ if opcion == "Análisis de Sentimiento":
         # Mostrar el rating estimado
         st.write(f"**Rating estimado:** {round(rating, 2)} ⭐")
 
-        # Paso 3: Generar y mostrar la nube de palabras
-        wordcloud = generar_nube_palabras(texto)
-        fig_wc, ax_wc = plt.subplots(figsize=(10, 5))
-        ax_wc.imshow(wordcloud, interpolation='bilinear')
-        ax_wc.axis("off")
-        st.pyplot(fig_wc)
-
+        # Paso 3: Generar y mostrar la nube de palabras si el usuario lo desea
+        if st.button("🔍 Ver palabras más frecuentes"):
+            wc = generar_nube_palabras(texto)
+            st.subheader("☁️ Nube de palabras más frecuentes")
+            fig, ax = plt.subplots(figsize=(10, 5))
+            ax.imshow(wc, interpolation='bilinear')
+            ax.axis("off")
+            st.pyplot(fig)
     else:
         st.write("Por favor, ingresa una reseña para analizarla.")
 
