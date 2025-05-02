@@ -112,12 +112,16 @@ def predecir_rating(texto):
     X_vector = vectorizador.transform([texto])
     return modelo_sentimiento.predict(X_vector)[0]
 
-def generar_nube_palabras(texto):
-    return WordCloud(width=800, height=400, background_color='white').generate(texto)
-
 import streamlit as st
+from wordcloud import WordCloud
 from io import BytesIO
 
+# Definición de la función para generar la nube de palabras
+def generar_nube_palabras(texto):
+    wc = WordCloud(width=800, height=400).generate(texto)
+    return wc
+
+# Flujo principal de Streamlit
 if opcion == "Análisis de Sentimiento":
     st.title("Análisis de Reseñas de Restaurante")
     
@@ -145,7 +149,6 @@ if opcion == "Análisis de Sentimiento":
                 st.image(img_buffer.getvalue(), use_column_width=True)
     else:
         st.write("Por favor, ingresa una reseña para analizarla.")
-
 
 # --- INICIO ---
 
