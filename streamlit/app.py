@@ -128,14 +128,16 @@ if opcion == "Análisis de Sentimiento":
 
     st.subheader("Vista previa de los datos")
     st.dataframe(df.head())
-
-    st.subheader("Distribución de sentimientos")
+    # Distribución de sentimientos
     fig, ax = plt.subplots()
     df['sentimiento'].value_counts().plot(kind='bar', color='skyblue', ax=ax)
     ax.set_xlabel("Sentimiento")
     ax.set_ylabel("Cantidad")
     ax.set_title("Distribución de Sentimientos")
     st.pyplot(fig)
+    plt.close(fig) 
+    
+   
 
     st.subheader("Nube de Palabras por Sentimiento")
     sentimiento_seleccionado = st.selectbox("Seleccioná un sentimiento", df['sentimiento'].unique())
