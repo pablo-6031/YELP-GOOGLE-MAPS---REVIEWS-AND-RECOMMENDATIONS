@@ -84,18 +84,23 @@ client = bigquery.Client(credentials=credentials)
 def run_query(query):
     return pd.DataFrame([dict(row) for row in client.query(query).result()])
 
-# === MODELOS ===
+import joblib
+import urllib.request
+import streamlit as st
+
+# Función para cargar los modelos desde URLs
 @st.cache_resource
 def cargar_modelos():
-    modelo_sentimiento_url = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/models/modelo_sentimiento.joblib"
-    vectorizador_url = "https://raw.githubusercontent.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/main/models/vectorizador_tfidf.joblib"
+    modelo_sentimiento_url = "https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/raw/main/ml/models/modelo_sentimiento.joblib"
+    vectorizador_url = "https://github.com/yaninaspina1/YELP-GOOGLE-MAPS---REVIEWS-AND-RECOMMENDATIONS/raw/main/ml/models/vectorizador_tfidf.joblib"
 
     modelo_sentimiento = joblib.load(urllib.request.urlopen(modelo_sentimiento_url))
     vectorizador = joblib.load(urllib.request.urlopen(vectorizador_url))
+    
     return modelo_sentimiento, vectorizador
 
+# Cargar modelos
 modelo_sentimiento, vectorizador = cargar_modelos()
-
 def predecir_sentimiento(texto):
     X_vector = vectorizador.transform([texto])
     pred_sentimiento = modelo_sentimiento.predict(X_vector)[0]
