@@ -17,3 +17,5 @@ datetime
 pydeck
 pandas_gbq
 tempfile
+joblib
+urllib
