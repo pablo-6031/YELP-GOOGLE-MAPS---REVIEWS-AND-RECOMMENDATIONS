@@ -14,6 +14,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from wordcloud import WordCloud 
 import pydeck as pdk
 import pandas_gbq
+import tempfile
 
 # === CONFIGURACIÓN GENERAL ===
 
