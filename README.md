@@ -33,8 +33,7 @@ Desarrollar herramientas analíticas e inteligentes que permitan:
 - Permite filtrar por ubicación, tipo de negocio y comparar tendencias.
 - Facilita una lectura rápida de la situación digital del negocio.
 
-🔗 [Ver Dashboard en Looker Studio](https://lookerstudio.google.com/reporting/
-df20fc98-f8fa-42bf-8734-92d4ff90e6f5)
+🔗 [Ver Dashboard en Looker Studio]( https://lookerstudio.google.com/reporting/df20fc98-f8fa-42bf-8734-92d4ff90e6f5 )
 
 ### 2. **Aplicación Streamlit – Simulador de Reseñas**
 
